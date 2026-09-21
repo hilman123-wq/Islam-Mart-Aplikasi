@@ -1820,7 +1820,7 @@
     var pendingDeleteUserId = null;
     var pendingDeleteCrit = null;
     var pendingDeleteOrderId = null;
-   var pendingDeleteItem = null;
+    var pendingDeleteItem = null;
     var isMondayToday = false;
 
     // 1. MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
@@ -2180,16 +2180,13 @@
       }
 
       showLoading('Memverifikasi akun...');
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        hideLoading();
-        showToast('Lingkungan Google Apps Script tidak terdeteksi.', 'error');
-        return;
-      }
+
+      // Pengecekan google.script yang lama SUDAH DIHAPUS DARI SINI
 
       var loginTimer = setTimeout(function() {
         hideLoading();
         showToast('Waktu permintaan habis. Silakan periksa koneksi internet Anda.', 'error');
-      }, 10000);
+      }, 15000);
 
       // MENGGUNAKAN fetchAPI
       fetchAPI(
@@ -2213,6 +2210,7 @@
           showToast('Koneksi gagal: ' + (err.message || err), 'error');
         }
       );
+    } // <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG
 
     function setupSession() {
       if (!currentUser) return;
@@ -2366,6 +2364,7 @@
           showToast('Gagal memuat dashboard: ' + (err.message || err), 'error');
         }
       );
+    } // <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG
 
     function renderDashboard(res) {
       if (isUserAdmin(currentUser)) return; // Admin tidak memakai logic banner pengingat harian staf
