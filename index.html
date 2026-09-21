@@ -1820,9 +1820,27 @@
     var pendingDeleteUserId = null;
     var pendingDeleteCrit = null;
     var pendingDeleteOrderId = null;
-    var pendingDeleteItem = null;
+   var pendingDeleteItem = null;
     var isMondayToday = false;
 
+    // 1. MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvyVHUM6rV6f7Kb4YyDf9gCmf5fBTuF5WNurzxyutoC0tpgZSZmk3qtP45wP81JW793Q/exec'; 
+
+    // 2. FUNGSI JEMBATAN PENGGANTI google.script.run
+    function fetchAPI(action, payload, onSuccess, onFailure) {
+      fetch(SCRIPT_URL + '?action=' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(res => {
+        if (onSuccess) onSuccess(res);
+      })
+      .catch(err => {
+        if (onFailure) onFailure(err);
+      });
+    }
     // ==========================================
     // LOGIKA LAPORAN BULANAN (ROLE BASED)
     // ==========================================
@@ -2173,8 +2191,11 @@
         showToast('Waktu permintaan habis. Silakan periksa koneksi internet Anda.', 'error');
       }, 10000);
 
-      google.script.run
-        .withSuccessHandler(function(res) {
+      // MENGGUNAKAN fetchAPI
+      fetchAPI(
+        'loginUser', // Nama aksi
+        { username: u, password: p }, // Data yang dikirim
+        function(res) { // onSuccess
           clearTimeout(loginTimer);
           hideLoading();
           if (res && res.success) {
@@ -2185,14 +2206,13 @@
           } else {
             showToast(res ? res.message : 'Login gagal!', 'error');
           }
-        })
-        .withFailureHandler(function(err) {
+        },
+        function(err) { // onFailure
           clearTimeout(loginTimer);
           hideLoading();
           showToast('Koneksi gagal: ' + (err.message || err), 'error');
-        })
-        .loginUser(u, p);
-    }
+        }
+      );
 
     function setupSession() {
       if (!currentUser) return;
@@ -2336,15 +2356,16 @@
 
     function loadDashboard() {
       if (!currentUser) return;
-      google.script.run
-        .withSuccessHandler(function(res) {
+      fetchAPI(
+        'getDashboardData',
+        { role: currentUser.role, username: currentUser.username, month: null, im: currentUser.im },
+        function(res) {
           if (res && res.success) renderDashboard(res);
-        })
-        .withFailureHandler(function(err) {
+        },
+        function(err) {
           showToast('Gagal memuat dashboard: ' + (err.message || err), 'error');
-        })
-        .getDashboardData(currentUser.role, currentUser.username, null, currentUser.im);
-    }
+        }
+      );
 
     function renderDashboard(res) {
       if (isUserAdmin(currentUser)) return; // Admin tidak memakai logic banner pengingat harian staf
