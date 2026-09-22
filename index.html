@@ -1942,8 +1942,18 @@
       var isAdmin = isUserAdmin(currentUser);
       var isKasir = roleStr === 'kasir';
       var isGudang = roleStr.includes('gudang');
+      var isKeuangan = roleStr.includes('keuangan');
 
-      // --- PINDAHKAN MENU WA KE GUDANG SECARA OTOMATIS ---
+      // --- ATUR HAK AKSES MENU CEKLIS HARIAN SPESIFIK ---
+      var navClhk = document.getElementById('nav-clhk-form'); // Ceklis Kasir
+      var navClhg = document.getElementById('nav-clhg-form'); // Ceklis Gudang
+      var navClhka = document.getElementById('nav-clhka-form'); // Ceklis Keuangan
+
+      if (navClhk) navClhk.style.display = isKasir ? 'flex' : 'none';
+      if (navClhg) navClhg.style.display = isGudang ? 'flex' : 'none';
+      if (navClhka) navClhka.style.display = isKeuangan ? 'flex' : 'none';
+
+      // --- PINDAHKAN MENU WA KE GUDANG ---
       var waMenu = document.getElementById('nav-wa-reminder');
       var gudangMenuContainer = document.getElementById('menuNonKasirSection');
       var adminMenuContainer = document.getElementById('adminMenuSection');
@@ -1951,11 +1961,10 @@
       if (waMenu) {
         waMenu.style.display = isGudang ? 'flex' : 'none'; 
         if (isGudang && gudangMenuContainer && waMenu.parentElement === adminMenuContainer) {
-            gudangMenuContainer.appendChild(waMenu); // Pindah HTML dari Admin ke Gudang
+            gudangMenuContainer.appendChild(waMenu); 
         }
       }
 
-      // Sembunyikan banner WA besar di Dashboard Admin
       var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
       if (waBannerAdmin) waBannerAdmin.style.display = 'none';
 
