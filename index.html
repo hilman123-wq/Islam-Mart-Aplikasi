@@ -1887,14 +1887,20 @@
 
       var roleStr = String(currentUser.role || '').toLowerCase();
       var isAdmin = isUserAdmin(currentUser);
-      var isKasir = roleStr === 'kasir';
+      var isKasir = roleStr.includes('kasir');
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
 
+      // --- HAK AKSES MENU CEKLIS HARIAN ---
       if (document.getElementById('nav-clhk-form')) document.getElementById('nav-clhk-form').style.display = isKasir ? 'flex' : 'none';
       if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
       if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
+      // --- SEMBUNYIKAN ARSIP LAPORAN BULANAN KHUSUS DARI KASIR ---
+      var navLaporan = document.getElementById('nav-laporan-bulanan');
+      if (navLaporan) navLaporan.style.display = isKasir ? 'none' : 'flex';
+
+      // --- HAK AKSES MENU BARANG & PO (Sembunyikan dari Keuangan) ---
       var navOrderCreate = document.getElementById('nav-order-create');
       var navOrderHistory = document.getElementById('nav-order-history');
       var navMasterBarang = document.getElementById('nav-master-barang');
