@@ -2349,13 +2349,17 @@
         let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(50);
         if (st !== 'ALL') query = query.eq('status', st);
         if (im !== 'ALL') query = query.eq('im', im);
-        if (m) query = query.like('tanggal', m + '-%');
+        if (m) {
+          // Filter rentang tanggal khusus untuk Supabase
+          var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
+          query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
+        }
 
         const { data, error } = await query;
         if (error) throw error;
         window.isOrdersLoaded = true;
         renderOrdersTable(data);
-      } catch (err) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-bold">Koneksi gagal.</td></tr>'; }
+      } catch (err) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>'; }
     }
 
     function renderOrdersTable(list) {
@@ -2623,14 +2627,16 @@
       var tb = document.getElementById('weeklyTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="12" class="py-10 text-center text-sky-500 font-bold">Mengolah data mingguan...</td></tr>';
       
       try {
-        let query = supaClient.from('checklists').select('*').eq('divisi', type).like('tanggal', m + '-%');
+        let query = supaClient.from('checklists').select('*').eq('divisi', type);
         if (im !== 'ALL') query = query.eq('im', im);
+        if (m) {
+          var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
+          query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
+        }
         const { data, error } = await query; if (error) throw error;
         window.isWeeklyLoaded = true;
 
-        // Local aggregation logic simple bypass
         var res = { meta: { type: type, im: im, month: m, week: w, rangeText: "Bulan " + m, kepalaToko: "Kepala Toko", kepalaGudang: "Kepala Gudang", categoryNames: [] }, data: [] };
-        
         var userMap = {};
         data.forEach(d => {
            if (!userMap[d.username]) userMap[d.username] = { nama: d.nama, im: d.im, count: 0, sum: 0 };
@@ -2662,8 +2668,12 @@
       var tb = document.getElementById('raportTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="12" class="py-10 text-center text-amber-500 font-bold">Mengolah raport bulanan...</td></tr>';
       
       try {
-        let query = supaClient.from('checklists').select('*').eq('divisi', type).like('tanggal', m + '-%');
+        let query = supaClient.from('checklists').select('*').eq('divisi', type);
         if (im !== 'ALL') query = query.eq('im', im);
+        if (m) {
+          var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
+          query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
+        }
         const { data, error } = await query; if (error) throw error;
         window.isRaportLoaded = true;
 
