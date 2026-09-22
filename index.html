@@ -2547,73 +2547,56 @@
 
     async function loadHistoryTable(forceRefresh) {
       if (forceRefresh === false && window.isHistoryLoaded) return;
-      var type = document.getElementById('historyType').value, im = document.getElementById('historyIM').value, m = document.getElementById('historyMonth').value;
+      var type = document.getElementById('historyType').value;
+      var im = document.getElementById('historyIM').value;
+      var m = document.getElementById('historyMonth').value;
       var tbody = document.getElementById('historyTableBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-indigo-500 font-bold">Menarik data ceklis...</td></tr>';
+      
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-indigo-500 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Menarik data ceklis...</td></tr>';
+      
       try {
         let query = supaClient.from('checklists').select('*').eq('divisi', type).order('tanggal', {ascending: false});
-        if(im!=='ALL') query = query.eq('im', im); if(m) query = query.like('tanggal', m+'-%');
+        if (im !== 'ALL') query = query.eq('im', im); 
+        if (m) {
+          // Filter rentang tanggal khusus untuk membaca bulan di Supabase
+          var year = m.split('-')[0];
+          var month = m.split('-')[1];
+          var lastDay = new Date(year, month, 0).getDate();
+          query = query.gte('tanggal', year + '-' + month + '-01').lte('tanggal', year + '-' + month + '-' + lastDay);
+        }
+        
         const { data, error } = await query;
-        if(error) throw error; window.isHistoryLoaded = true;
-        renderHistoryTable(type, data);
-      } catch(err) { if(tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500 font-bold">Koneksi gagal.</td></tr>'; }
+        if (error) throw error; 
+        
+        window.isHistoryLoaded = true;
+        renderHistoryTable(type, data || []);
+      } catch(err) { 
+        // Jika masih gagal, akan muncul pesan error spesifik berwarna merah
+        if(tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>'; 
+      }
     }
 
     function renderHistoryTable(type, list) {
-      var tbody = document.getElementById('historyTableBody'); if (!tbody) return; tbody.innerHTML = '';
-      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada riwayat.</td></tr>'; return; }
+      var tbody = document.getElementById('historyTableBody'); 
+      if (!tbody) return; 
+      tbody.innerHTML = '';
+      
+      if (!list || list.length === 0) { 
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada riwayat ceklis pada filter ini.</td></tr>'; 
+        return; 
+      }
+      
       list.forEach(item => {
-        tbody.innerHTML += '<tr class="hover:bg-slate-50"><td class="py-3 px-3">' + item.tanggal + '</td><td class="py-3 px-4 font-bold">' + item.nama + '</td><td class="py-3 px-3">' + item.im + '</td><td class="py-3 px-3 text-center font-black">' + item.nilai_akhir + '</td><td class="py-3 px-3 text-center font-black">' + item.predikat + '</td><td class="py-3 px-4 text-center">' + (isUserAdmin(currentUser) ? '<button type="button" onclick="deleteHistoryItem(\'' + type + '\', \'' + item.id + '\')" class="text-red-600"><i class="fa-solid fa-trash"></i></button>' : '-') + '</td></tr>';
+        var btnHapus = isUserAdmin(currentUser) ? '<button type="button" onclick="deleteHistoryItem(\'' + type + '\', \'' + item.id + '\')" class="p-1 text-red-600 hover:text-red-800 transition" title="Hapus Data"><i class="fa-solid fa-trash"></i></button>' : '-';
+        
+        tbody.innerHTML += '<tr class="hover:bg-slate-50">' +
+          '<td class="py-3 px-3 font-semibold text-slate-600">' + item.tanggal + '</td>' +
+          '<td class="py-3 px-4 font-bold text-slate-800">' + item.nama + '</td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (item.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + item.im + '</span></td>' +
+          '<td class="py-3 px-3 text-center font-black">' + (item.nilai_akhir || 0) + '</td>' +
+          '<td class="py-3 px-3 text-center font-black ' + (item.predikat === 'A' ? 'text-emerald-700' : 'text-slate-800') + '">' + (item.predikat || '-') + '</td>' +
+          '<td class="py-3 px-4 text-center">' + btnHapus + '</td></tr>';
       });
-    }
-
-    async function deleteHistoryItem(type, id) {
-      if (!confirm('Hapus riwayat ini?')) return;
-      showLoading('Menghapus...');
-      try { const { error } = await supaClient.from('checklists').delete().eq('id', id); hideLoading(); if(error) throw error; showToast('Dihapus!', 'success'); loadHistoryTable(true); } 
-      catch(e) { hideLoading(); showToast('Gagal: '+e.message, 'error'); }
-    }
-
-    // Modal Indikator Edit (Admin)
-    function openAddCriteriaModal(div, cat) { document.getElementById('critDivisi').value = div; document.getElementById('critCatKey').value = cat; document.getElementById('critItemIdx').value = '-1'; document.getElementById('critItemText').value = ''; openModal('criteriaModal'); }
-    function openEditCriteriaModal(div, cat, idx, txt) { document.getElementById('critDivisi').value = div; document.getElementById('critCatKey').value = cat; document.getElementById('critItemIdx').value = idx; document.getElementById('critItemText').value = txt; openModal('criteriaModal'); }
-    function openEditCatModal(div, cat, oldName) { document.getElementById('catDivisi').value = div; document.getElementById('catKey').value = cat; document.getElementById('catNameText').value = oldName; openModal('criteriaCatModal'); }
-    function promptDeleteCriteriaItem(div, cat, idx, txt) { pendingDeleteCrit = {divisi: div, catKey: cat, idx: idx}; document.getElementById('criteriaDeletePreview').innerText = txt; openModal('criteriaDeleteModal'); }
-    
-    async function submitCriteriaItem(e) {
-      e.preventDefault(); var div = document.getElementById('critDivisi').value, cat = document.getElementById('critCatKey').value, idx = parseInt(document.getElementById('critItemIdx').value, 10), txt = document.getElementById('critItemText').value.trim();
-      if (!txt) return; if(idx>=0) cachedCriteria[div][cat].items[idx] = txt; else cachedCriteria[div][cat].items.push(txt);
-      showLoading('Menyimpan indikator...');
-      try { const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria'); hideLoading(); if(error) throw error; closeModal('criteriaModal'); showToast('Tersimpan!', 'success'); buildChecklistForm(div, cachedCriteria[div]); } 
-      catch(err) { hideLoading(); showToast('Gagal: '+err.message, 'error'); }
-    }
-
-    async function executeDeleteCriteriaItem() {
-      if(!pendingDeleteCrit) return; var div=pendingDeleteCrit.divisi, cat=pendingDeleteCrit.catKey, idx=pendingDeleteCrit.idx;
-      cachedCriteria[div][cat].items.splice(idx, 1);
-      showLoading('Menghapus indikator...');
-      try { await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria'); hideLoading(); closeModal('criteriaDeleteModal'); buildChecklistForm(div, cachedCriteria[div]); } catch(err) {}
-    }
-
-    async function submitCategoryName(e) {
-      e.preventDefault(); var div = document.getElementById('catDivisi').value, cat = document.getElementById('catKey').value, nm = document.getElementById('catNameText').value.trim();
-      if(!nm) return; cachedCriteria[div][cat].name = nm;
-      showLoading('Menyimpan judul...');
-      try { await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria'); hideLoading(); closeModal('criteriaCatModal'); buildChecklistForm(div, cachedCriteria[div]); } catch(err) {}
-    }
-
-    // Laporan Bulanan
-    function initLaporanBulanView() { document.getElementById('filterLaporanBulan').value = new Date().toISOString().substring(0, 7); if (new Date().getDate() > 3 && document.getElementById('deadlineWarning')) document.getElementById('deadlineWarning').style.display = 'flex'; if (isUserAdmin(currentUser) && document.getElementById('adminFilterLaporan')) document.getElementById('adminFilterLaporan').classList.remove('hidden'); loadLaporanTable(); }
-    
-    async function loadLaporanTable() {
-      var b = document.getElementById('filterLaporanBulan').value, d = document.getElementById('filterLaporanDivisi') ? document.getElementById('filterLaporanDivisi').value : 'ALL', u = document.getElementById('filterLaporanUnit') ? document.getElementById('filterLaporanUnit').value : 'ALL';
-      var tb = document.getElementById('laporanTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan...</td></tr>';
-      try {
-        let query = supaClient.from('laporan_bulanan').select('*').order('created_at', { ascending: false });
-        if(b) query = query.eq('periode', b); if(d!=='ALL') query = query.eq('divisi', d); if(u!=='ALL') query = query.eq('im', u);
-        const { data, error } = await query; if(error) throw error;
-        cachedLaporanList = data || []; renderLaporanTable(cachedLaporanList);
-      } catch(err) { if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-red-500">Gagal.</td></tr>'; }
     }
 
     function renderLaporanTable(list) {
