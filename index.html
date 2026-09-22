@@ -1823,24 +1823,19 @@
     var pendingDeleteItem = null;
     var isMondayToday = false;
 
-    // 1. MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvyVHUM6rV6f7Kb4YyDf9gCmf5fBTuF5WNurzxyutoC0tpgZSZmk3qtP45wP81JW793Q/exec'; 
+    // ==========================================
+    // KONEKSI DATABASE SUPABASE
+    // ==========================================
+    const SUPABASE_URL = 'https://uafvpcrjpfjpfcxysrch.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhZnZwY3JqcGZqcGZjeHlzcmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMzUyOTAsImV4cCI6MjEwNTYxMTI5MH0.Pss7iyFZQIui00pSgzBjGsMl9fhMyd4018poPQOxhNk'; 
+    const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. FUNGSI JEMBATAN PENGGANTI google.script.run
-    function fetchAPI(action, payload, onSuccess, onFailure) {
-      fetch(SCRIPT_URL + '?action=' + action, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      })
-      .then(response => response.json())
-      .then(res => {
-        if (onSuccess) onSuccess(res);
-      })
-      .catch(err => {
-        if (onFailure) onFailure(err);
-      });
-    }
+    var currentUser = null;
+    var activeTab = 'dashboard';
+    var cachedUsers = [];
+    var cachedCriteria = null;
+    var cachedMasterBarang = [];   
+
     // ==========================================
     // LOGIKA LAPORAN BULANAN (ROLE BASED)
     // ==========================================
@@ -2364,7 +2359,7 @@
           showToast('Gagal memuat dashboard: ' + (err.message || err), 'error');
         }
       );
-    } // <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG
+    } // <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG 
 
     function renderDashboard(res) {
       if (isUserAdmin(currentUser)) return; // Admin tidak memakai logic banner pengingat harian staf
