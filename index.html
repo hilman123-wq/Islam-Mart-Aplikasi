@@ -22,6 +22,8 @@
   
   <!-- Supabase JS Library (Server Alternatif) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<!-- Chart.js Library untuk Grafik Interaktif -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
@@ -317,127 +319,58 @@
       <!-- VIEWPORT TAB CONTENT -->
       <div class="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
 
-        <!-- ========================================================================= -->
-        <!-- TAB: DASHBOARD -->
+       <!-- ========================================================================= -->
+        <!-- TAB: DASHBOARD (GRAFIK & STATISTIK SAJA) -->
         <!-- ========================================================================= -->
         <section id="tab-dashboard" class="space-y-6">
           
-          <!-- BUNGKUSAN DASHBOARD KHUSUS STAF / KASIR -->
-          <div id="staffDashboardPanel" class="space-y-6">
-            <!-- Banner Pengingat PO -->
-            <div id="dashboardMondayOrderBanner" style="display: none;" class="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-teal-900 via-emerald-900 to-slate-900 text-white border border-teal-500/40 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/40 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-calendar-check"></i></div>
-                <div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-teal-400 text-slate-950">Jadwal Rutin: Minggu dan Senin</span>
-                  <h3 class="text-sm sm:text-base font-black text-white mt-1">Waktunya Cek Stok Fisik & Order Barang (PO)</h3>
-                  <p class="text-xs text-teal-200/90 mt-0.5">Hari ini adalah jadwal pembuatan Purchase Order mingguan ke distributor.</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button onclick="switchTab('master-barang')" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition"><i class="fa-solid fa-boxes-stacked mr-1"></i> Cek Stok</button>
-                <button onclick="switchTab('order-create')" class="px-4 py-2.5 bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs rounded-xl shadow active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-cart-plus"></i> <span>Buat PO</span></button>
+          <!-- Banner Pengingat Ceklis (Tetap dipertahankan agar staf ingat mengisi form) -->
+          <div id="dashboardDailyReminderBanner" class="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div id="reminderBannerIcon" class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clock"></i></div>
+              <div>
+                <h3 id="reminderBannerTitle" class="text-sm sm:text-base font-black text-slate-800">Ceklis Operasional</h3>
+                <p id="reminderBannerDesc" class="text-xs text-slate-500 mt-0.5">Memeriksa status pengisian form ceklis Anda...</p>
               </div>
             </div>
+            <button id="reminderBannerActionBtn" onclick="goToMyChecklist()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center gap-2">
+              <span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
 
-            <!-- Banner Ceklis -->
-            <div id="dashboardDailyReminderBanner" class="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div class="flex items-center gap-3.5">
-                <div id="reminderBannerIcon" class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clock"></i></div>
-                <div>
-                  <h3 id="reminderBannerTitle" class="text-sm sm:text-base font-black text-slate-800">Ceklis Operasional Hari Ini</h3>
-                  <p id="reminderBannerDesc" class="text-xs text-slate-500 mt-0.5">Memeriksa status pengisian form ceklis Anda...</p>
-                </div>
-              </div>
-              <button id="reminderBannerActionBtn" onclick="goToMyChecklist()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition flex items-center justify-center gap-2">
-                <span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>
-              </button>
+          <!-- KARTU STATISTIK (ANGKA METRIK UTAMA) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
+              <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Total PO (Bulan Ini)</p>
+              <h3 id="statTotalPO" class="text-xl sm:text-2xl font-black text-teal-600">0</h3>
             </div>
-
-            <!-- Metrik -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-                <div class="flex items-center justify-between text-slate-400"><span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Ceklis Kasir</span><i class="fa-solid fa-cash-register text-amber-500"></i></div>
-                <div class="flex items-baseline justify-between"><h3 id="statClhkAvg" class="text-xl sm:text-2xl font-black text-slate-800">0.0</h3><span id="statClhkCount" class="text-xs font-bold text-slate-500">0 form</span></div>
-              </div>
-              <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-                <div class="flex items-center justify-between text-slate-400"><span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Ceklis Gudang</span><i class="fa-solid fa-warehouse text-blue-500"></i></div>
-                <div class="flex items-baseline justify-between"><h3 id="statClhgAvg" class="text-xl sm:text-2xl font-black text-slate-800">0.0</h3><span id="statClhgCount" class="text-xs font-bold text-slate-500">0 form</span></div>
-              </div>
-              <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-                <div class="flex items-center justify-between text-slate-400"><span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Ceklis Keuangan</span><i class="fa-solid fa-file-invoice-dollar text-purple-500"></i></div>
-                <div class="flex items-baseline justify-between"><h3 id="statClhkaAvg" class="text-xl sm:text-2xl font-black text-slate-800">0.0</h3><span id="statClhkaCount" class="text-xs font-bold text-slate-500">0 form</span></div>
-              </div>
-              <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-                <div class="flex items-center justify-between text-slate-400"><span class="text-[11px] font-extrabold uppercase tracking-wider text-teal-600">Orderan PO</span><i class="fa-solid fa-cart-shopping text-teal-500"></i></div>
-                <div class="flex items-baseline justify-between"><h3 id="statOrdersCount" class="text-xl sm:text-2xl font-black text-slate-800">0</h3><span id="statOrdersPending" class="text-xs font-bold text-amber-600">0 pending</span></div>
-              </div>
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
+              <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Pengeluaran PO</p>
+              <h3 id="statTotalRp" class="text-lg sm:text-xl font-black text-rose-600 truncate">Rp 0</h3>
             </div>
-
-            <!-- 4 Menu Cepat -->
-            <div id="kasirQuickMenu" class="space-y-2">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-600">Menu Utama Kasir</h3>
-              <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div onclick="switchTab('clhk-form')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-amber-500 hover:shadow-md transition cursor-pointer"><div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-2"><i class="fa-solid fa-cash-register"></i></div><h4 class="text-xs font-bold text-slate-800">1. Ceklis Kasir</h4></div>
-                <div onclick="switchTab('data-history')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:shadow-md transition cursor-pointer"><div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-2"><i class="fa-solid fa-clock-rotate-left"></i></div><h4 class="text-xs font-bold text-slate-800">2. Riwayat Ceklis</h4></div>
-                <div onclick="switchTab('order-create')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-teal-500 hover:shadow-md transition cursor-pointer"><div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center mb-2"><i class="fa-solid fa-cart-plus"></i></div><h4 class="text-xs font-bold text-slate-800">3. Buat PO</h4></div>
-                <div onclick="switchTab('master-barang')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 hover:shadow-md transition cursor-pointer"><div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-2"><i class="fa-solid fa-barcode"></i></div><h4 class="text-xs font-bold text-slate-800">4. Label Rak</h4></div>
-              </div>
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
+              <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Disiplin IM Banin</p>
+              <h3 id="statKinerjaBanin" class="text-xl sm:text-2xl font-black text-emerald-600">0%</h3>
             </div>
-
-            <!-- Panel Laporan Bulanan -->
-            <div id="dashboardLaporanPanel" class="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-              <div class="flex items-center justify-between border-b pb-3"><h3 class="text-sm font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-folder-open text-rose-600"></i><span>Pengumpulan Laporan Bulanan</span></h3><span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">Tenggat: Tgl 3</span></div>
-              <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <div class="w-12 h-12 rounded-full bg-white border border-rose-200 text-rose-600 flex items-center justify-center text-xl shrink-0 shadow-sm"><i class="fa-solid fa-file-excel"></i></div>
-                <div class="flex-1 text-center sm:text-left w-full">
-                  <h4 class="text-sm font-bold text-slate-800">Kewajiban Laporan Divisi <span id="dashLaporanDivisiName" class="text-rose-600 uppercase">...</span></h4>
-                  <div id="dashLaporanTags" class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-2"></div>
-                </div>
-                <div class="shrink-0 mt-2 sm:mt-0"><button onclick="switchTab('laporan-bulanan')" class="w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-2"><i class="fa-solid fa-arrow-right-to-bracket"></i><span>Buka Laporan</span></button></div>
-              </div>
+            <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
+              <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Disiplin IM Banat</p>
+              <h3 id="statKinerjaBanat" class="text-xl sm:text-2xl font-black text-emerald-600">0%</h3>
             </div>
           </div>
 
-          <!-- BUNGKUSAN DASHBOARD KHUSUS ADMIN -->
-          <div id="adminDashboardPanel" class="hidden space-y-4">
-            <h2 class="text-sm font-black text-slate-500 uppercase tracking-wider ml-1 mb-2">Panel Pengawasan & Evaluasi Kinerja Divisi</h2>
-            
-            <!-- Ubah Grid menjadi 4 Kotak (2 baris di HP, 4 sejajar di PC) -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div onclick="goToAdminReport('CLHK')" class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-amber-400 cursor-pointer transition flex flex-col items-center text-center">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4"><i class="fa-solid fa-cash-register"></i></div>
-                <h3 class="font-black text-slate-800 text-xs sm:text-sm">Laporan Kasir</h3>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">Evaluasi 5S & Pelayanan</p>
-              </div>
-              <div onclick="goToAdminReport('CLHKA')" class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-purple-400 cursor-pointer transition flex flex-col items-center text-center">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <h3 class="font-black text-slate-800 text-xs sm:text-sm">Laporan Keuangan</h3>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">Brankas & Petty Cash</p>
-              </div>
-              <div onclick="goToAdminReport('CLHG')" class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-blue-400 cursor-pointer transition flex flex-col items-center text-center">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4"><i class="fa-solid fa-warehouse"></i></div>
-                <h3 class="font-black text-slate-800 text-xs sm:text-sm">Laporan Gudang</h3>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">FEFO & Stock Opname</p>
-              </div>
-              
-              <!-- TAMBAHAN KOTAK BARU: RIWAYAT ORDERAN -->
-              <div onclick="switchTab('order-history')" class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-teal-400 cursor-pointer transition flex flex-col items-center text-center">
-                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-teal-50 text-teal-500 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl mb-3 sm:mb-4"><i class="fa-solid fa-receipt"></i></div>
-                <h3 class="font-black text-slate-800 text-xs sm:text-sm">Riwayat Order</h3>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">Pantau PO & Supplier</p>
+          <!-- GRAFIK VISUAL (CHART.JS) -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 class="text-xs sm:text-sm font-black text-slate-800 mb-4 uppercase tracking-wider"><i class="fa-solid fa-chart-line text-teal-500 mr-1.5"></i> Grafik Pengeluaran PO (7 Hari)</h3>
+              <div class="relative h-48 sm:h-64 w-full">
+                <canvas id="poChartCanvas"></canvas>
               </div>
             </div>
-            
-            <div class="mt-6 bg-slate-900 rounded-3xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:bg-slate-800 transition shadow-xl" onclick="switchTab('wa-reminder')">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-xl sm:text-2xl border border-emerald-500/30"><i class="fa-brands fa-whatsapp"></i></div>
-                <div>
-                  <h3 class="font-black text-sm sm:text-base">Pusat Pengingat WhatsApp</h3>
-                  <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Tegur staf yang belum mengisi form hari ini.</p>
-                </div>
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <h3 class="text-xs sm:text-sm font-black text-slate-800 mb-4 uppercase tracking-wider"><i class="fa-solid fa-chart-pie text-emerald-500 mr-1.5"></i> Rata-Rata Disiplin Ceklis (7 Hari)</h3>
+              <div class="relative h-48 sm:h-64 w-full">
+                <canvas id="ceklisChartCanvas"></canvas>
               </div>
-              <i class="fa-solid fa-chevron-right text-slate-500 text-xl hidden sm:block"></i>
             </div>
           </div>
 
@@ -2096,118 +2029,140 @@
     // ==========================================
     // DASHBOARD
     // ==========================================
+    // Variabel penampung grafik
+    var myPoChart = null;
+    var myCeklisChart = null;
+
     async function loadDashboard() {
       if (!currentUser) return;
       try {
-        var today = new Date().toISOString().split('T')[0];
-        const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', today).eq('username', currentUser.username);
+        var today = new Date();
+        var todayStr = today.toISOString().split('T')[0];
+        
+        // 1. Status pengisian form user
+        const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
         var hasFilled = clToday && clToday.length > 0;
         
-        // Render simple stats for quick load
-        renderDashboard({ hasFilledToday: hasFilled, stats: { orders: { count: '-', pending: '-', nominal: 0 } } });
+        // 2. Tarik data orderan & ceklis dari Supabase (Bulan Ini)
+        var curMonth = todayStr.substring(0,7);
+        const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').like('tanggal', curMonth + '%');
+        const { data: checks } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir').like('tanggal', curMonth + '%');
+
+        // Kalkulasi Statistik Kartu (Bulan Ini)
+        var totalPO = 0, totalRp = 0;
+        if (orders) {
+            totalPO = orders.length;
+            totalRp = orders.reduce((sum, o) => sum + Number(o.estimasi_total||0), 0);
+        }
+
+        var sumBanin = 0, countBanin = 0, sumBanat = 0, countBanat = 0;
+        if (checks) {
+            checks.forEach(c => {
+                if (String(c.im).toLowerCase() === 'banin') { sumBanin += Number(c.nilai_akhir||0); countBanin++; }
+                if (String(c.im).toLowerCase() === 'banat') { sumBanat += Number(c.nilai_akhir||0); countBanat++; }
+            });
+        }
+        var avgBanin = countBanin > 0 ? (sumBanin/countBanin).toFixed(1) : 0;
+        var avgBanat = countBanat > 0 ? (sumBanat/countBanat).toFixed(1) : 0;
+
+        // Kalkulasi Data Grafik (7 Hari Terakhir)
+        var chartLabels = [];
+        var poData = [];
+        var checkBaninData = [];
+        var checkBanatData = [];
+
+        for(var i=6; i>=0; i--) {
+            var d = new Date(); d.setDate(d.getDate() - i);
+            var dateStr = d.toISOString().split('T')[0];
+            var shortDate = d.toLocaleDateString('id-ID', {day: 'numeric', month:'short'});
+            chartLabels.push(shortDate); // Contoh: "22 Sep"
+
+            // Filter harian PO
+            var dailyPO = (orders||[]).filter(o => o.tanggal === dateStr).reduce((sum, o) => sum + Number(o.estimasi_total||0), 0);
+            poData.push(dailyPO);
+
+            // Filter harian Nilai Ceklis
+            var dailyBanin = (checks||[]).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banin');
+            var dailyBanat = (checks||[]).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banat');
+            
+            var dAvgBanin = dailyBanin.length > 0 ? dailyBanin.reduce((sum,c)=>sum+Number(c.nilai_akhir),0)/dailyBanin.length : 0;
+            var dAvgBanat = dailyBanat.length > 0 ? dailyBanat.reduce((sum,c)=>sum+Number(c.nilai_akhir),0)/dailyBanat.length : 0;
+            
+            checkBaninData.push(dAvgBanin.toFixed(1));
+            checkBanatData.push(dAvgBanat.toFixed(1));
+        }
+
+        // Tampilkan ke layar
+        renderDashboard({
+            hasFilledToday: hasFilled,
+            stats: { totalPO, totalRp, avgBanin, avgBanat },
+            charts: { labels: chartLabels, po: poData, checkBanin: checkBaninData, checkBanat: checkBanatData }
+        });
       } catch (err) { console.error(err); }
     }
 
     function renderDashboard(res) {
-      if (isUserAdmin(currentUser)) return;
+      if (!currentUser) return;
       
-      var roleStr = String(currentUser.role || '').toLowerCase();
-      var isKeuangan = roleStr.includes('keuangan');
-      var isGudang = roleStr.includes('gudang');
-      var isKasir = roleStr.includes('kasir'); 
-      var myUnit = currentUser.im || 'Banin';
-
-      var todayDay = new Date().getDay();
-      
-      var poBanner = document.getElementById('dashboardMondayOrderBanner');
-      if (poBanner) {
-        poBanner.style.display = ((todayDay === 0 || todayDay === 1) && !isKeuangan) ? 'flex' : 'none';
-      }
-
+      // Render Banner Absen
       var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
       if (res.hasFilledToday) {
         iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         titleEl.innerText = 'Ceklis Harian Selesai Terisi'; descEl.innerText = 'Terima kasih atas kedisiplinan Anda mengisi ceklis hari ini.';
-        btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Lihat Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
+        btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
       } else {
         iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
-        titleEl.innerText = 'Anda Belum Mengisi Ceklis Hari Ini!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda sebelum pergantian shift.';
+        titleEl.innerText = 'Anda Belum Mengisi Ceklis!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda hari ini.';
         btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
       }
 
-      var metricsContainer = document.querySelector('#staffDashboardPanel > .grid.grid-cols-2.lg\\:grid-cols-4');
-      if (metricsContainer) metricsContainer.style.display = isKeuangan ? 'none' : 'grid';
-
-      var kasirQuickMenu = document.getElementById('kasirQuickMenu');
-      if (kasirQuickMenu) kasirQuickMenu.style.display = isKasir ? 'block' : 'none';
-
-      // =======================================================================
-      // MENCEGAH CACHE LAYAR KEUANGAN SUPAYA JUDUL BANIN/BANAT SELALU TEPAT
-      var existingKeuangan = document.getElementById('keuanganModernDashboard');
-      if (existingKeuangan) { existingKeuangan.remove(); } 
-
-      if (isKeuangan) {
-         var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6">' +
-           '<h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit.toUpperCase() + '</h3>' +
-           '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
-             
-             '<div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
-               '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
-               '<div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
-               '<h4 class="text-sm font-black text-white">1. Form Ceklis</h4>' +
-               '<p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p>' +
-             '</div>' +
-             
-             '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
-               '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
-               '<div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div>' +
-               '<h4 class="text-sm font-black text-white">2. Arsip Laporan</h4>' +
-               '<p class="text-[10px] text-rose-200/70 mt-1">Unggah file Excel neraca & laba rugi bulanan.</p>' +
-             '</div>' +
-             
-             '<div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group">' +
-               '<div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
-               '<h4 class="text-sm font-black text-slate-800">3. Riwayat Ceklis</h4>' +
-               '<p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p>' +
-             '</div>' +
-             
-           '</div>' +
-         '</div>';
-         
-         var laporanPanel = document.getElementById('dashboardLaporanPanel');
-         if (laporanPanel && laporanPanel.parentNode) {
-             laporanPanel.insertAdjacentHTML('beforebegin', keuHtml);
-         }
+      // Tulis Angka ke Kartu Statistik (Nominal dikonversi ke Juta/Ribu agar ringkas)
+      if(document.getElementById('statTotalPO')) document.getElementById('statTotalPO').innerText = res.stats.totalPO;
+      if(document.getElementById('statKinerjaBanin')) document.getElementById('statKinerjaBanin').innerText = res.stats.avgBanin + '%';
+      if(document.getElementById('statKinerjaBanat')) document.getElementById('statKinerjaBanat').innerText = res.stats.avgBanat + '%';
+      
+      var elRp = document.getElementById('statTotalRp');
+      if(elRp) {
+          if (res.stats.totalRp >= 1000000) elRp.innerText = 'Rp ' + (res.stats.totalRp/1000000).toFixed(1) + ' Jt';
+          else if (res.stats.totalRp >= 1000) elRp.innerText = 'Rp ' + (res.stats.totalRp/1000).toFixed(1) + ' Rb';
+          else elRp.innerText = 'Rp ' + res.stats.totalRp;
       }
 
-      var laporanPanel = document.getElementById('dashboardLaporanPanel');
-      if (isKasir) { if (laporanPanel) laporanPanel.style.display = 'none'; } 
-      else {
-        if (laporanPanel) laporanPanel.style.display = 'block'; 
-        var dashDivEl = document.getElementById('dashLaporanDivisiName'), dashTagsEl = document.getElementById('dashLaporanTags');
-        if (dashDivEl && dashTagsEl && currentUser) {
-          var userDivisi = roleStr;
-          if (userDivisi.includes('gudang')) userDivisi = 'gudang'; else if (userDivisi.includes('keuangan')) userDivisi = 'keuangan'; else if (userDivisi.includes('sarpras')) userDivisi = 'sarpras'; else if (userDivisi.includes('permak')) userDivisi = 'permak';
-          dashDivEl.innerText = userDivisi.toUpperCase();
-          var requiredReports = KATEGORI_LAPORAN[userDivisi] || ['Laporan Operasional Toko'];
-          dashTagsEl.innerHTML = ''; requiredReports.forEach(rep => dashTagsEl.innerHTML += '<span class="inline-block px-2.5 py-1 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-600 shadow-sm">' + rep + '</span>');
-        }
+      // Eksekusi Animasi Gambar Chart.js
+      if (typeof Chart === 'undefined') return;
+
+      var ctxPo = document.getElementById('poChartCanvas');
+      if(ctxPo) {
+          if (myPoChart) myPoChart.destroy();
+          myPoChart = new Chart(ctxPo, {
+              type: 'bar',
+              data: {
+                  labels: res.charts.labels,
+                  datasets: [{
+                      label: 'Pengeluaran PO (Rp)',
+                      data: res.charts.po,
+                      backgroundColor: '#14b8a6', // warna Teal
+                      borderRadius: 4
+                  }]
+              },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+          });
       }
 
-      var existingGudangBanner = document.getElementById('gudangWaBanner');
-      if (isGudang) {
-         if (!existingGudangBanner) {
-             var staffDash = document.getElementById('staffDashboardPanel');
-             if (staffDash) {
-                 staffDash.insertAdjacentHTML('beforeend', 
-                 '<div id="gudangWaBanner" class="mt-6 bg-slate-900 rounded-3xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:bg-slate-800 transition shadow-xl" onclick="switchTab(\'wa-reminder\')">' +
-                 '<div class="flex items-center gap-4"><div class="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-xl sm:text-2xl border border-emerald-500/30"><i class="fa-brands fa-whatsapp"></i></div>' +
-                 '<div><h3 class="font-black text-sm sm:text-base">Pusat Pengingat WhatsApp</h3><p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Tegur staf IM ' + myUnit + ' yang belum mengisi form.</p></div></div>' +
-                 '<i class="fa-solid fa-chevron-right text-slate-500 text-xl hidden sm:block"></i></div>');
-             }
-         }
-      } else if (existingGudangBanner) {
-          existingGudangBanner.style.display = 'none';
+      var ctxCeklis = document.getElementById('ceklisChartCanvas');
+      if(ctxCeklis) {
+          if (myCeklisChart) myCeklisChart.destroy();
+          myCeklisChart = new Chart(ctxCeklis, {
+              type: 'line',
+              data: {
+                  labels: res.charts.labels,
+                  datasets: [
+                      { label: 'IM Banin', data: res.charts.checkBanin, borderColor: '#059669', backgroundColor: '#059669', tension: 0.3, borderWidth: 3 },
+                      { label: 'IM Banat', data: res.charts.checkBanat, borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.3, borderWidth: 3 }
+                  ]
+              },
+              options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+          });
       }
     }
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
