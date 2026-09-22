@@ -1828,7 +1828,7 @@
     // ==========================================
     const SUPABASE_URL = 'https://uafvpcrjpfjpfcxysrch.supabase.co'; 
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhZnZwY3JqcGZqcGZjeHlzcmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMzUyOTAsImV4cCI6MjEwNTYxMTI5MH0.Pss7iyFZQIui00pSgzBjGsMl9fhMyd4018poPQOxhNk'; 
-    const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     var currentUser = null;
     var activeTab = 'dashboard';
@@ -2164,7 +2164,7 @@
       }
     }
 
-    function handleLogin(e) {
+    async function handleLogin(e) {
       if (e) e.preventDefault();
       var u = document.getElementById('loginUsername').value.trim();
       var p = document.getElementById('loginPassword').value.trim();
@@ -2176,36 +2176,32 @@
 
       showLoading('Memverifikasi akun...');
 
-      // Pengecekan google.script yang lama SUDAH DIHAPUS DARI SINI
+      try {
+        // PERINTAH SUPABASE: Cek kecocokan username dan password
+        const { data, error } = await supaClient
+          .from('users')
+          .select('*')
+          .eq('username', u)
+          .eq('password', p)
+          .maybeSingle();
 
-      var loginTimer = setTimeout(function() {
         hideLoading();
-        showToast('Waktu permintaan habis. Silakan periksa koneksi internet Anda.', 'error');
-      }, 15000);
 
-      // MENGGUNAKAN fetchAPI
-      fetchAPI(
-        'loginUser', // Nama aksi
-        { username: u, password: p }, // Data yang dikirim
-        function(res) { // onSuccess
-          clearTimeout(loginTimer);
-          hideLoading();
-          if (res && res.success) {
-            currentUser = res.user;
-            try { sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser)); } catch (err) {}
-            showToast('Selamat datang, ' + currentUser.nama + '!', 'success');
-            setupSession();
-          } else {
-            showToast(res ? res.message : 'Login gagal!', 'error');
-          }
-        },
-        function(err) { // onFailure
-          clearTimeout(loginTimer);
-          hideLoading();
-          showToast('Koneksi gagal: ' + (err.message || err), 'error');
+        if (error || !data) {
+          showToast('Username atau Password salah!', 'error');
+        } else if (data.status && data.status.toLowerCase() !== 'aktif') {
+          showToast('Akun Anda sedang dinonaktifkan!', 'error');
+        } else {
+          currentUser = data;
+          try { sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser)); } catch (err) {}
+          showToast('Selamat datang, ' + currentUser.nama + '!', 'success');
+          setupSession();
         }
-      );
-    } // <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG
+      } catch (err) {
+        hideLoading();
+        showToast('Koneksi gagal: ' + err.message, 'error');
+      }
+    }// <--- INI KURUNG PENUTUP YANG SEBELUMNYA HILANG
 
     function setupSession() {
       if (!currentUser) return;
