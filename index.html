@@ -288,7 +288,7 @@
       <!-- Top Header Bar -->
       <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div class="flex items-center gap-3">
-          <button onclick="openMobileSidebar()" class="sm:hidden w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+          <button onclick="openMobileSidebar()" class="hidden">
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="flex items-center gap-2">
@@ -1281,26 +1281,31 @@
     </main>
 
     <!-- BOTTOM BAR NAVIGASI MOBILE (KHUSUS HP) -->
+    <!-- BOTTOM BAR NAVIGASI MOBILE (KHUSUS HP) -->
     <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 sm:hidden z-30 px-3 py-2 flex items-center justify-around text-center shadow-lg">
-      <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600">
+      <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-12">
         <i class="fa-solid fa-gauge-high text-sm"></i>
         <span class="text-[9px] font-bold">Beranda</span>
       </button>
-      <button onclick="switchTab('order-create')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600">
+      <button id="btnNavBtmPO" onclick="switchTab('order-create')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 w-12">
         <i class="fa-solid fa-cart-plus text-sm"></i>
         <span class="text-[9px] font-bold">Order PO</span>
       </button>
-      <button onclick="goToMyChecklist()" class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold">
-        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center -mt-4 shadow-lg shadow-emerald-600/40">
-          <i class="fa-solid fa-square-check text-base"></i>
-        </div>
-        <span class="text-[9px]">Isi Form</span>
-      </button>
-      <button onclick="switchTab('master-barang')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600">
+      <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-12">
         <i class="fa-solid fa-barcode text-sm"></i>
         <span class="text-[9px] font-bold">Barang</span>
       </button>
-      <button onclick="openMobileSidebar()" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800">
+      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;" class="flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 w-12">
+        <i class="fa-solid fa-file-excel text-sm"></i>
+        <span class="text-[9px] font-bold">Laporan</span>
+      </button>
+      <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold w-12 relative -top-3">
+        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 border-slate-100">
+          <i class="fa-solid fa-square-check text-base"></i>
+        </div>
+        <span class="text-[9px] mt-0.5 whitespace-nowrap">Isi Form</span>
+      </button>
+      <button onclick="openMobileSidebar()" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800 w-12">
         <i class="fa-solid fa-bars text-sm"></i>
         <span class="text-[9px] font-bold">Menu</span>
       </button>
@@ -1953,16 +1958,14 @@
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
 
-      // --- HAK AKSES MENU CEKLIS HARIAN ---
       if (document.getElementById('nav-clhk-form')) document.getElementById('nav-clhk-form').style.display = isKasir ? 'flex' : 'none';
       if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
       if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
-      // --- HAK AKSES MENU BARANG & PO (Sembunyikan dari Keuangan) ---
       var navOrderCreate = document.getElementById('nav-order-create');
       var navOrderHistory = document.getElementById('nav-order-history');
       var navMasterBarang = document.getElementById('nav-master-barang');
-      var poHeader = navOrderCreate ? navOrderCreate.previousElementSibling : null; // Label Judul "Orderan Barang (PO)"
+      var poHeader = navOrderCreate ? navOrderCreate.previousElementSibling : null; 
 
       if (isKeuangan) {
         if (navOrderCreate) navOrderCreate.style.display = 'none';
@@ -1976,21 +1979,38 @@
         if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
-      // --- PENEMPATAN MENU WA ---
+      // --- LOGIKA MENU NAVIGASI BAWAH (HP) ---
+      var btmPO = document.getElementById('btnNavBtmPO');
+      var btmBarang = document.getElementById('btnNavBtmBarang');
+      var btmLaporan = document.getElementById('btnNavBtmLaporan');
+      var btmForm = document.getElementById('btnNavBtmForm');
+
+      if (isKeuangan) {
+        if (btmPO) btmPO.style.display = 'none';
+        if (btmBarang) btmBarang.style.display = 'none';
+        if (btmLaporan) btmLaporan.style.display = 'flex'; // Keuangan dapat menu Laporan
+      } else {
+        if (btmPO) btmPO.style.display = 'flex';
+        if (btmBarang) btmBarang.style.display = 'flex';
+        if (btmLaporan) btmLaporan.style.display = 'none';
+      }
+
+      if (isAdmin) {
+        if (btmForm) btmForm.style.display = 'none'; // Admin tidak butuh tombol isi form harian
+      } else {
+        if (btmForm) btmForm.style.display = 'flex';
+      }
+
       var waMenu = document.getElementById('nav-wa-reminder');
       var gudangMenuContainer = document.getElementById('menuNonKasirSection');
       var adminMenuContainer = document.getElementById('adminMenuSection');
 
       if (waMenu) {
         waMenu.style.display = (isGudang || isAdmin) ? 'flex' : 'none'; 
-        if (isGudang && gudangMenuContainer) {
-            gudangMenuContainer.appendChild(waMenu); 
-        } else if (isAdmin && adminMenuContainer) {
-            adminMenuContainer.appendChild(waMenu);
-        }
+        if (isGudang && gudangMenuContainer) gudangMenuContainer.appendChild(waMenu); 
+        else if (isAdmin && adminMenuContainer) adminMenuContainer.appendChild(waMenu);
       }
 
-      // Tampilkan kembali tombol cepat WA di Dashboard Admin
       var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
       if (waBannerAdmin) waBannerAdmin.style.display = isAdmin ? 'flex' : 'none';
 
@@ -2099,13 +2119,11 @@
 
       var todayDay = new Date().getDay();
       
-      // 1. Sembunyikan Banner PO dari user Keuangan
       var poBanner = document.getElementById('dashboardMondayOrderBanner');
       if (poBanner) {
         poBanner.style.display = ((todayDay === 0 || todayDay === 1) && !isKeuangan) ? 'flex' : 'none';
       }
 
-      // 2. Banner Status Pengisian Form Ceklis (Tetap Muncul)
       var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
       if (res.hasFilledToday) {
         iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
@@ -2117,7 +2135,6 @@
         btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
       }
 
-      // 3. Sembunyikan Widget Kasir & Gudang dari Dashboard Keuangan
       var metricsContainer = document.querySelector('#staffDashboardPanel > .grid.grid-cols-2.lg\\:grid-cols-4');
       if (metricsContainer) metricsContainer.style.display = isKeuangan ? 'none' : 'grid';
 
@@ -2125,51 +2142,44 @@
       if (kasirQuickMenu) kasirQuickMenu.style.display = isKasir ? 'block' : 'none';
 
       // =======================================================================
-      // 4. INJEKSI DASHBOARD MODERN SPESIFIK KEUANGAN
-      // =======================================================================
+      // MENCEGAH CACHE LAYAR KEUANGAN SUPAYA JUDUL BANIN/BANAT SELALU TEPAT
       var existingKeuangan = document.getElementById('keuanganModernDashboard');
+      if (existingKeuangan) { existingKeuangan.remove(); } 
+
       if (isKeuangan) {
-         if (!existingKeuangan) {
-             var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6">' +
-               '<h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit + '</h3>' +
-               '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
-                 
-                 '<div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
-                   '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
-                   '<div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
-                   '<h4 class="text-sm font-black text-white">1. Form Ceklis</h4>' +
-                   '<p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p>' +
-                 '</div>' +
-                 
-                 '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
-                   '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
-                   '<div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div>' +
-                   '<h4 class="text-sm font-black text-white">2. Arsip Laporan</h4>' +
-                   '<p class="text-[10px] text-rose-200/70 mt-1">Unggah file Excel neraca & laba rugi bulanan.</p>' +
-                 '</div>' +
-                 
-                 '<div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group">' +
-                   '<div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
-                   '<h4 class="text-sm font-black text-slate-800">3. Riwayat Ceklis</h4>' +
-                   '<p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p>' +
-                 '</div>' +
-                 
-               '</div>' +
-             '</div>';
+         var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6">' +
+           '<h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit.toUpperCase() + '</h3>' +
+           '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
              
-             // Sisipkan sebelum panel laporan standar
-             var laporanPanel = document.getElementById('dashboardLaporanPanel');
-             if (laporanPanel && laporanPanel.parentNode) {
-                 laporanPanel.insertAdjacentHTML('beforebegin', keuHtml);
-             }
-         } else {
-             existingKeuangan.style.display = 'block';
+             '<div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
+               '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
+               '<div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
+               '<h4 class="text-sm font-black text-white">1. Form Ceklis</h4>' +
+               '<p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p>' +
+             '</div>' +
+             
+             '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
+               '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
+               '<div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div>' +
+               '<h4 class="text-sm font-black text-white">2. Arsip Laporan</h4>' +
+               '<p class="text-[10px] text-rose-200/70 mt-1">Unggah file Excel neraca & laba rugi bulanan.</p>' +
+             '</div>' +
+             
+             '<div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group">' +
+               '<div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
+               '<h4 class="text-sm font-black text-slate-800">3. Riwayat Ceklis</h4>' +
+               '<p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p>' +
+             '</div>' +
+             
+           '</div>' +
+         '</div>';
+         
+         var laporanPanel = document.getElementById('dashboardLaporanPanel');
+         if (laporanPanel && laporanPanel.parentNode) {
+             laporanPanel.insertAdjacentHTML('beforebegin', keuHtml);
          }
-      } else {
-         if (existingKeuangan) existingKeuangan.style.display = 'none';
       }
 
-      // 5. Panel Tenggat Laporan Bulanan (Otomatis menyesuaikan divisi)
       var laporanPanel = document.getElementById('dashboardLaporanPanel');
       if (isKasir) { if (laporanPanel) laporanPanel.style.display = 'none'; } 
       else {
@@ -2184,7 +2194,6 @@
         }
       }
 
-      // 6. BANNER PENGINGAT WA KHUSUS GUDANG
       var existingGudangBanner = document.getElementById('gudangWaBanner');
       if (isGudang) {
          if (!existingGudangBanner) {
