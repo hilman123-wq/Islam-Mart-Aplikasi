@@ -2090,28 +2090,93 @@
 
     function renderDashboard(res) {
       if (isUserAdmin(currentUser)) return;
-      var todayDay = new Date().getDay();
-      if (document.getElementById('dashboardMondayOrderBanner')) document.getElementById('dashboardMondayOrderBanner').style.display = (todayDay === 0 || todayDay === 1) ? 'flex' : 'none';
+      
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var isKeuangan = roleStr.includes('keuangan');
+      var isGudang = roleStr.includes('gudang');
+      var isKasir = roleStr.includes('kasir'); 
+      var myUnit = currentUser.im || 'Banin';
 
+      var todayDay = new Date().getDay();
+      
+      // 1. Sembunyikan Banner PO dari user Keuangan
+      var poBanner = document.getElementById('dashboardMondayOrderBanner');
+      if (poBanner) {
+        poBanner.style.display = ((todayDay === 0 || todayDay === 1) && !isKeuangan) ? 'flex' : 'none';
+      }
+
+      // 2. Banner Status Pengisian Form Ceklis (Tetap Muncul)
       var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
       if (res.hasFilledToday) {
-        iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         titleEl.innerText = 'Ceklis Harian Selesai Terisi'; descEl.innerText = 'Terima kasih atas kedisiplinan Anda mengisi ceklis hari ini.';
         btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Lihat Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
       } else {
-        iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
+        iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
         titleEl.innerText = 'Anda Belum Mengisi Ceklis Hari Ini!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda sebelum pergantian shift.';
         btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
       }
 
-      var userRoleStr = String(currentUser.role || '').toLowerCase();
+      // 3. Sembunyikan Widget Kasir & Gudang dari Dashboard Keuangan
+      var metricsContainer = document.querySelector('#staffDashboardPanel > .grid.grid-cols-2.lg\\:grid-cols-4');
+      if (metricsContainer) metricsContainer.style.display = isKeuangan ? 'none' : 'grid';
+
+      var kasirQuickMenu = document.getElementById('kasirQuickMenu');
+      if (kasirQuickMenu) kasirQuickMenu.style.display = isKasir ? 'block' : 'none';
+
+      // =======================================================================
+      // 4. INJEKSI DASHBOARD MODERN SPESIFIK KEUANGAN
+      // =======================================================================
+      var existingKeuangan = document.getElementById('keuanganModernDashboard');
+      if (isKeuangan) {
+         if (!existingKeuangan) {
+             var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6">' +
+               '<h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit + '</h3>' +
+               '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
+                 
+                 '<div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
+                   '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
+                   '<div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
+                   '<h4 class="text-sm font-black text-white">1. Form Ceklis</h4>' +
+                   '<p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p>' +
+                 '</div>' +
+                 
+                 '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
+                   '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
+                   '<div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div>' +
+                   '<h4 class="text-sm font-black text-white">2. Arsip Laporan</h4>' +
+                   '<p class="text-[10px] text-rose-200/70 mt-1">Unggah file Excel neraca & laba rugi bulanan.</p>' +
+                 '</div>' +
+                 
+                 '<div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group">' +
+                   '<div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
+                   '<h4 class="text-sm font-black text-slate-800">3. Riwayat Ceklis</h4>' +
+                   '<p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p>' +
+                 '</div>' +
+                 
+               '</div>' +
+             '</div>';
+             
+             // Sisipkan sebelum panel laporan standar
+             var laporanPanel = document.getElementById('dashboardLaporanPanel');
+             if (laporanPanel && laporanPanel.parentNode) {
+                 laporanPanel.insertAdjacentHTML('beforebegin', keuHtml);
+             }
+         } else {
+             existingKeuangan.style.display = 'block';
+         }
+      } else {
+         if (existingKeuangan) existingKeuangan.style.display = 'none';
+      }
+
+      // 5. Panel Tenggat Laporan Bulanan (Otomatis menyesuaikan divisi)
       var laporanPanel = document.getElementById('dashboardLaporanPanel');
-      if (userRoleStr === 'kasir') { if (laporanPanel) laporanPanel.style.display = 'none'; } 
+      if (isKasir) { if (laporanPanel) laporanPanel.style.display = 'none'; } 
       else {
         if (laporanPanel) laporanPanel.style.display = 'block'; 
         var dashDivEl = document.getElementById('dashLaporanDivisiName'), dashTagsEl = document.getElementById('dashLaporanTags');
         if (dashDivEl && dashTagsEl && currentUser) {
-          var userDivisi = userRoleStr;
+          var userDivisi = roleStr;
           if (userDivisi.includes('gudang')) userDivisi = 'gudang'; else if (userDivisi.includes('keuangan')) userDivisi = 'keuangan'; else if (userDivisi.includes('sarpras')) userDivisi = 'sarpras'; else if (userDivisi.includes('permak')) userDivisi = 'permak';
           dashDivEl.innerText = userDivisi.toUpperCase();
           var requiredReports = KATEGORI_LAPORAN[userDivisi] || ['Laporan Operasional Toko'];
@@ -2119,8 +2184,7 @@
         }
       }
 
-      // --- BANNER PENGINGAT WA KHUSUS GUDANG ---
-      var isGudang = userRoleStr.includes('gudang');
+      // 6. BANNER PENGINGAT WA KHUSUS GUDANG
       var existingGudangBanner = document.getElementById('gudangWaBanner');
       if (isGudang) {
          if (!existingGudangBanner) {
@@ -2129,7 +2193,7 @@
                  staffDash.insertAdjacentHTML('beforeend', 
                  '<div id="gudangWaBanner" class="mt-6 bg-slate-900 rounded-3xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:bg-slate-800 transition shadow-xl" onclick="switchTab(\'wa-reminder\')">' +
                  '<div class="flex items-center gap-4"><div class="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-xl sm:text-2xl border border-emerald-500/30"><i class="fa-brands fa-whatsapp"></i></div>' +
-                 '<div><h3 class="font-black text-sm sm:text-base">Pusat Pengingat WhatsApp</h3><p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Tegur staf IM ' + (currentUser.im || 'Banin') + ' yang belum mengisi form.</p></div></div>' +
+                 '<div><h3 class="font-black text-sm sm:text-base">Pusat Pengingat WhatsApp</h3><p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Tegur staf IM ' + myUnit + ' yang belum mengisi form.</p></div></div>' +
                  '<i class="fa-solid fa-chevron-right text-slate-500 text-xl hidden sm:block"></i></div>');
              }
          }
