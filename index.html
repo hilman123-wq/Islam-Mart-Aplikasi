@@ -2456,14 +2456,58 @@
       
       for (var catKey in divCriteria) {
         var cat = divCriteria[catKey], catCard = document.createElement('div'); catCard.className = 'bg-slate-50 border rounded-2xl p-4 space-y-3';
-        var hHtml = '<div class="flex items-center justify-between border-b pb-2"><div class="flex items-center gap-2"><h4 class="text-xs font-black">' + cat.name + '</h4>' + (canEdit ? '<button type="button" onclick="openEditCatModal(\''+divisi+'\',\''+catKey+'\',\''+cat.name+'\')" class="text-emerald-600"><i class="fa-solid fa-pen"></i></button>' : '') + '</div><div class="flex items-center gap-2"><span id="badgeCatScore-'+divisi+'-'+catKey+'" class="px-2 py-0.5 rounded text-[11px] font-black bg-slate-200">0%</span>' + (canEdit ? '<button type="button" onclick="openAddCriteriaModal(\''+divisi+'\',\''+catKey+'\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-plus"></i></button>' : '') + '</div></div>';
+        var hHtml = '<div class="flex items-center justify-between border-b pb-2"><div class="flex items-center gap-2"><h4 class="text-xs font-black">' + cat.name + '</h4>' + (canEdit ? '<button type="button" onclick="openEditCatModal(\''+divisi+'\',\''+catKey+'\',\''+cat.name+'\')" class="text-emerald-600"><i class="fa-solid fa-pen"></i></button>' : '') + '</div><div class="flex items-center gap-2"><span id="badgeCatScore-'+divisi+'-'+catKey+'" class="px-2 py-0.5 rounded text-[11px] font-black bg-slate-200">0%</span>' + (canEdit ? '<button type="button" onclick="openAddCriteriaModal(\''+divisi+'\',\''+catKey+'\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-plus"></i></button><button type="button" onclick="deleteCategoryPrompt(\''+divisi+'\',\''+catKey+'\')" class="px-2 py-1 bg-red-100 text-red-800 rounded-lg text-[10px] font-bold ml-1" title="Hapus Kategori"><i class="fa-solid fa-trash"></i></button>' : '') + '</div></div>';
         var iHtml = '<div class="space-y-2 text-xs">';
         (cat.items||[]).forEach((it, i) => {
           iHtml += '<div class="flex items-start gap-3 p-2 bg-white rounded-xl border group"><label class="flex items-start gap-2 flex-1 cursor-pointer"><input type="checkbox" name="chk_'+divisi+'_'+catKey+'" onchange="calculateLiveScore(\''+divisi+'\')" class="mt-0.5 w-4 h-4 text-emerald-600 rounded"><span class="text-slate-700 font-medium">' + it + '</span></label>' + (canEdit ? '<div class="flex opacity-80 hover:opacity-100"><button type="button" onclick="openEditCriteriaModal(\''+divisi+'\',\''+catKey+'\','+i+',\''+it.replace(/'/g,"\\'")+'\')" class="p-1 text-emerald-600"><i class="fa-solid fa-pen-to-square"></i></button><button type="button" onclick="promptDeleteCriteriaItem(\''+divisi+'\',\''+catKey+'\','+i+',\''+it.replace(/'/g,"\\'")+'\')" class="p-1 text-red-600"><i class="fa-solid fa-trash"></i></button></div>' : '') + '</div>';
         });
         catCard.innerHTML = hHtml + iHtml + '</div>'; container.appendChild(catCard);
       }
+      
+      // Tambahan Tombol "+ Tambah Kategori Baru"
+      if (canEdit) {
+        var btnAdd = document.createElement('div');
+        btnAdd.className = 'flex justify-center pt-2 pb-2';
+        btnAdd.innerHTML = '<button type="button" onclick="addNewCategory(\'' + divisi + '\')" class="px-4 py-2 border-2 border-dashed border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold rounded-xl text-xs flex items-center gap-2 transition"><i class="fa-solid fa-plus"></i> Tambah Kategori Baru</button>';
+        container.appendChild(btnAdd);
+      }
+
       calculateLiveScore(divisi);
+    }
+
+    async function addNewCategory(divisi) {
+      var newName = prompt('Masukkan nama Kategori baru (contoh: Pro Aktif):');
+      if (!newName || newName.trim() === '') return;
+      if (!cachedCriteria[divisi]) cachedCriteria[divisi] = {};
+      
+      // Cari urutan kategori selanjutnya (misal: cat5)
+      var nextNum = 1;
+      Object.keys(cachedCriteria[divisi]).forEach(k => {
+        var num = parseInt(k.replace('cat', ''));
+        if (num >= nextNum) nextNum = num + 1;
+      });
+      var newCatKey = 'cat' + nextNum;
+      
+      cachedCriteria[divisi][newCatKey] = { name: newName.trim(), items: [] };
+      showLoading('Menambahkan kategori...');
+      try {
+        const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria');
+        hideLoading(); if (error) throw error;
+        showToast('Kategori baru ditambahkan!', 'success');
+        buildChecklistForm(divisi, cachedCriteria[divisi]);
+      } catch(err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+    }
+
+    async function deleteCategoryPrompt(divisi, catKey) {
+      if (!confirm('Yakin ingin menghapus seluruh kategori ini beserta indikator di dalamnya?')) return;
+      delete cachedCriteria[divisi][catKey];
+      showLoading('Menghapus kategori...');
+      try {
+        const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria');
+        hideLoading(); if (error) throw error;
+        showToast('Kategori dihapus!', 'success');
+        buildChecklistForm(divisi, cachedCriteria[divisi]);
+      } catch(err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
     }
 
     function calculateLiveScore(divisi) {
