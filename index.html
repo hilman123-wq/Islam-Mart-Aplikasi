@@ -1675,8 +1675,12 @@
             <label class="block font-bold text-slate-700 uppercase mb-1">Divisi / Role *</label>
             <select id="userFormRole" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
               <option value="Kasir">Kasir</option>
-              <option value="Gudang">Gudang</option>
-              <option value="Keuangan">Keuangan</option>
+              <option value="Gudang Banin">Gudang Banin</option>
+              <option value="Gudang Banat">Gudang Banat</option>
+              <option value="Keuangan Banin">Keuangan Banin</option>
+              <option value="Keuangan Banat">Keuangan Banat</option>
+              <option value="Driver Purchasing">Driver Purchasing</option>
+              <option value="Permak">Permak</option>
               <option value="Kepala Toko">Kepala Toko</option>
             </select>
           </div>
@@ -2019,8 +2023,9 @@
     function goToMyChecklist() {
       if (!currentUser) return;
       var r = (currentUser.role || '').toLowerCase();
-      if (r === 'gudang') switchTab('clhg-form');
-      else if (r === 'keuangan') switchTab('clhka-form');
+      // Gunakan "includes" agar mendeteksi semua yang mengandung kata Gudang/Keuangan
+      if (r.includes('gudang')) switchTab('clhg-form');
+      else if (r.includes('keuangan')) switchTab('clhka-form');
       else switchTab('clhk-form');
     }
 
