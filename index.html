@@ -1944,29 +1944,46 @@
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
 
-      // --- ATUR HAK AKSES MENU CEKLIS HARIAN SPESIFIK ---
-      var navClhk = document.getElementById('nav-clhk-form'); // Ceklis Kasir
-      var navClhg = document.getElementById('nav-clhg-form'); // Ceklis Gudang
-      var navClhka = document.getElementById('nav-clhka-form'); // Ceklis Keuangan
+      // --- HAK AKSES MENU CEKLIS HARIAN ---
+      if (document.getElementById('nav-clhk-form')) document.getElementById('nav-clhk-form').style.display = isKasir ? 'flex' : 'none';
+      if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
+      if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
-      if (navClhk) navClhk.style.display = isKasir ? 'flex' : 'none';
-      if (navClhg) navClhg.style.display = isGudang ? 'flex' : 'none';
-      if (navClhka) navClhka.style.display = isKeuangan ? 'flex' : 'none';
+      // --- HAK AKSES MENU BARANG & PO (Sembunyikan dari Keuangan) ---
+      var navOrderCreate = document.getElementById('nav-order-create');
+      var navOrderHistory = document.getElementById('nav-order-history');
+      var navMasterBarang = document.getElementById('nav-master-barang');
+      var poHeader = navOrderCreate ? navOrderCreate.previousElementSibling : null; // Label Judul "Orderan Barang (PO)"
 
-      // --- PINDAHKAN MENU WA KE GUDANG ---
+      if (isKeuangan) {
+        if (navOrderCreate) navOrderCreate.style.display = 'none';
+        if (navOrderHistory) navOrderHistory.style.display = 'none';
+        if (navMasterBarang) navMasterBarang.style.display = 'none';
+        if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'none';
+      } else {
+        if (navOrderCreate) navOrderCreate.style.display = 'flex';
+        if (navOrderHistory) navOrderHistory.style.display = 'flex';
+        if (navMasterBarang) navMasterBarang.style.display = 'flex';
+        if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
+      }
+
+      // --- PENEMPATAN MENU WA ---
       var waMenu = document.getElementById('nav-wa-reminder');
       var gudangMenuContainer = document.getElementById('menuNonKasirSection');
       var adminMenuContainer = document.getElementById('adminMenuSection');
 
       if (waMenu) {
-        waMenu.style.display = isGudang ? 'flex' : 'none'; 
-        if (isGudang && gudangMenuContainer && waMenu.parentElement === adminMenuContainer) {
+        waMenu.style.display = (isGudang || isAdmin) ? 'flex' : 'none'; 
+        if (isGudang && gudangMenuContainer) {
             gudangMenuContainer.appendChild(waMenu); 
+        } else if (isAdmin && adminMenuContainer) {
+            adminMenuContainer.appendChild(waMenu);
         }
       }
 
+      // Tampilkan kembali tombol cepat WA di Dashboard Admin
       var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
-      if (waBannerAdmin) waBannerAdmin.style.display = 'none';
+      if (waBannerAdmin) waBannerAdmin.style.display = isAdmin ? 'flex' : 'none';
 
       if (isAdmin) {
         if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'none';
@@ -2010,11 +2027,12 @@
     function switchTab(tabId) {
       var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
       var isGudang = roleStr.includes('gudang');
+      var isAdmin = isUserAdmin(currentUser);
 
-      if (['user-management', 'supplier-management'].includes(tabId) && !isUserAdmin(currentUser)) {
+      if (['user-management', 'supplier-management'].includes(tabId) && !isAdmin) {
         showToast('Menu khusus Administrator!', 'error'); tabId = 'dashboard';
-      } else if (tabId === 'wa-reminder' && !isGudang) {
-        showToast('Menu Pengingat WA khusus untuk Kepala Gudang!', 'error'); tabId = 'dashboard';
+      } else if (tabId === 'wa-reminder' && !isGudang && !isAdmin) {
+        showToast('Menu Pengingat WA khusus untuk Kepala Toko dan Gudang!', 'error'); tabId = 'dashboard';
       }
 
       activeTab = tabId; closeMobileSidebar();
@@ -2955,18 +2973,37 @@
       var tb = document.getElementById('waReminderTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek absensi...</td></tr>';
       try {
         var today = new Date().toISOString().split('T')[0];
-        var myUnit = currentUser.im || 'Banin'; // AMBIL UNIT USER GUDANG SAAT INI
+        var isAdmin = isUserAdmin(currentUser);
+        var myUnit = currentUser.im || 'Banin'; 
         
-        // Tarik data users HANYA untuk unit yang sama dengan unit Gudang
-        const { data: users } = await supaClient.from('users').select('*').eq('status', 'Aktif').eq('im', myUnit);
+        let usersQuery = supaClient.from('users').select('*').eq('status', 'Aktif');
+        let checksQuery = supaClient.from('checklists').select('username').eq('tanggal', today);
         
-        // Tarik data checklist HANYA untuk unit tersebut pada hari ini
-        const { data: checks } = await supaClient.from('checklists').select('username').eq('tanggal', today).eq('im', myUnit);
+        // Jika bukan Admin (Gudang), kunci pengambilan data hanya untuk unit tokonya saja
+        if (!isAdmin) {
+            usersQuery = usersQuery.eq('im', myUnit);
+            checksQuery = checksQuery.eq('im', myUnit);
+        }
+
+        const { data: users } = await usersQuery;
+        const { data: checks } = await checksQuery;
         
         var filledUsernames = checks.map(c => c.username);
         
-        // Filter: Kecualikan yang sudah mengisi DAN kecualikan jabatan Kepala Toko dari daftar peringatan
-        unsubmittedStaffList = users.filter(u => !filledUsernames.includes(u.username) && !u.role.toLowerCase().includes('kepala'));
+        if (isAdmin) {
+            // ADMIN: Filter khusus staf Gudang dan Keuangan (dari kedua unit) yang belum mengisi
+            unsubmittedStaffList = users.filter(u => 
+                !filledUsernames.includes(u.username) && 
+                (u.role.toLowerCase().includes('gudang') || u.role.toLowerCase().includes('keuangan'))
+            );
+        } else {
+            // GUDANG: Memantau staf operasional di unitnya (Kasir), kecuali atasan
+            unsubmittedStaffList = users.filter(u => 
+                !filledUsernames.includes(u.username) && 
+                !u.role.toLowerCase().includes('kepala')
+            );
+        }
+        
         window.isWaReminderLoaded = true;
         renderWaReminder(today);
       } catch(e) { if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">Gagal memuat.</td></tr>'; }
@@ -2974,10 +3011,25 @@
 
     function renderWaReminder(todayStr) {
       document.getElementById('waReminderDateDisplay').innerText = todayStr;
+      var isAdmin = isUserAdmin(currentUser);
       var countEl = document.getElementById('waReminderUnfilledCount'); if(countEl) countEl.innerText = unsubmittedStaffList.length + ' Petugas';
       var badge = document.getElementById('sidebarWaBadge'); if(badge) { badge.innerText = unsubmittedStaffList.length; badge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
+      
+      // Ubah Judul Layar Sesuai Peran
+      var titleEl = document.querySelector('#tab-wa-reminder h2');
+      var descEl = document.querySelector('#tab-wa-reminder p');
+      if (titleEl && descEl) {
+          if (isAdmin) {
+              titleEl.innerText = "Pengingat WA (Gudang & Keuangan)";
+              descEl.innerText = "Kirim teguran khusus untuk Staf Gudang dan Keuangan Banin & Banat yang belum mengisi ceklis.";
+          } else {
+              titleEl.innerText = "Pusat Pengingat WhatsApp Harian";
+              descEl.innerText = "Kirim teguran via WhatsApp kepada staf di unit Anda yang belum mengisi ceklis.";
+          }
+      }
+
       var tb = document.getElementById('waReminderTableBody'); if(!tb) return; tb.innerHTML = '';
-      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400">Semua petugas sudah mengisi form!</td></tr>'; return; }
+      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400">Semua target petugas sudah mengisi form!</td></tr>'; return; }
       
       unsubmittedStaffList.forEach(s => {
         tb.innerHTML += '<tr class="hover:bg-slate-800/40"><td class="py-3 px-4 font-bold text-white">' + s.nama + '</td><td class="py-3 px-3">' + s.role + '</td><td class="py-3 px-3">' + s.im + '</td><td class="py-3 px-4 font-mono text-emerald-400">' + (s.nowa||'-') + '</td><td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300">Belum Isi</span></td><td class="py-3 px-4 text-center"><button onclick="sendWaReminderSingle(\''+s.nama+'\',\''+(s.nowa||'')+'\',\''+s.role+'\',\''+s.im+'\')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold mx-auto"><i class="fa-brands fa-whatsapp"></i> Ingatkan WA</button></td></tr>';
@@ -2992,9 +3044,11 @@
 
     function sendWaReminderAll() {
       if(!unsubmittedStaffList.length) return showToast('Semua aman!', 'info');
+      var isAdmin = isUserAdmin(currentUser);
       var myUnit = currentUser.im || 'Banin';
-      var msg = "Assalamu'alaikum.\nPengumuman Operasional *Islam Mart " + myUnit + "*:\n\nPetugas berikut belum mengisi Ceklis Harian hari ini:\n";
-      unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+")\n");
+      
+      var msg = "Assalamu'alaikum.\nPengumuman Operasional *Islam Mart" + (isAdmin ? "" : " " + myUnit) + "*:\n\nPetugas berikut belum menyelesaikan Ceklis Harian hari ini:\n";
+      unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+" - " + s.im + ")\n");
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
 
