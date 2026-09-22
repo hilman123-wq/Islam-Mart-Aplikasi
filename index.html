@@ -1938,7 +1938,27 @@
       });
       if (document.getElementById('orderIM')) document.getElementById('orderIM').value = currentUser.im || 'Banin';
 
-      var isAdmin = isUserAdmin(currentUser), isKasir = (currentUser.role || '').toLowerCase() === 'kasir';
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var isAdmin = isUserAdmin(currentUser);
+      var isKasir = roleStr === 'kasir';
+      var isGudang = roleStr.includes('gudang');
+
+      // --- PINDAHKAN MENU WA KE GUDANG SECARA OTOMATIS ---
+      var waMenu = document.getElementById('nav-wa-reminder');
+      var gudangMenuContainer = document.getElementById('menuNonKasirSection');
+      var adminMenuContainer = document.getElementById('adminMenuSection');
+
+      if (waMenu) {
+        waMenu.style.display = isGudang ? 'flex' : 'none'; 
+        if (isGudang && gudangMenuContainer && waMenu.parentElement === adminMenuContainer) {
+            gudangMenuContainer.appendChild(waMenu); // Pindah HTML dari Admin ke Gudang
+        }
+      }
+
+      // Sembunyikan banner WA besar di Dashboard Admin
+      var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
+      if (waBannerAdmin) waBannerAdmin.style.display = 'none';
+
       if (isAdmin) {
         if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'none';
         if (document.getElementById('adminMenuSection')) document.getElementById('adminMenuSection').style.display = 'block';
@@ -1979,13 +1999,19 @@
     }
 
     function switchTab(tabId) {
-      if (['user-management', 'wa-reminder', 'supplier-management'].includes(tabId) && !isUserAdmin(currentUser)) {
+      var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
+      var isGudang = roleStr.includes('gudang');
+
+      if (['user-management', 'supplier-management'].includes(tabId) && !isUserAdmin(currentUser)) {
         showToast('Menu khusus Administrator!', 'error'); tabId = 'dashboard';
+      } else if (tabId === 'wa-reminder' && !isGudang) {
+        showToast('Menu Pengingat WA khusus untuk Kepala Gudang!', 'error'); tabId = 'dashboard';
       }
+
       activeTab = tabId; closeMobileSidebar();
       document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); b.classList.add('text-slate-300'); });
       var activeBtn = document.getElementById('nav-' + tabId);
-      if (activeBtn) activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50');
+      if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
       ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder'].forEach(t => {
         if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
@@ -2054,6 +2080,24 @@
           var requiredReports = KATEGORI_LAPORAN[userDivisi] || ['Laporan Operasional Toko'];
           dashTagsEl.innerHTML = ''; requiredReports.forEach(rep => dashTagsEl.innerHTML += '<span class="inline-block px-2.5 py-1 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-600 shadow-sm">' + rep + '</span>');
         }
+      }
+
+      // --- BANNER PENGINGAT WA KHUSUS GUDANG ---
+      var isGudang = userRoleStr.includes('gudang');
+      var existingGudangBanner = document.getElementById('gudangWaBanner');
+      if (isGudang) {
+         if (!existingGudangBanner) {
+             var staffDash = document.getElementById('staffDashboardPanel');
+             if (staffDash) {
+                 staffDash.insertAdjacentHTML('beforeend', 
+                 '<div id="gudangWaBanner" class="mt-6 bg-slate-900 rounded-3xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:bg-slate-800 transition shadow-xl" onclick="switchTab(\'wa-reminder\')">' +
+                 '<div class="flex items-center gap-4"><div class="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-xl sm:text-2xl border border-emerald-500/30"><i class="fa-brands fa-whatsapp"></i></div>' +
+                 '<div><h3 class="font-black text-sm sm:text-base">Pusat Pengingat WhatsApp</h3><p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Tegur staf IM ' + (currentUser.im || 'Banin') + ' yang belum mengisi form.</p></div></div>' +
+                 '<i class="fa-solid fa-chevron-right text-slate-500 text-xl hidden sm:block"></i></div>');
+             }
+         }
+      } else if (existingGudangBanner) {
+          existingGudangBanner.style.display = 'none';
       }
     }
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
@@ -2902,10 +2946,17 @@
       var tb = document.getElementById('waReminderTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek absensi...</td></tr>';
       try {
         var today = new Date().toISOString().split('T')[0];
-        const { data: users } = await supaClient.from('users').select('*').eq('status', 'Aktif');
-        const { data: checks } = await supaClient.from('checklists').select('username').eq('tanggal', today);
+        var myUnit = currentUser.im || 'Banin'; // AMBIL UNIT USER GUDANG SAAT INI
+        
+        // Tarik data users HANYA untuk unit yang sama dengan unit Gudang
+        const { data: users } = await supaClient.from('users').select('*').eq('status', 'Aktif').eq('im', myUnit);
+        
+        // Tarik data checklist HANYA untuk unit tersebut pada hari ini
+        const { data: checks } = await supaClient.from('checklists').select('username').eq('tanggal', today).eq('im', myUnit);
         
         var filledUsernames = checks.map(c => c.username);
+        
+        // Filter: Kecualikan yang sudah mengisi DAN kecualikan jabatan Kepala Toko dari daftar peringatan
         unsubmittedStaffList = users.filter(u => !filledUsernames.includes(u.username) && !u.role.toLowerCase().includes('kepala'));
         window.isWaReminderLoaded = true;
         renderWaReminder(today);
@@ -2929,9 +2980,11 @@
       var phone = (nowa || '').replace(/[^0-9]/g, ''); if (phone.startsWith('0')) phone = '62' + phone.substring(1);
       window.open("https://api.whatsapp.com/send?" + (phone ? "phone="+phone+"&" : "") + "text=" + encodeURIComponent(msg), '_blank');
     }
+
     function sendWaReminderAll() {
       if(!unsubmittedStaffList.length) return showToast('Semua aman!', 'info');
-      var msg = "Assalamu'alaikum.\nPengumuman:\nPetugas berikut belum mengisi Ceklis Harian hari ini:\n";
+      var myUnit = currentUser.im || 'Banin';
+      var msg = "Assalamu'alaikum.\nPengumuman Operasional *Islam Mart " + myUnit + "*:\n\nPetugas berikut belum mengisi Ceklis Harian hari ini:\n";
       unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+")\n");
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
