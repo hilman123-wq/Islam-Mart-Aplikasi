@@ -2979,57 +2979,66 @@
       try {
         var today = new Date().toISOString().split('T')[0];
         var isAdmin = isUserAdmin(currentUser);
-        var myUnit = currentUser.im || 'Banin'; 
+        var roleStr = String(currentUser.role || '').toLowerCase();
+        var myUnit = String(currentUser.im || 'Banin').toLowerCase(); 
         
-        let usersQuery = supaClient.from('users').select('*').eq('status', 'Aktif');
-        let checksQuery = supaClient.from('checklists').select('username').eq('tanggal', today);
+        // Tarik semua data users yang aktif dan semua ceklis hari ini
+        const { data: users, error: errUsers } = await supaClient.from('users').select('*').eq('status', 'Aktif');
+        const { data: checks, error: errChecks } = await supaClient.from('checklists').select('username').eq('tanggal', today);
         
-        // Jika bukan Admin (Gudang), kunci pengambilan data hanya untuk unit tokonya saja
-        if (!isAdmin) {
-            usersQuery = usersQuery.eq('im', myUnit);
-            checksQuery = checksQuery.eq('im', myUnit);
-        }
+        if (errUsers) throw errUsers;
+        if (errChecks) throw errChecks;
 
-        const { data: users } = await usersQuery;
-        const { data: checks } = await checksQuery;
-        
         var filledUsernames = checks.map(c => c.username);
         
-        if (isAdmin) {
-            // ADMIN: Filter khusus staf Gudang dan Keuangan (dari kedua unit) yang belum mengisi
-            unsubmittedStaffList = users.filter(u => 
-                !filledUsernames.includes(u.username) && 
-                (u.role.toLowerCase().includes('gudang') || u.role.toLowerCase().includes('keuangan'))
-            );
-        } else {
-            // GUDANG: Memantau staf operasional di unitnya (Kasir), kecuali atasan
-            unsubmittedStaffList = users.filter(u => 
-                !filledUsernames.includes(u.username) && 
-                !u.role.toLowerCase().includes('kepala')
-            );
-        }
+        // FILTERING CERDAS BERDASARKAN RULES
+        unsubmittedStaffList = users.filter(u => {
+            if (filledUsernames.includes(u.username)) return false; // Abaikan yang sudah isi
+
+            var uRole = String(u.role || '').toLowerCase();
+            var uUnit = String(u.im || '').toLowerCase();
+
+            if (isAdmin) {
+                // ADMIN: Keuangan (Banin/Banat), Gudang (Banin/Banat), Driver Purchasing
+                return uRole.includes('keuangan') || uRole.includes('gudang') || uRole.includes('driver purchasing');
+            } else if (roleStr.includes('gudang')) {
+                if (myUnit === 'banin') {
+                    // GUDANG BANIN: Hanya Kasir Banin
+                    return uRole.includes('kasir') && uUnit === 'banin';
+                } else if (myUnit === 'banat') {
+                    // GUDANG BANAT: Kasir Banat + Permak
+                    return (uRole.includes('kasir') && uUnit === 'banat') || uRole.includes('permak');
+                }
+            }
+            return false; // Sembunyikan sisanya
+        });
         
         window.isWaReminderLoaded = true;
         renderWaReminder(today);
       } catch(e) { if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">Gagal memuat.</td></tr>'; }
     }
 
-    function renderWaReminder(todayStr) {
+   function renderWaReminder(todayStr) {
       document.getElementById('waReminderDateDisplay').innerText = todayStr;
       var isAdmin = isUserAdmin(currentUser);
+      var myUnit = String(currentUser.im || '').toLowerCase();
+
       var countEl = document.getElementById('waReminderUnfilledCount'); if(countEl) countEl.innerText = unsubmittedStaffList.length + ' Petugas';
       var badge = document.getElementById('sidebarWaBadge'); if(badge) { badge.innerText = unsubmittedStaffList.length; badge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
       
-      // Ubah Judul Layar Sesuai Peran
+      // Ubah Judul Layar Sesuai Peran dan Aturan
       var titleEl = document.querySelector('#tab-wa-reminder h2');
       var descEl = document.querySelector('#tab-wa-reminder p');
       if (titleEl && descEl) {
           if (isAdmin) {
-              titleEl.innerText = "Pengingat WA (Gudang & Keuangan)";
-              descEl.innerText = "Kirim teguran khusus untuk Staf Gudang dan Keuangan Banin & Banat yang belum mengisi ceklis.";
+              titleEl.innerText = "Pengingat WA (Admin)";
+              descEl.innerText = "Tegur Staf Gudang, Keuangan, dan Driver Purchasing yang belum mengisi form.";
+          } else if (myUnit === 'banat') {
+              titleEl.innerText = "Pusat Pengingat WA (Banat)";
+              descEl.innerText = "Tegur staf Kasir Banat dan Permak yang belum mengisi form harian.";
           } else {
-              titleEl.innerText = "Pusat Pengingat WhatsApp Harian";
-              descEl.innerText = "Kirim teguran via WhatsApp kepada staf di unit Anda yang belum mengisi ceklis.";
+              titleEl.innerText = "Pusat Pengingat WA (Banin)";
+              descEl.innerText = "Tegur staf Kasir Banin yang belum mengisi form harian.";
           }
       }
 
@@ -3047,12 +3056,17 @@
       window.open("https://api.whatsapp.com/send?" + (phone ? "phone="+phone+"&" : "") + "text=" + encodeURIComponent(msg), '_blank');
     }
 
-    function sendWaReminderAll() {
+  function sendWaReminderAll() {
       if(!unsubmittedStaffList.length) return showToast('Semua aman!', 'info');
       var isAdmin = isUserAdmin(currentUser);
-      var myUnit = currentUser.im || 'Banin';
+      var myUnit = String(currentUser.im || 'Banin').toLowerCase();
       
-      var msg = "Assalamu'alaikum.\nPengumuman Operasional *Islam Mart" + (isAdmin ? "" : " " + myUnit) + "*:\n\nPetugas berikut belum menyelesaikan Ceklis Harian hari ini:\n";
+      var headerText = "Operasional Islam Mart";
+      if (!isAdmin) {
+          headerText = "Operasional Islam Mart " + (myUnit === 'banat' ? 'Banat & Permak' : 'Banin');
+      }
+
+      var msg = "Assalamu'alaikum.\nPengumuman *" + headerText + "*:\n\nPetugas berikut belum menyelesaikan form laporan / ceklis harian hari ini:\n";
       unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+" - " + s.im + ")\n");
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
