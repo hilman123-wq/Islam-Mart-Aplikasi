@@ -2806,11 +2806,67 @@
       });
     }
 
+    async function loadLaporanTable() {
+      var b = document.getElementById('filterLaporanBulan').value;
+      var d = document.getElementById('filterLaporanDivisi') ? document.getElementById('filterLaporanDivisi').value : 'ALL';
+      var u = document.getElementById('filterLaporanUnit') ? document.getElementById('filterLaporanUnit').value : 'ALL';
+      
+      var roleStr = String(currentUser.role||'').toLowerCase();
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var isAdmin = isUserAdmin(currentUser);
+
+      var tb = document.getElementById('laporanTableBody'); 
+      if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan...</td></tr>';
+      
+      try {
+        let query = supaClient.from('laporan_bulanan').select('*').order('created_at', { ascending: false });
+        
+        // 1. Filter berdasarkan Bulan
+        if(b) {
+            query = query.eq('periode', b); 
+        }
+        
+        // 2. Filter berdasarkan Hak Akses (Jabatan)
+        if (!isAdmin && !isKepalaAdmin) {
+            // Jika staf biasa (Gudang/Keuangan), tampilkan semua laporan di Divisi & Unitnya
+            query = query.eq('divisi', currentUser.role).eq('im', currentUser.im);
+        } else {
+            // Jika Kepala Administrasi / Admin, bisa filter divisi lain
+            if(d !== 'ALL') query = query.ilike('divisi', '%' + d + '%'); 
+            if(u !== 'ALL') query = query.eq('im', u);
+        }
+        
+        const { data, error } = await query; 
+        if(error) throw error;
+
+        cachedLaporanList = data || []; 
+        renderLaporanTable(cachedLaporanList);
+      } catch(err) { 
+        if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-red-500 font-bold">Gagal memuat: ' + err.message + '</td></tr>'; 
+      }
+    }
+
     function renderLaporanTable(list) {
-      var tbody = document.getElementById('laporanTableBody'); if(!tbody) return; tbody.innerHTML = '';
-      if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Tidak ada laporan.</td></tr>'; return; }
+      var tbody = document.getElementById('laporanTableBody'); 
+      var printBody = document.getElementById('laporanPrintTableBody');
+      if(!tbody || !printBody) return; 
+      
+      tbody.innerHTML = '';
+      printBody.innerHTML = '';
+
+      if(list.length === 0) { 
+          tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Tidak ada laporan bulan ini.</td></tr>'; 
+          printBody.innerHTML = '<tr><td colspan="5" class="py-4 text-center">Belum ada data laporan yang diunggah.</td></tr>';
+          return; 
+      }
+      
       list.forEach((r, i) => {
-        tbody.innerHTML += '<tr class="hover:bg-slate-50"><td class="py-3 px-3 text-center">' + (i+1) + '</td><td class="py-3 px-3">' + r.periode + '</td><td class="py-3 px-4 font-black">' + r.jenis + '</td><td class="py-3 px-3">' + r.divisi + ' - ' + r.im + '</td><td class="py-3 px-3">' + r.petugas + '</td><td class="py-3 px-3">' + new Date(r.created_at).toISOString().split('T')[0] + '</td><td class="py-3 px-4 text-center"><button onclick="exportLaporanToExcel(\''+r.id+'\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded mr-2"><i class="fa-solid fa-download"></i></button><button onclick="deleteLaporan(\''+r.id+'\')" class="p-1 text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>';
+        var tgl = new Date(r.created_at).toISOString().split('T')[0];
+        // Tabel Layar
+        tbody.innerHTML += '<tr class="hover:bg-slate-50"><td class="py-3 px-3 text-center">' + (i+1) + '</td><td class="py-3 px-3">' + r.periode + '</td><td class="py-3 px-4 font-black">' + r.jenis + '</td><td class="py-3 px-3">' + r.divisi + ' - ' + r.im + '</td><td class="py-3 px-3">' + r.petugas + '</td><td class="py-3 px-3">' + tgl + '</td><td class="py-3 px-4 text-center"><button onclick="exportLaporanToExcel(\''+r.id+'\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded mr-2" title="Unduh File Excel"><i class="fa-solid fa-download"></i></button><button onclick="deleteLaporan(\''+r.id+'\')" class="p-1 text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>';
+        
+        // Tabel Kertas Cetak
+        printBody.innerHTML += '<tr><td class="py-2 px-3 border border-black text-center">' + (i+1) + '</td><td class="py-2 px-3 border border-black font-bold">' + r.divisi + ' ' + r.im + '</td><td class="py-2 px-3 border border-black">' + r.jenis + '</td><td class="py-2 px-3 border border-black">' + r.petugas + '</td><td class="py-2 px-3 border border-black text-center">' + tgl + '</td></tr>';
       });
     }
 
@@ -2834,11 +2890,31 @@
     }
 
     async function submitLaporanForm(e) {
-      e.preventDefault(); var j = document.getElementById('laporanRawJson').value; if(!j) return showToast('Pilih Excel!', 'error');
-      var div = String(currentUser.role||'').toLowerCase(); if(div.includes('gudang')) div='Gudang'; else if(div.includes('keuangan')) div='Keuangan'; else if(div.includes('sarpras')) div='Sarpras'; else if(div.includes('permak')) div='Permak'; else div='Administrasi';
-      var payload = { periode: document.getElementById('laporanFormBulan').value, jenis: document.getElementById('laporanFormJenis').value, data_json: JSON.parse(j), divisi: div, im: currentUser.im, petugas: currentUser.nama };
-      showLoading('Mengunggah...');
-      try { await supaClient.from('laporan_bulanan').insert([payload]); hideLoading(); showToast('Berhasil!', 'success'); closeModal('laporanModal'); loadLaporanTable(); } catch(err) { hideLoading(); showToast(err.message, 'error'); }
+      e.preventDefault(); 
+      var j = document.getElementById('laporanRawJson').value; 
+      if(!j) return showToast('Pilih file Excel terlebih dahulu!', 'error');
+
+      var bulanInput = document.getElementById('laporanFormBulan').value;
+      if (!bulanInput) { bulanInput = new Date().toISOString().substring(0, 7); }
+      
+      var payload = { 
+         periode: bulanInput, 
+         jenis: document.getElementById('laporanFormJenis').value || 'Laporan Bulanan', 
+         data_json: JSON.parse(j), 
+         divisi: currentUser.role, 
+         im: currentUser.im || 'Banin', 
+         petugas: currentUser.nama 
+      };
+      
+      showLoading('Mengunggah Laporan...');
+      try { 
+         const { error } = await supaClient.from('laporan_bulanan').insert([payload]); 
+         hideLoading(); 
+         if (error) throw error;
+         showToast('Laporan Berhasil Diunggah!', 'success'); 
+         closeModal('laporanModal'); 
+         loadLaporanTable(); 
+      } catch(err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
     }
 
     function exportLaporanToExcel(id) {
@@ -3106,64 +3182,80 @@
 
     async function loadWaReminder(forceRefresh) {
       if (forceRefresh === false && window.isWaReminderLoaded) return;
-      var tb = document.getElementById('waReminderTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek absensi...</td></tr>';
+      var tb = document.getElementById('waReminderTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek data...</td></tr>';
       try {
         var today = new Date().toISOString().split('T')[0];
+        var curMonth = today.substring(0,7);
         var isAdmin = isUserAdmin(currentUser);
         var roleStr = String(currentUser.role || '').toLowerCase();
         var myUnit = String(currentUser.im || 'Banin').toLowerCase(); 
-        
-        // Tarik semua data users yang aktif dan semua ceklis hari ini
+        var isKepalaAdmin = roleStr.includes('kepala administrasi');
+
         const { data: users, error: errUsers } = await supaClient.from('users').select('*').eq('status', 'Aktif');
-        const { data: checks, error: errChecks } = await supaClient.from('checklists').select('username').eq('tanggal', today);
-        
         if (errUsers) throw errUsers;
-        if (errChecks) throw errChecks;
 
-        var filledUsernames = checks.map(c => c.username);
-        
-        // FILTERING CERDAS BERDASARKAN RULES
-        unsubmittedStaffList = users.filter(u => {
-            if (filledUsernames.includes(u.username)) return false; // Abaikan yang sudah isi
+        if (isKepalaAdmin) {
+            // KEPALA ADMINISTRASI: Fokus ke Laporan Bulanan Excel
+            const { data: reports, error: errRep } = await supaClient.from('laporan_bulanan').select('petugas').eq('periode', curMonth);
+            if (errRep) throw errRep;
 
-            var uRole = String(u.role || '').toLowerCase();
-            var uUnit = String(u.im || '').toLowerCase();
+            var submittedUsers = reports.map(r => r.petugas);
+            var targetRoles = ['gudang', 'keuangan', 'sarpras', 'permak', 'kantin daycare', 'bazar'];
 
-            if (isAdmin) {
-                // ADMIN: Keuangan (Banin/Banat), Gudang (Banin/Banat), Driver Purchasing
-                return uRole.includes('keuangan') || uRole.includes('gudang') || uRole.includes('driver purchasing');
-            } else if (roleStr.includes('gudang')) {
-                if (myUnit === 'banin') {
-                    // GUDANG BANIN: Hanya Kasir Banin
-                    return uRole.includes('kasir') && uUnit === 'banin';
-                } else if (myUnit === 'banat') {
-                    // GUDANG BANAT: Kasir Banat + Permak
-                    return (uRole.includes('kasir') && uUnit === 'banat') || uRole.includes('permak');
+            unsubmittedStaffList = users.filter(u => {
+                var uRole = String(u.role || '').toLowerCase();
+                var isTarget = targetRoles.some(tr => uRole.includes(tr));
+                var hasSubmitted = submittedUsers.includes(u.nama);
+                return isTarget && !hasSubmitted; 
+            });
+        } else {
+            // ADMIN & GUDANG: Fokus ke Form Ceklis Harian Operasional
+            const { data: checks, error: errChecks } = await supaClient.from('checklists').select('username').eq('tanggal', today);
+            if (errChecks) throw errChecks;
+
+            var filledUsernames = checks.map(c => c.username);
+            unsubmittedStaffList = users.filter(u => {
+                if (filledUsernames.includes(u.username)) return false; 
+                var uRole = String(u.role || '').toLowerCase();
+                var uUnit = String(u.im || '').toLowerCase();
+
+                if (isAdmin) {
+                    return uRole.includes('keuangan') || uRole.includes('gudang') || uRole.includes('driver purchasing');
+                } else if (roleStr.includes('gudang')) {
+                    if (myUnit === 'banin') return uRole.includes('kasir') && uUnit === 'banin';
+                    else if (myUnit === 'banat') return (uRole.includes('kasir') && uUnit === 'banat') || uRole.includes('permak');
                 }
-            }
-            return false; // Sembunyikan sisanya
-        });
+                return false; 
+            });
+        }
         
         window.isWaReminderLoaded = true;
         renderWaReminder(today);
       } catch(e) { if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">Gagal memuat.</td></tr>'; }
     }
 
-   function renderWaReminder(todayStr) {
+    function renderWaReminder(todayStr) {
       document.getElementById('waReminderDateDisplay').innerText = todayStr;
       var isAdmin = isUserAdmin(currentUser);
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
       var myUnit = String(currentUser.im || '').toLowerCase();
 
-      var countEl = document.getElementById('waReminderUnfilledCount'); if(countEl) countEl.innerText = unsubmittedStaffList.length + ' Petugas';
-      var badge = document.getElementById('sidebarWaBadge'); if(badge) { badge.innerText = unsubmittedStaffList.length; badge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
+      var countEl = document.getElementById('waReminderUnfilledCount'); 
+      if(countEl) countEl.innerText = unsubmittedStaffList.length + (isKepalaAdmin ? ' Divisi' : ' Petugas');
       
-      // Ubah Judul Layar Sesuai Peran dan Aturan
+      var badge = document.getElementById('sidebarWaBadge'); 
+      if(badge) { badge.innerText = unsubmittedStaffList.length; badge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
+      
       var titleEl = document.querySelector('#tab-wa-reminder h2');
       var descEl = document.querySelector('#tab-wa-reminder p');
       if (titleEl && descEl) {
-          if (isAdmin) {
+          if (isKepalaAdmin) {
+              titleEl.innerText = "Pengingat Laporan Bulanan";
+              descEl.innerText = "Tegur Divisi/Petugas yang belum mengunggah file Laporan Bulanan bulan ini.";
+          } else if (isAdmin) {
               titleEl.innerText = "Pengingat WA (Admin)";
-              descEl.innerText = "Tegur Staf Gudang, Keuangan, dan Driver Purchasing yang belum mengisi form.";
+              descEl.innerText = "Tegur Staf Gudang, Keuangan, dan Driver Purchasing yang belum mengisi form harian.";
           } else if (myUnit === 'banat') {
               titleEl.innerText = "Pusat Pengingat WA (Banat)";
               descEl.innerText = "Tegur staf Kasir Banat dan Permak yang belum mengisi form harian.";
@@ -3174,31 +3266,42 @@
       }
 
       var tb = document.getElementById('waReminderTableBody'); if(!tb) return; tb.innerHTML = '';
-      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400">Semua target petugas sudah mengisi form!</td></tr>'; return; }
+      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400">Semua target petugas/divisi aman!</td></tr>'; return; }
       
       unsubmittedStaffList.forEach(s => {
-        tb.innerHTML += '<tr class="hover:bg-slate-800/40"><td class="py-3 px-4 font-bold text-white">' + s.nama + '</td><td class="py-3 px-3">' + s.role + '</td><td class="py-3 px-3">' + s.im + '</td><td class="py-3 px-4 font-mono text-emerald-400">' + (s.nowa||'-') + '</td><td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300">Belum Isi</span></td><td class="py-3 px-4 text-center"><button onclick="sendWaReminderSingle(\''+s.nama+'\',\''+(s.nowa||'')+'\',\''+s.role+'\',\''+s.im+'\')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold mx-auto"><i class="fa-brands fa-whatsapp"></i> Ingatkan WA</button></td></tr>';
+        var statusBadge = isKepalaAdmin ? "Belum Upload" : "Belum Isi";
+        tb.innerHTML += '<tr class="hover:bg-slate-800/40"><td class="py-3 px-4 font-bold text-white">' + s.nama + '</td><td class="py-3 px-3">' + s.role + '</td><td class="py-3 px-3">' + s.im + '</td><td class="py-3 px-4 font-mono text-emerald-400">' + (s.nowa||'-') + '</td><td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300">' + statusBadge + '</span></td><td class="py-3 px-4 text-center"><button onclick="sendWaReminderSingle(\''+s.nama+'\',\''+(s.nowa||'')+'\',\''+s.role+'\',\''+s.im+'\')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold mx-auto"><i class="fa-brands fa-whatsapp"></i> Ingatkan WA</button></td></tr>';
       });
     }
 
     function sendWaReminderSingle(nama, nowa, role, im) {
-      var msg = "Assalamu'alaikum.\nYth. *" + nama + "*,\nMohon isi Ceklis Harian (" + role + " - IM " + im + ") untuk hari ini.\nTerima kasih.";
+      var msg = "";
+      if (String(currentUser.role||'').toLowerCase().includes('kepala administrasi')) {
+          msg = "Assalamu'alaikum.\nYth. Divisi *" + role + "* (" + nama + "),\nMohon segera unggah file *Laporan Bulanan* ke sistem. Tenggat waktu pengumpulan adalah tanggal 3.\nTerima kasih.";
+      } else {
+          msg = "Assalamu'alaikum.\nYth. *" + nama + "*,\nMohon isi Ceklis Harian (" + role + " - IM " + im + ") untuk hari ini.\nTerima kasih.";
+      }
       var phone = (nowa || '').replace(/[^0-9]/g, ''); if (phone.startsWith('0')) phone = '62' + phone.substring(1);
       window.open("https://api.whatsapp.com/send?" + (phone ? "phone="+phone+"&" : "") + "text=" + encodeURIComponent(msg), '_blank');
     }
 
-  function sendWaReminderAll() {
+    function sendWaReminderAll() {
       if(!unsubmittedStaffList.length) return showToast('Semua aman!', 'info');
       var isAdmin = isUserAdmin(currentUser);
+      var roleStr = String(currentUser.role || '').toLowerCase();
       var myUnit = String(currentUser.im || 'Banin').toLowerCase();
       
-      var headerText = "Operasional Islam Mart";
-      if (!isAdmin) {
-          headerText = "Operasional Islam Mart " + (myUnit === 'banat' ? 'Banat & Permak' : 'Banin');
+      var msg = "";
+      if (roleStr.includes('kepala administrasi')) {
+          msg = "Assalamu'alaikum.\nPengumuman *Administrasi Islam Mart*:\n\nDivisi berikut belum mengunggah *Laporan Bulanan* periode ini:\n";
+          unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.role+" ("+s.nama+")\n");
+      } else {
+          var headerText = "Operasional Islam Mart";
+          if (!isAdmin) headerText = "Operasional Islam Mart " + (myUnit === 'banat' ? 'Banat & Permak' : 'Banin');
+          msg = "Assalamu'alaikum.\nPengumuman *" + headerText + "*:\n\nPetugas berikut belum menyelesaikan ceklis harian hari ini:\n";
+          unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+" - " + s.im + ")\n");
       }
-
-      var msg = "Assalamu'alaikum.\nPengumuman *" + headerText + "*:\n\nPetugas berikut belum menyelesaikan form laporan / ceklis harian hari ini:\n";
-      unsubmittedStaffList.forEach((s,i) => msg += (i+1)+". "+s.nama+" ("+s.role+" - " + s.im + ")\n");
+      
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
 
