@@ -20,10 +20,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
-  <!-- Supabase JS Library (Server Alternatif) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<!-- Chart.js Library untuk Grafik Interaktif -->
+ <!-- Chart.js Library untuk Grafik Interaktif -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SheetJS Library untuk Membaca & Export Excel (TAMBAHKAN BARIS INI) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
@@ -1049,7 +1050,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 no-print">
             <div class="flex flex-col sm:flex-row justify-between gap-3">
               <div>
                 <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
@@ -1061,24 +1062,29 @@
               <div class="flex flex-wrap gap-2 items-center">
                 <input type="month" id="filterLaporanBulan" onchange="loadLaporanTable()" class="p-2 bg-slate-50 border rounded-xl text-xs font-semibold">
                 
-                <!-- Filter Khusus Admin -->
-                <div id="adminFilterLaporan" class="hidden flex gap-2">
+                <!-- Filter Khusus Kepala Administrasi & Admin -->
+                <div id="adminFilterLaporan" class="hidden flex-wrap gap-2 items-center">
                   <select id="filterLaporanDivisi" onchange="loadLaporanTable()" class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
                     <option value="ALL">Semua Divisi</option>
-                    <option value="Administrasi">Administrasi</option>
                     <option value="Gudang">Gudang</option>
                     <option value="Keuangan">Keuangan</option>
                     <option value="Sarpras">Sarpras</option>
                     <option value="Permak">Permak</option>
+                    <option value="Kantin">Kantin Daycare</option>
+                    <option value="Bazar">Bazar</option>
                   </select>
                   <select id="filterLaporanUnit" onchange="loadLaporanTable()" class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
                     <option value="ALL">Semua Unit</option>
                     <option value="Banin">Banin</option>
                     <option value="Banat">Banat</option>
                   </select>
+                  <button onclick="cetakLaporanBulanan()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-print text-amber-400"></i>
+                    <span>Cetak Rekap</span>
+                  </button>
                 </div>
 
-                <button onclick="openLaporanModal()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
+                <button id="btnUnggahLaporan" onclick="openLaporanModal()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
                   <i class="fa-solid fa-cloud-arrow-up"></i>
                   <span>Unggah Laporan</span>
                 </button>
@@ -1102,6 +1108,35 @@
                   <tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat data laporan...</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- HALAMAN CETAK (Tersembunyi, hanya muncul saat diprint) -->
+          <div id="laporanPrintArea" style="display: none;" class="p-8 bg-white text-black min-h-screen">
+            <div class="text-center border-b-2 border-black pb-4 mb-6">
+              <h2 class="text-xl font-black uppercase tracking-widest">REKAPITULASI LAPORAN BULANAN</h2>
+              <h3 class="text-sm font-bold uppercase mt-1">ISLAM MART TERPADU</h3>
+              <p class="text-xs font-semibold mt-2">Periode Bulan: <span id="cetakLaporanBulan">-</span></p>
+            </div>
+            <table class="w-full text-left text-xs border-collapse border border-black mb-8">
+              <thead class="bg-gray-200 text-black font-bold uppercase">
+                <tr>
+                  <th class="py-2 px-3 border border-black text-center w-10">No</th>
+                  <th class="py-2 px-3 border border-black">Divisi & Unit</th>
+                  <th class="py-2 px-3 border border-black">Jenis Laporan</th>
+                  <th class="py-2 px-3 border border-black">Petugas / Pengunggah</th>
+                  <th class="py-2 px-3 border border-black text-center">Tgl Upload</th>
+                </tr>
+              </thead>
+              <tbody id="laporanPrintTableBody" class="text-black">
+              </tbody>
+            </table>
+            <div class="flex justify-end pr-10 text-center text-xs mt-10">
+              <div>
+                <p>Kepala Administrasi,</p>
+                <div class="h-16"></div>
+                <p class="font-bold underline" id="cetakNamaAdmin">-</p>
+              </div>
             </div>
           </div>
         </section>
@@ -1887,7 +1922,8 @@
 
       var roleStr = String(currentUser.role || '').toLowerCase();
       var isAdmin = isUserAdmin(currentUser);
-      var isKasir = roleStr.includes('kasir');
+      // KASIR MERANGKAP KEPALA ADMINISTRASI (Jahid) akan terdeteksi di sini
+      var isKasir = roleStr.includes('kasir'); 
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
@@ -1896,9 +1932,9 @@
       if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
       if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
-      // --- MENYEMBUNYIKAN MENU ARSIP LAPORAN DARI SEMUA USER ---
+      // --- MUNCULKAN LAPORAN BULANAN UNTUK SEMUA KECUALI KASIR MURNI ---
       var navLaporan = document.getElementById('nav-laporan-bulanan');
-      if (navLaporan) navLaporan.style.display = 'none'; 
+      if (navLaporan) navLaporan.style.display = (isKasir && !isKepalaAdmin) ? 'none' : 'flex';
 
       var navOrderCreate = document.getElementById('nav-order-create');
       var navOrderHistory = document.getElementById('nav-order-history');
@@ -1917,7 +1953,6 @@
         if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
-      // --- LOGIKA MENU NAVIGASI BAWAH (HP) ---
       var btmPO = document.getElementById('btnNavBtmPO');
       var btmBarang = document.getElementById('btnNavBtmBarang');
       var btmLaporan = document.getElementById('btnNavBtmLaporan');
@@ -1926,14 +1961,14 @@
       if (isKeuangan || isKepalaAdmin) {
         if (btmPO) btmPO.style.display = 'none';
         if (btmBarang) btmBarang.style.display = 'none';
-        if (btmLaporan) btmLaporan.style.display = 'none'; // Sembunyikan juga di HP
+        if (btmLaporan) btmLaporan.style.display = 'flex'; 
       } else {
         if (btmPO) btmPO.style.display = 'flex';
         if (btmBarang) btmBarang.style.display = 'flex';
         if (btmLaporan) btmLaporan.style.display = 'none';
       }
 
-      if (isAdmin || isKepalaAdmin) {
+      if (isAdmin || (isKepalaAdmin && !isKasir)) {
         if (btmForm) btmForm.style.display = 'none'; 
       } else {
         if (btmForm) btmForm.style.display = 'flex';
@@ -1951,6 +1986,136 @@
             adminMenuContainer.appendChild(waMenu);
         }
       }
+
+      var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
+      if (waBannerAdmin) waBannerAdmin.style.display = (isAdmin || isKepalaAdmin) ? 'flex' : 'none';
+
+      if (isAdmin) {
+        if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'none';
+        if (document.getElementById('adminMenuSection')) document.getElementById('adminMenuSection').style.display = 'block';
+        if (document.getElementById('staffDashboardPanel')) document.getElementById('staffDashboardPanel').style.display = 'none';
+        if (document.getElementById('adminDashboardPanel')) document.getElementById('adminDashboardPanel').style.display = 'block';
+      } else {
+        if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'block';
+        if (document.getElementById('adminMenuSection')) document.getElementById('adminMenuSection').style.display = 'none';
+        if (document.getElementById('menuNonKasirSection')) document.getElementById('menuNonKasirSection').style.display = (isKasir && !isKepalaAdmin) ? 'none' : 'block';
+        if (document.getElementById('staffDashboardPanel')) document.getElementById('staffDashboardPanel').style.display = 'block';
+        if (document.getElementById('adminDashboardPanel')) document.getElementById('adminDashboardPanel').style.display = 'none';
+      }
+
+      loadCriteriaAndBuildForms();
+      loadUsersForDropdowns();
+      loadMasterBarangAutocompleteData();
+      switchTab('dashboard');
+    }
+
+    function initLaporanBulanView() { 
+      document.getElementById('filterLaporanBulan').value = new Date().toISOString().substring(0, 7); 
+      if (new Date().getDate() > 3 && document.getElementById('deadlineWarning')) document.getElementById('deadlineWarning').style.display = 'flex'; 
+      
+      var roleStr = String(currentUser.role||'').toLowerCase();
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var isAdmin = isUserAdmin(currentUser);
+      
+      if (document.getElementById('adminFilterLaporan')) {
+          if (isAdmin || isKepalaAdmin) {
+              document.getElementById('adminFilterLaporan').style.display = 'flex';
+          } else {
+              document.getElementById('adminFilterLaporan').style.display = 'none';
+          }
+      }
+      loadLaporanTable(); 
+    }
+
+    function renderLaporanTable(list) {
+      var tbody = document.getElementById('laporanTableBody'); 
+      var printBody = document.getElementById('laporanPrintTableBody');
+      if(!tbody || !printBody) return; 
+      
+      tbody.innerHTML = '';
+      printBody.innerHTML = '';
+
+      if(list.length === 0) { 
+          tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Tidak ada laporan bulan ini.</td></tr>'; 
+          printBody.innerHTML = '<tr><td colspan="5" class="py-4 text-center">Belum ada data laporan yang diunggah.</td></tr>';
+          return; 
+      }
+      
+      list.forEach((r, i) => {
+        var tgl = new Date(r.created_at).toISOString().split('T')[0];
+        // Tabel Layar
+        tbody.innerHTML += '<tr class="hover:bg-slate-50"><td class="py-3 px-3 text-center">' + (i+1) + '</td><td class="py-3 px-3">' + r.periode + '</td><td class="py-3 px-4 font-black">' + r.jenis + '</td><td class="py-3 px-3">' + r.divisi + ' - ' + r.im + '</td><td class="py-3 px-3">' + r.petugas + '</td><td class="py-3 px-3">' + tgl + '</td><td class="py-3 px-4 text-center"><button onclick="exportLaporanToExcel(\''+r.id+'\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded mr-2" title="Unduh File Excel"><i class="fa-solid fa-download"></i></button><button onclick="deleteLaporan(\''+r.id+'\')" class="p-1 text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>';
+        
+        // Tabel Kertas Cetak
+        printBody.innerHTML += '<tr><td class="py-2 px-3 border border-black text-center">' + (i+1) + '</td><td class="py-2 px-3 border border-black font-bold">' + r.divisi + ' ' + r.im + '</td><td class="py-2 px-3 border border-black">' + r.jenis + '</td><td class="py-2 px-3 border border-black">' + r.petugas + '</td><td class="py-2 px-3 border border-black text-center">' + tgl + '</td></tr>';
+      });
+    }
+
+    function renderDashboard(res) {
+      if (!currentUser) return;
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var isAdmin = isUserAdmin(currentUser);
+      
+      var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
+      if (res.hasFilledToday) {
+        iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        titleEl.innerText = 'Ceklis Harian Selesai Terisi'; descEl.innerText = 'Terima kasih atas kedisiplinan Anda mengisi ceklis hari ini.';
+        btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
+      } else {
+        iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
+        titleEl.innerText = 'Anda Belum Mengisi Ceklis!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda hari ini.';
+        btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
+      }
+
+      if(document.getElementById('statTotalPO')) document.getElementById('statTotalPO').innerText = res.stats.totalPO;
+      if(document.getElementById('statKinerjaBanin')) document.getElementById('statKinerjaBanin').innerText = res.stats.avgBanin + '%';
+      if(document.getElementById('statKinerjaBanat')) document.getElementById('statKinerjaBanat').innerText = res.stats.avgBanat + '%';
+      
+      var elRp = document.getElementById('statTotalRp');
+      if(elRp) {
+          if (res.stats.totalRp >= 1000000) elRp.innerText = 'Rp ' + (res.stats.totalRp/1000000).toFixed(1) + ' Jt';
+          else if (res.stats.totalRp >= 1000) elRp.innerText = 'Rp ' + (res.stats.totalRp/1000).toFixed(1) + ' Rb';
+          else elRp.innerText = 'Rp ' + res.stats.totalRp;
+      }
+
+      if (typeof Chart !== 'undefined') {
+          var ctxPo = document.getElementById('poChartCanvas');
+          if(ctxPo) {
+              if (myPoChart) myPoChart.destroy();
+              myPoChart = new Chart(ctxPo, { type: 'bar', data: { labels: res.charts.labels, datasets: [{ label: 'Pengeluaran PO (Rp)', data: res.charts.po, backgroundColor: '#14b8a6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+          }
+
+          var ctxCeklis = document.getElementById('ceklisChartCanvas');
+          if(ctxCeklis) {
+              if (myCeklisChart) myCeklisChart.destroy();
+              myCeklisChart = new Chart(ctxCeklis, { type: 'line', data: { labels: res.charts.labels, datasets: [ { label: 'IM Banin', data: res.charts.checkBanin, borderColor: '#059669', backgroundColor: '#059669', tension: 0.3, borderWidth: 3 }, { label: 'IM Banat', data: res.charts.checkBanat, borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.3, borderWidth: 3 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } } });
+          }
+      }
+
+      // ==========================================
+      // INJEKSI DASHBOARD MODERN KEUANGAN & KEPALA ADMIN
+      // ==========================================
+      var isKeuangan = roleStr.includes('keuangan');
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var myUnit = String(currentUser.im || 'Banin').toUpperCase();
+
+      var existingKeuangan = document.getElementById('keuanganModernDashboard');
+      if (existingKeuangan) { existingKeuangan.remove(); } 
+      var existingAdmin = document.getElementById('kepalaAdminDashboard');
+      if (existingAdmin) { existingAdmin.remove(); } 
+
+      var tabDashboardSection = document.getElementById('tab-dashboard');
+
+      if (isKeuangan && tabDashboardSection) {
+         var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6"><h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit + '</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"><div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div><h4 class="text-sm font-black text-white">1. Form Ceklis</h4><p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p></div><div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group"><div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div><h4 class="text-sm font-black text-slate-800">2. Riwayat Ceklis</h4><p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p></div></div></div>';
+         tabDashboardSection.insertAdjacentHTML('beforeend', keuHtml);
+      }
+
+      if (isKepalaAdmin && tabDashboardSection) {
+         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi & Laporan</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"><div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan Bulanan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau, unduh, dan cetak rekap laporan seluruh divisi.</p></div><div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WhatsApp</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur divisi yang telat kumpul laporan bulanan.</p></div></div></div>';
+         tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
+      }
+    }
 
       var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
       if (waBannerAdmin) waBannerAdmin.style.display = (isAdmin || isKepalaAdmin) ? 'flex' : 'none';
@@ -3232,6 +3397,28 @@
 
     var deferredPrompt; window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(document.getElementById('btnInstallPwa')) document.getElementById('btnInstallPwa').style.display = 'flex'; });
     function promptInstallPwa() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(c => { if(c.outcome === 'accepted') showToast('Aplikasi dipasang!', 'success'); deferredPrompt = null; }); } else showToast('Gunakan fitur Tambah ke Layar Utama di browser Anda.', 'info'); }
+  
+    function cetakLaporanBulanan() {
+      // 1. Set informasi dinamis pada kop surat
+      var bulanVal = document.getElementById('filterLaporanBulan').value;
+      document.getElementById('cetakLaporanBulan').innerText = bulanVal || 'Semua Waktu';
+      document.getElementById('cetakNamaAdmin').innerText = currentUser.nama;
+
+      // 2. Isolasi layar untuk mode print
+      var appContent = document.getElementById('mainApp');
+      var printContent = document.getElementById('laporanPrintArea');
+      
+      appContent.style.display = 'none';
+      printContent.style.display = 'block';
+
+      // 3. Eksekusi Print
+      window.print();
+
+      // 4. Kembalikan ke tampilan aplikasi normal
+      printContent.style.display = 'none';
+      appContent.style.display = 'flex';
+    }
+  
   </script>
 </body>
 </html>
