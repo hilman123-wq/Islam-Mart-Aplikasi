@@ -2007,7 +2007,7 @@
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
       switchTab('dashboard');
-    }
+    } 
 
     function initLaporanBulanView() { 
       document.getElementById('filterLaporanBulan').value = new Date().toISOString().substring(0, 7); 
@@ -2364,7 +2364,7 @@
          var tabDashboardSection = document.getElementById('tab-dashboard');
          if (tabDashboardSection) {
              // Letakkan khusus pengguna keuangan di bagian bawah dashboard
-             tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
+            tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
     }
 
