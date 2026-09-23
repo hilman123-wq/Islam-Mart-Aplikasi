@@ -2364,10 +2364,10 @@
          var tabDashboardSection = document.getElementById('tab-dashboard');
          if (tabDashboardSection) {
              // Letakkan khusus pengguna keuangan di bagian bawah dashboard
-             tabDashboardSection.insertAdjacentHTML('beforeend', keuHtml);
-         }
+             tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
     }
+
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
     // ==========================================
