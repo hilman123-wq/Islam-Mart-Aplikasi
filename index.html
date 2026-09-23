@@ -1896,8 +1896,9 @@
       if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
       if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
+      // --- MENYEMBUNYIKAN MENU ARSIP LAPORAN DARI SEMUA USER ---
       var navLaporan = document.getElementById('nav-laporan-bulanan');
-      if (navLaporan) navLaporan.style.display = isKasir ? 'none' : 'flex';
+      if (navLaporan) navLaporan.style.display = 'none'; 
 
       var navOrderCreate = document.getElementById('nav-order-create');
       var navOrderHistory = document.getElementById('nav-order-history');
@@ -1916,6 +1917,7 @@
         if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
+      // --- LOGIKA MENU NAVIGASI BAWAH (HP) ---
       var btmPO = document.getElementById('btnNavBtmPO');
       var btmBarang = document.getElementById('btnNavBtmBarang');
       var btmLaporan = document.getElementById('btnNavBtmLaporan');
@@ -1924,7 +1926,7 @@
       if (isKeuangan || isKepalaAdmin) {
         if (btmPO) btmPO.style.display = 'none';
         if (btmBarang) btmBarang.style.display = 'none';
-        if (btmLaporan) btmLaporan.style.display = 'flex';
+        if (btmLaporan) btmLaporan.style.display = 'none'; // Sembunyikan juga di HP
       } else {
         if (btmPO) btmPO.style.display = 'flex';
         if (btmBarang) btmBarang.style.display = 'flex';
@@ -2110,7 +2112,6 @@
     function renderDashboard(res) {
       if (!currentUser) return;
       
-      // Render Banner Absen
       var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
       if (res.hasFilledToday) {
         iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
@@ -2122,7 +2123,6 @@
         btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
       }
 
-      // Tulis Angka ke Kartu Statistik (Nominal dikonversi ke Juta/Ribu agar ringkas)
       if(document.getElementById('statTotalPO')) document.getElementById('statTotalPO').innerText = res.stats.totalPO;
       if(document.getElementById('statKinerjaBanin')) document.getElementById('statKinerjaBanin').innerText = res.stats.avgBanin + '%';
       if(document.getElementById('statKinerjaBanat')) document.getElementById('statKinerjaBanat').innerText = res.stats.avgBanat + '%';
@@ -2134,7 +2134,6 @@
           else elRp.innerText = 'Rp ' + res.stats.totalRp;
       }
 
-      // Eksekusi Animasi Gambar Chart.js
       if (typeof Chart === 'undefined') return;
 
       var ctxPo = document.getElementById('poChartCanvas');
@@ -2147,7 +2146,7 @@
                   datasets: [{
                       label: 'Pengeluaran PO (Rp)',
                       data: res.charts.po,
-                      backgroundColor: '#14b8a6', // warna Teal
+                      backgroundColor: '#14b8a6', 
                       borderRadius: 4
                   }]
               },
@@ -2169,6 +2168,44 @@
               },
               options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
           });
+      }
+
+      // ==========================================
+      // INJEKSI DASHBOARD MODERN KEUANGAN (UPDATE)
+      // ==========================================
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var isKeuangan = roleStr.includes('keuangan');
+      var myUnit = String(currentUser.im || 'Banin').toUpperCase();
+
+      var existingKeuangan = document.getElementById('keuanganModernDashboard');
+      if (existingKeuangan) { existingKeuangan.remove(); } 
+
+      if (isKeuangan) {
+         var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6">' +
+           '<h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit + '</h3>' +
+           '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">' + // Diubah menjadi 2 kolom
+             
+             '<div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">' +
+               '<div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>' +
+               '<div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
+               '<h4 class="text-sm font-black text-white">1. Form Ceklis</h4>' +
+               '<p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p>' +
+             '</div>' +
+             
+             '<div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group">' +
+               '<div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
+               '<h4 class="text-sm font-black text-slate-800">2. Riwayat Ceklis</h4>' +
+               '<p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p>' +
+             '</div>' +
+             
+           '</div>' +
+         '</div>';
+         
+         var tabDashboardSection = document.getElementById('tab-dashboard');
+         if (tabDashboardSection) {
+             // Letakkan khusus pengguna keuangan di bagian bawah dashboard
+             tabDashboardSection.insertAdjacentHTML('beforeend', keuHtml);
+         }
       }
     }
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
