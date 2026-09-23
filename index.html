@@ -2112,12 +2112,7 @@
       }
 
       if (isKepalaAdmin && tabDashboardSection) {
-         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi & Laporan</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"><div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan Bulanan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau, unduh, dan cetak rekap laporan seluruh divisi.</p></div><div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WhatsApp</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur divisi yang telat kumpul laporan bulanan.</p></div></div></div>';
-         tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
-      }
-    }
-
-      var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
+         var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
       if (waBannerAdmin) waBannerAdmin.style.display = (isAdmin || isKepalaAdmin) ? 'flex' : 'none';
 
       if (isAdmin) {
