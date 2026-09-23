@@ -3390,9 +3390,29 @@
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
 
-    var deferredPrompt; window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(document.getElementById('btnInstallPwa')) document.getElementById('btnInstallPwa').style.display = 'flex'; });
-    function promptInstallPwa() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(c => { if(c.outcome === 'accepted') showToast('Aplikasi dipasang!', 'success'); deferredPrompt = null; }); } else showToast('Gunakan fitur Tambah ke Layar Utama di browser Anda.', 'info'); }
-  
+    var deferredPrompt;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (document.getElementById('btnInstallPwa')) {
+        document.getElementById('btnInstallPwa').style.display = 'flex';
+      }
+    });
+
+    function promptInstallPwa() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(c => {
+          if (c.outcome === 'accepted') {
+            showToast('Aplikasi dipasang!', 'success');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        showToast('Gunakan fitur Tambah ke Layar Utama di browser Anda.', 'info');
+      }
+    }
+
     function cetakLaporanBulanan() {
       // 1. Set informasi dinamis pada kop surat
       var bulanVal = document.getElementById('filterLaporanBulan').value;
@@ -3402,7 +3422,7 @@
       // 2. Isolasi layar untuk mode print
       var appContent = document.getElementById('mainApp');
       var printContent = document.getElementById('laporanPrintArea');
-      
+
       appContent.style.display = 'none';
       printContent.style.display = 'block';
 
@@ -3413,7 +3433,7 @@
       printContent.style.display = 'none';
       appContent.style.display = 'flex';
     }
-  
   </script>
+
 </body>
 </html>
