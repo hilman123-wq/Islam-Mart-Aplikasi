@@ -2043,10 +2043,16 @@
         const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
         var hasFilled = clToday && clToday.length > 0;
         
-        // 2. Tarik data orderan & ceklis dari Supabase (Bulan Ini)
+       // 2. Tarik data orderan & ceklis dari Supabase (Bulan Ini)
         var curMonth = todayStr.substring(0,7);
-        const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').like('tanggal', curMonth + '%');
-        const { data: checks } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir').like('tanggal', curMonth + '%');
+        var year = curMonth.split('-')[0];
+        var month = curMonth.split('-')[1];
+        var lastDay = new Date(year, month, 0).getDate();
+        var startDate = curMonth + '-01';
+        var endDate = curMonth + '-' + lastDay;
+
+        const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').gte('tanggal', startDate).lte('tanggal', endDate);
+        const { data: checks } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir').gte('tanggal', startDate).lte('tanggal', endDate);
 
         // Kalkulasi Statistik Kartu (Bulan Ini)
         var totalPO = 0, totalRp = 0;
