@@ -2362,14 +2362,25 @@
     function toggleSelectAllItems(masterCb) { document.querySelectorAll('.item-select-checkbox').forEach(cb => { cb.checked = masterCb.checked; handleItemSelection(cb); }); }
 
     function filterAndRenderMasterBarang() {
-      var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase(), imFilter = document.getElementById('filterItemIM').value, kat = document.getElementById('filterItemCategory').value;
+      var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase();
+      var imFilter = document.getElementById('filterItemIM').value;
+      var kat = document.getElementById('filterItemCategory').value;
+      
       window.filteredMasterItems = cachedMasterBarang.filter(it => {
-        var matchIM = (imFilter === 'ALL') || (it.im === imFilter), itemKat = String(it.kategori || '').trim().toLowerCase(), matchKat = (kat === 'ALL') || (itemKat === kat.trim().toLowerCase());
+        var matchIM = (imFilter === 'ALL') || (it.im === imFilter);
+        
+        // Logika cerdas: hilangkan semua spasi & tanda baca sebelum dicocokkan
+        var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
+        var matchKat = (kat === 'ALL') || (itemKat === targetKat);
+        
         var matchQ = true;
         if (q) matchQ = String(it.nama||'').toLowerCase().includes(q) || String(it.barcode||'').toLowerCase().includes(q) || String(it.supplier||'').toLowerCase().includes(q);
+        
         return matchIM && matchKat && matchQ;
       });
-      window.masterCurrentPage = 1; renderMasterBarangPage();
+      window.masterCurrentPage = 1; 
+      renderMasterBarangPage();
     }
 
     function changeMasterPage(delta) {
@@ -2578,13 +2589,22 @@
 
     function renderPoCatalog(isChangePage) {
       if (isChangePage !== true) window.poCurrentPage = 1; 
-      var q = (document.getElementById('poSearchInput').value || '').trim().toLowerCase(), cat = document.getElementById('poCatFilter').value, selectedIM = document.getElementById('orderIM').value, sup = (document.getElementById('orderSupplier').value || '').trim().toLowerCase();
+      var q = (document.getElementById('poSearchInput').value || '').trim().toLowerCase();
+      var cat = document.getElementById('poCatFilter').value;
+      var selectedIM = document.getElementById('orderIM').value;
+      var sup = (document.getElementById('orderSupplier').value || '').trim().toLowerCase();
       
       window.filteredPoItems = cachedMasterBarang.filter(it => {
-        var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all'), matchCat = (cat === 'ALL') || ((it.kategori||'').toLowerCase() === cat.toLowerCase());
+        var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
+        
+        // Logika cerdas: hilangkan semua spasi & tanda baca sebelum dicocokkan
+        var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
+        var matchKat = (cat === 'ALL') || (itemKat === targetKat);
+        
         var matchQ = !q || (it.nama||'').toLowerCase().includes(q) || (it.barcode||'').toLowerCase().includes(q);
         var matchSup = !sup || (it.supplier||'').toLowerCase().includes(sup);
-        return matchIM && matchCat && matchQ && matchSup;
+        return matchIM && matchKat && matchQ && matchSup;
       });
       renderPoCatalogPage();
     }
