@@ -2128,6 +2128,80 @@
       });
     }
 
+    async function loadDashboard() {
+      if (!currentUser) return;
+      try {
+        var today = new Date();
+        var todayStr = today.toISOString().split('T')[0];
+        
+        // 1. Status pengisian form user
+        const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
+        var hasFilled = clToday && clToday.length > 0;
+        
+        // 2. Tarik data orderan & ceklis dari Supabase (Bulan Ini)
+        var curMonth = todayStr.substring(0,7);
+        var year = curMonth.split('-')[0];
+        var month = curMonth.split('-')[1];
+        var lastDay = new Date(year, month, 0).getDate();
+        var startDate = curMonth + '-01';
+        var endDate = curMonth + '-' + lastDay;
+
+        const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').gte('tanggal', startDate).lte('tanggal', endDate);
+        const { data: checks } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir').gte('tanggal', startDate).lte('tanggal', endDate);
+
+        // Kalkulasi Statistik Kartu (Bulan Ini)
+        var totalPO = 0, totalRp = 0;
+        if (orders) {
+            totalPO = orders.length;
+            totalRp = orders.reduce((sum, o) => sum + Number(o.estimasi_total||0), 0);
+        }
+
+        var sumBanin = 0, countBanin = 0, sumBanat = 0, countBanat = 0;
+        if (checks) {
+            checks.forEach(c => {
+                if (String(c.im).toLowerCase() === 'banin') { sumBanin += Number(c.nilai_akhir||0); countBanin++; }
+                if (String(c.im).toLowerCase() === 'banat') { sumBanat += Number(c.nilai_akhir||0); countBanat++; }
+            });
+        }
+        var avgBanin = countBanin > 0 ? (sumBanin/countBanin).toFixed(1) : 0;
+        var avgBanat = countBanat > 0 ? (sumBanat/countBanat).toFixed(1) : 0;
+
+        // Kalkulasi Data Grafik (7 Hari Terakhir)
+        var chartLabels = [];
+        var poData = [];
+        var checkBaninData = [];
+        var checkBanatData = [];
+
+        for(var i=6; i>=0; i--) {
+            var d = new Date(); d.setDate(d.getDate() - i);
+            var dateStr = d.toISOString().split('T')[0];
+            var shortDate = d.toLocaleDateString('id-ID', {day: 'numeric', month:'short'});
+            chartLabels.push(shortDate); 
+
+            // Filter harian PO
+            var dailyPO = (orders||[]).filter(o => o.tanggal === dateStr).reduce((sum, o) => sum + Number(o.estimasi_total||0), 0);
+            poData.push(dailyPO);
+
+            // Filter harian Nilai Ceklis
+            var dailyBanin = (checks||[]).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banin');
+            var dailyBanat = (checks||[]).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banat');
+            
+            var dAvgBanin = dailyBanin.length > 0 ? dailyBanin.reduce((sum,c)=>sum+Number(c.nilai_akhir),0)/dailyBanin.length : 0;
+            var dAvgBanat = dailyBanat.length > 0 ? dailyBanat.reduce((sum,c)=>sum+Number(c.nilai_akhir),0)/dailyBanat.length : 0;
+            
+            checkBaninData.push(dAvgBanin.toFixed(1));
+            checkBanatData.push(dAvgBanat.toFixed(1));
+        }
+
+        // Tampilkan ke layar
+        renderDashboard({
+            hasFilledToday: hasFilled,
+            stats: { totalPO, totalRp, avgBanin, avgBanat },
+            charts: { labels: chartLabels, po: poData, checkBanin: checkBaninData, checkBanat: checkBanatData }
+        });
+      } catch (err) { console.error(err); }
+    }
+
     function renderDashboard(res) {
       if (!currentUser) return;
       var roleStr = String(currentUser.role || '').toLowerCase();
