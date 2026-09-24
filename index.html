@@ -2692,20 +2692,18 @@
         var unitToko = document.getElementById('importBarangIM').value; 
         
         var rawData = JSON.parse(j);
-        showLoading('Menyinkronkan data massal secara instan...');
+        showLoading('Menyinkronkan ' + rawData.length + ' data (proses bertahap)...');
 
         try {
-            // 1. PERBAIKAN FATAL: Gunakan fungsi fetchAllMasterBarang untuk MENARIK SELURUH RIBUAN DATA, bukan cuma 1000 data
+            // 1. Ambil data lama untuk dicocokkan
             const existingItems = await fetchAllMasterBarang();
 
             var existingMap = {};
             (existingItems || []).forEach(it => {
-                // Pencocokan ketat berdasarkan Barcode + Nama + Unit Toko
                 var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
                 existingMap[key] = it.id;
             });
 
-            // PISAHKAN JALUR: Satu untuk Insert (Baru), Satu untuk Update (Lama)
             var itemsToInsert = [];
             var itemsToUpdate = [];
 
@@ -2737,23 +2735,34 @@
                     if (gbr) payload.gambar = gbr;
                     
                     if (matchId) {
-                        payload.id = matchId; // Wajib ada ID untuk di-update (ditimpa)
+                        payload.id = matchId; 
                         itemsToUpdate.push(payload);
                     } else {
-                        itemsToInsert.push(payload); // Tanpa ID untuk dimasukkan baru
+                        itemsToInsert.push(payload); 
                     }
                 }
             });
 
-            // 2. Eksekusi JALUR CEPAT
+            // 2. EKSEKUSI JALUR AMAN (BATCH PROCESSING)
+            // Memecah pengiriman data menjadi paket per 500 barang agar server tidak jebol
+            var BATCH_SIZE = 500;
+
+            // Proses Kirim Barang Baru
             if (itemsToInsert.length > 0) {
-                const { error: insErr } = await supaClient.from('master_barang').insert(itemsToInsert);
-                if (insErr) throw insErr;
+                for (let i = 0; i < itemsToInsert.length; i += BATCH_SIZE) {
+                    const batch = itemsToInsert.slice(i, i + BATCH_SIZE);
+                    const { error: insErr } = await supaClient.from('master_barang').insert(batch);
+                    if (insErr) throw insErr;
+                }
             }
 
+            // Proses Kirim Pembaruan Barang Lama (Upsert)
             if (itemsToUpdate.length > 0) {
-                const { error: updErr } = await supaClient.from('master_barang').upsert(itemsToUpdate, { onConflict: 'id' });
-                if (updErr) throw updErr;
+                for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
+                    const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
+                    const { error: updErr } = await supaClient.from('master_barang').upsert(batch, { onConflict: 'id' });
+                    if (updErr) throw updErr;
+                }
             }
 
             hideLoading();
@@ -2763,7 +2772,7 @@
 
         } catch(err) {
             hideLoading();
-            showToast('Gagal Sinkronisasi: Cek Data Excel', 'error');
+            showToast('Gagal Sinkronisasi Server: ' + err.message, 'error');
             console.error("Detail Error Import:", err);
         }
     }
