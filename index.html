@@ -2813,33 +2813,34 @@
       var endIndex = startIndex + window.poItemsPerPage;
       var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
 
-      // Buka kerangka Grid (2 kolom di HP, 3-4 kolom di Tablet/PC)
+      // Buka kerangka Grid (Shopee-style)
       var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3">';
       
       itemsToRender.forEach(it => {
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
         var placeholderImg = 'https://placehold.co/400x400/e2e8f0/64748b?text=IM';
+        var errorImg = 'https://placehold.co/400x400/fee2e2/ef4444?text=Akses+Ditolak';
         var rawImg = it.gambar || it.image || '';
         var imgUrl = placeholderImg;
         
         if (rawImg) {
-            // Deteksi otomatis jika yang dipaste adalah Link Google Drive biasa
-            var gdriveMatch = rawImg.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            // Perbaikan Regex: Menangkap ID file Google Drive versi URL terbaru maupun lama
+            var gdriveMatch = rawImg.match(/(?:file\/d\/|id=)([a-zA-Z0-9_-]+)/);
             if (gdriveMatch && gdriveMatch[1]) {
-                // Sulap link Google Drive menjadi link gambar langsung (Direct Image Link)
-                imgUrl = 'https://drive.google.com/uc?export=view&id=' + gdriveMatch[1];
+                // Trik Baru: Gunakan Thumbnail API Google (Aman dari blokir, ukuran otomatis kecil & ringan)
+                imgUrl = 'https://drive.google.com/thumbnail?id=' + gdriveMatch[1] + '&sz=w500';
             } else {
-                imgUrl = rawImg; // Gunakan link normal jika bukan dari GDrive
+                imgUrl = rawImg; 
             }
         }
         
-        // Desain Kartu Shopee-style
+        // Desain Kartu dengan sistem "onerror" (jika link ditolak, muncul tulisan Akses Ditolak)
         html += `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
             <!-- Area Gambar -->
             <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
-              <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
-              <!-- Label Info (Stok / Kategori) -->
+              <img src="${imgUrl}" onerror="this.src='${errorImg}'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
+              <!-- Label Info (Stok) -->
               <div class="absolute top-2 left-2 flex flex-col gap-1">
                 <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
               </div>
