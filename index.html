@@ -2326,6 +2326,9 @@
       if (!currentUser) return;
       var roleStr = String(currentUser.role || '').toLowerCase();
       var isAdmin = isUserAdmin(currentUser);
+      var isGudang = roleStr.includes('gudang');
+      var isKeuangan = roleStr.includes('keuangan');
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
       
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
       var reminderBanner = document.getElementById('dashboardDailyReminderBanner');
