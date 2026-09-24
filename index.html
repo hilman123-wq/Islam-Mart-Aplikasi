@@ -2574,15 +2574,32 @@
 
       var totalPages = Math.ceil(totalItems / window.masterItemsPerPage);
       if (totalPages > 1) {
+        // Generate opsi dropdown halaman
+        var pageOptions = '';
+        for (var p = 1; p <= totalPages; p++) {
+            pageOptions += '<option value="' + p + '" ' + (p === window.masterCurrentPage ? 'selected' : '') + '>Hal ' + p + '</option>';
+        }
+
         html += '<tr><td colspan="11" class="py-3 bg-white sticky left-0 border-t"><div class="flex items-center justify-between px-4">' +
           '<span class="text-[11px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + ' dari total ' + totalItems + '</span>' +
           '<div class="flex items-center gap-2">' +
             '<button type="button" onclick="changeMasterPage(-1)" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.masterCurrentPage === 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left mr-1"></i> Prev</button>' +
-            '<span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">Hal ' + window.masterCurrentPage + ' / ' + totalPages + '</span>' +
+            '<select onchange="goToMasterPage(this.value)" class="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer">' + pageOptions + '</select>' +
+            '<span class="text-xs font-bold text-slate-500">/ ' + totalPages + '</span>' +
             '<button type="button" onclick="changeMasterPage(1)" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.masterCurrentPage === totalPages ? 'disabled' : '') + '>Next <i class="fa-solid fa-chevron-right ml-1"></i></button>' +
           '</div></div></td></tr>';
       }
       tbody.innerHTML = html;
+    }
+
+    // Fungsi Pelompat Halaman Master Barang
+    function goToMasterPage(page) {
+      var newPage = parseInt(page);
+      var maxPage = Math.ceil(window.filteredMasterItems.length / window.masterItemsPerPage);
+      if (newPage >= 1 && newPage <= maxPage) {
+        window.masterCurrentPage = newPage;
+        renderMasterBarangPage();
+      }
     }
 
     // Fungsi Tambahan untuk Hapus Semua Barang
@@ -2896,7 +2913,6 @@
       var endIndex = startIndex + window.poItemsPerPage;
       var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
 
-      // Buka kerangka Grid (Shopee-style)
       var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3">';
       
       itemsToRender.forEach(it => {
@@ -2907,29 +2923,23 @@
         var imgUrl = placeholderImg;
         
         if (rawImg) {
-            // Perbaikan Regex: Menangkap ID file Google Drive versi URL terbaru maupun lama
             var gdriveMatch = rawImg.match(/(?:file\/d\/|id=)([a-zA-Z0-9_-]+)/);
             if (gdriveMatch && gdriveMatch[1]) {
-                // Trik Baru: Gunakan Thumbnail API Google (Aman dari blokir, ukuran otomatis kecil & ringan)
                 imgUrl = 'https://drive.google.com/thumbnail?id=' + gdriveMatch[1] + '&sz=w500';
             } else {
                 imgUrl = rawImg; 
             }
         }
         
-        // Desain Kartu dengan sistem "onerror" (jika link ditolak, muncul tulisan Akses Ditolak)
         html += `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
-            <!-- Area Gambar -->
             <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
               <img src="${imgUrl}" onerror="this.src='${errorImg}'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
-              <!-- Label Info (Stok) -->
               <div class="absolute top-2 left-2 flex flex-col gap-1">
                 <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
               </div>
             </div>
             
-            <!-- Area Info & Tombol -->
             <div class="p-2.5 sm:p-3 flex flex-col flex-1">
               <h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1" title="${it.nama}">${it.nama}</h4>
               <p class="text-[9px] text-slate-400 font-mono mb-2 truncate" title="${it.supplier||'-'}">${it.supplier || '-'}</p>
@@ -2947,14 +2957,36 @@
           </div>
         `;
       });
-      html += '</div>'; // Tutup Grid
+      html += '</div>';
 
-      // Paginasi di Bawah Grid
+      // Paginasi Dropdown di Bawah Grid
       var totalPages = Math.ceil(totalItems / window.poItemsPerPage);
       if (totalPages > 1) {
-        html += '<div class="p-3 bg-white sticky bottom-0 flex justify-between items-center gap-3 border-t border-teal-200 shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)] rounded-b-xl"><span class="text-[10px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + '</span><div class="flex items-center gap-2"><button type="button" onclick="changePoPage(-1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === 1 ? 'disabled' : '') + '>Prev</button><span class="text-[11px] font-black text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg border border-teal-200 shadow-sm">Hal ' + window.poCurrentPage + '/' + totalPages + '</span><button type="button" onclick="changePoPage(1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === totalPages ? 'disabled' : '') + '>Next</button></div></div>';
+        var pageOptions = '';
+        for (var p = 1; p <= totalPages; p++) {
+            pageOptions += '<option value="' + p + '" ' + (p === window.poCurrentPage ? 'selected' : '') + '>Hal ' + p + '</option>';
+        }
+
+        html += '<div class="p-3 bg-white sticky bottom-0 flex justify-between items-center gap-3 border-t border-teal-200 shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)] rounded-b-xl">' +
+          '<span class="text-[10px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + '</span>' +
+          '<div class="flex items-center gap-2">' +
+            '<button type="button" onclick="changePoPage(-1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === 1 ? 'disabled' : '') + '>Prev</button>' +
+            '<select onchange="goToPoPage(this.value)" class="text-[11px] font-black text-teal-800 bg-teal-100 px-2 py-1.5 rounded-lg border border-teal-200 outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer">' + pageOptions + '</select>' +
+            '<span class="text-[11px] font-bold text-slate-500">/ ' + totalPages + '</span>' +
+            '<button type="button" onclick="changePoPage(1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === totalPages ? 'disabled' : '') + '>Next</button>' +
+          '</div></div>';
       }
       container.innerHTML = html;
+    }
+
+    // Fungsi Pelompat Halaman PO
+    function goToPoPage(page) {
+      var newPage = parseInt(page);
+      var maxPage = Math.ceil(window.filteredPoItems.length / window.poItemsPerPage);
+      if (newPage >= 1 && newPage <= maxPage) {
+        window.poCurrentPage = newPage;
+        renderPoCatalogPage();
+      }
     }
 
     function addItmToCart(it) {
