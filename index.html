@@ -2695,13 +2695,14 @@
         showLoading('Menyinkronkan ' + rawData.length + ' data (proses bertahap)...');
 
         try {
-            // 1. Ambil data lama untuk dicocokkan
+            // 1. Ambil data lama untuk dicocokkan (Cegah duplikat & amankan gambar lama)
             const existingItems = await fetchAllMasterBarang();
 
             var existingMap = {};
             (existingItems || []).forEach(it => {
                 var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
-                existingMap[key] = it.id;
+                // Simpan ID dan gambar lama ke dalam memori
+                existingMap[key] = { id: it.id, gambar: it.gambar };
             });
 
             var itemsToInsert = [];
@@ -2719,8 +2720,15 @@
 
                 if (nama) {
                     var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
-                    var matchId = existingMap[lookupKey];
+                    var matchObj = existingMap[lookupKey];
 
+                    // TRICK AMAN: Pertahankan gambar lama jika kolom gambar di Excel kosong
+                    var finalGambar = gbr;
+                    if (!finalGambar && matchObj && matchObj.gambar) {
+                        finalGambar = matchObj.gambar;
+                    }
+
+                    // Struktur PASTI SERAGAM untuk semua baris
                     var payload = {
                         barcode: barcode,
                         nama: nama,
@@ -2729,25 +2737,23 @@
                         harga_beli: isNaN(hb) ? 0 : hb,
                         harga_jual: isNaN(hj) ? 0 : hj,
                         supplier: sup,
-                        im: unitToko
+                        im: unitToko,
+                        gambar: finalGambar
                     };
                     
-                    if (gbr) payload.gambar = gbr;
-                    
-                    if (matchId) {
-                        payload.id = matchId; 
+                    if (matchObj) {
+                        payload.id = matchObj.id; // Wajib ada ID untuk update
                         itemsToUpdate.push(payload);
                     } else {
-                        itemsToInsert.push(payload); 
+                        itemsToInsert.push(payload); // Tanpa ID untuk insert
                     }
                 }
             });
 
             // 2. EKSEKUSI JALUR AMAN (BATCH PROCESSING)
-            // Memecah pengiriman data menjadi paket per 500 barang agar server tidak jebol
+            // Dipecah per 500 baris agar server Supabase tidak kewalahan
             var BATCH_SIZE = 500;
 
-            // Proses Kirim Barang Baru
             if (itemsToInsert.length > 0) {
                 for (let i = 0; i < itemsToInsert.length; i += BATCH_SIZE) {
                     const batch = itemsToInsert.slice(i, i + BATCH_SIZE);
@@ -2756,7 +2762,6 @@
                 }
             }
 
-            // Proses Kirim Pembaruan Barang Lama (Upsert)
             if (itemsToUpdate.length > 0) {
                 for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
                     const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
