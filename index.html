@@ -2695,12 +2695,12 @@
         showLoading('Menyinkronkan data massal secara instan...');
 
         try {
-            // 1. Ambil data lama untuk dicocokkan (Cegah duplikat)
-            const { data: existingItems, error: fetchErr } = await supaClient.from('master_barang').select('id, barcode, nama, im');
-            if (fetchErr) throw fetchErr;
+            // 1. PERBAIKAN FATAL: Gunakan fungsi fetchAllMasterBarang untuk MENARIK SELURUH RIBUAN DATA, bukan cuma 1000 data
+            const existingItems = await fetchAllMasterBarang();
 
             var existingMap = {};
             (existingItems || []).forEach(it => {
+                // Pencocokan ketat berdasarkan Barcode + Nama + Unit Toko
                 var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
                 existingMap[key] = it.id;
             });
@@ -2723,7 +2723,6 @@
                     var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
                     var matchId = existingMap[lookupKey];
 
-                    // BENTUK PAYLOAD SERAGAM (Semua kolom wajib dideklarasikan meskipun kosong)
                     var payload = {
                         barcode: barcode,
                         nama: nama,
@@ -2732,27 +2731,26 @@
                         harga_beli: isNaN(hb) ? 0 : hb,
                         harga_jual: isNaN(hj) ? 0 : hj,
                         supplier: sup,
-                        im: unitToko,
-                        gambar: gbr 
+                        im: unitToko
                     };
                     
+                    if (gbr) payload.gambar = gbr;
+                    
                     if (matchId) {
-                        payload.id = matchId; // Wajib ada ID untuk update
+                        payload.id = matchId; // Wajib ada ID untuk di-update (ditimpa)
                         itemsToUpdate.push(payload);
                     } else {
-                        itemsToInsert.push(payload); // Tanpa ID untuk insert baru
+                        itemsToInsert.push(payload); // Tanpa ID untuk dimasukkan baru
                     }
                 }
             });
 
-            // 2. Eksekusi JALUR CEPAT (Bulk Insert & Bulk Upsert)
-            // Jalur A: Masukkan rombongan barang baru
+            // 2. Eksekusi JALUR CEPAT
             if (itemsToInsert.length > 0) {
                 const { error: insErr } = await supaClient.from('master_barang').insert(itemsToInsert);
                 if (insErr) throw insErr;
             }
 
-            // Jalur B: Timpa rombongan barang lama dengan harga/stok baru
             if (itemsToUpdate.length > 0) {
                 const { error: updErr } = await supaClient.from('master_barang').upsert(itemsToUpdate, { onConflict: 'id' });
                 if (updErr) throw updErr;
