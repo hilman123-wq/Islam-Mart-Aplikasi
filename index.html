@@ -2656,51 +2656,88 @@
         e.preventDefault();
         var j = document.getElementById('importBarangRawJson').value;
         if (!j) return showToast('Pilih file Excel terlebih dahulu!', 'error');
-        var unitToko = document.getElementById('importBarangIM').value; // Pisahkan Banin/Banat
+        var unitToko = document.getElementById('importBarangIM').value; 
         
         var rawData = JSON.parse(j);
-        var payload = [];
-        
-        // Deteksi kolom secara cerdas (meski besar/kecil huruf berbeda di Excel)
-        rawData.forEach(row => {
-            var barcode = row["Barcode"] || row["barcode"] || row["BARCODE"] || "";
-            var nama = row["Nama Barang"] || row["nama"] || row["Nama"] || "";
-            var kat = row["Kategori"] || row["kategori"] || "Lainnya";
-            var qty = parseInt(row["Qty"] || row["qty"] || row["QTY"] || 0);
-            var hb = parseFloat(row["Harga Beli"] || row["harga beli"] || row["harga_beli"] || 0);
-            var hj = parseFloat(row["Harga Jual"] || row["harga jual"] || row["harga_jual"] || 0);
-            var sup = row["Supplier"] || row["supplier"] || "";
-            // Penarik Link Gambar dari Excel
-            var gbr = row["Gambar"] || row["gambar"] || row["Link Gambar"] || "";
+        var successCount = 0;
+        var updateCount = 0;
+        var insertCount = 0;
 
-            if (nama) { 
-                payload.push({
-                    barcode: String(barcode),
-                    nama: String(nama),
-                    kategori: String(kat),
-                    qty: isNaN(qty) ? 0 : qty,
-                    harga_beli: isNaN(hb) ? 0 : hb,
-                    harga_jual: isNaN(hj) ? 0 : hj,
-                    supplier: String(sup),
-                    gambar: String(gbr), // <-- Menyimpan gambar secara massal
-                    im: unitToko 
-                });
-            }
-        });
-
-        if (payload.length === 0) return showToast('Tidak ada data valid yang bisa diimport!', 'error');
-
-        showLoading('Mengimport ' + payload.length + ' barang ke ' + unitToko + '...');
+        showLoading('Menganalisis & menyinkronkan data barang...');
         try {
-            const { error } = await supaClient.from('master_barang').insert(payload);
+            // 1. Ambil seluruh data master barang yang ada di Supabase saat ini
+            const { data: existingItems, error: fetchErr } = await supaClient.from('master_barang').select('id, barcode, nama, im');
+            if (fetchErr) throw fetchErr;
+
+            // Buat kamus (map) pencocokan berdasarkan Barcode dan Nama (lowercase agar akurat)
+            var existingMap = {};
+            (existingItems || []).forEach(it => {
+                var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim().toLowerCase() + '_' + String(it.im || '').trim().toLowerCase());
+                existingMap[key] = it.id;
+            });
+
+            var itemsToInsert = [];
+            var itemsToUpdate = [];
+
+            rawData.forEach(row => {
+                var barcode = String(row["Barcode"] || row["barcode"] || row["BARCODE"] || "").trim();
+                var nama = String(row["Nama Barang"] || row["nama"] || row["Nama"] || "").trim();
+                var kat = String(row["Kategori"] || row["kategori"] || "Lainnya").trim();
+                var qty = parseInt(row["Qty"] || row["qty"] || row["QTY"] || 0);
+                var hb = parseFloat(row["Harga Beli"] || row["harga beli"] || row["harga_beli"] || 0);
+                var hj = parseFloat(row["Harga Jual"] || row["harga jual"] || row["harga_jual"] || 0);
+                var sup = String(row["Supplier"] || row["supplier"] || "").trim();
+                var gbr = String(row["Gambar"] || row["gambar"] || row["Link Gambar"] || "").trim();
+
+                if (nama) {
+                    var lookupKey = barcode + '_' + nama.toLowerCase() + '_' + unitToko.toLowerCase();
+                    var matchId = existingMap[lookupKey];
+
+                    var itemPayload = {
+                        barcode: barcode,
+                        nama: nama,
+                        kategori: kat,
+                        qty: isNaN(qty) ? 0 : qty,
+                        harga_beli: isNaN(hb) ? 0 : hb,
+                        harga_jual: isNaN(hj) ? 0 : hj,
+                        supplier: sup,
+                        gambar: gbr,
+                        im: unitToko
+                    };
+
+                    if (matchId) {
+                        // Jika sudah ada, masukkan ke daftar Update (berdasarkan ID uniknya)
+                        itemsToUpdate.push({ id: matchId, ...itemPayload });
+                    } else {
+                        // Jika belum ada, masukkan ke daftar Insert (Barang Baru)
+                        itemsToInsert.push(itemPayload);
+                    }
+                }
+            });
+
+            // 2. Eksekusi Insert untuk barang-barang baru
+            if (itemsToInsert.length > 0) {
+                const { error: insErr } = await supaClient.from('master_barang').insert(itemsToInsert);
+                if (insErr) throw insErr;
+                insertCount = itemsToInsert.length;
+            }
+
+            // 3. Eksekusi Update satu-satu untuk barang yang harganya berubah
+            for (let item of itemsToUpdate) {
+                var updateId = item.id;
+                delete item.id; // Hapus ID dari payload update
+                const { error: updErr } = await supaClient.from('master_barang').update(item).eq('id', updateId);
+                if (!updErr) updateCount++;
+            }
+
             hideLoading();
-            if (error) throw error;
-            showToast(payload.length + ' Barang berhasil diimport!', 'success');
+            showToast('Sinkronisasi Berhasil! ' + insertCount + ' barang baru ditambahkan, ' + updateCount + ' harga/data lama diperbarui.', 'success');
             closeModal('importBarangModal');
             loadMasterBarang(true);
+
         } catch(err) {
             hideLoading();
-            showToast('Gagal Import: ' + err.message, 'error');
+            showToast('Gagal Sinkronisasi: ' + err.message, 'error');
         }
     }
 
