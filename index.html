@@ -2593,27 +2593,16 @@
       }
     }
 
-    async function executeDeleteAllMasterItems() {
+   async function executeDeleteAllMasterItems() {
       showLoading('Menghapus seluruh data master barang...');
       try {
-        // Ambil semua ID yang ada di tabel master_barang terlebih dahulu
-        const { data: allItems, error: fetchErr } = await supaClient.from('master_barang').select('id');
-        if (fetchErr) throw fetchErr;
-
-        if (!allItems || allItems.length === 0) {
-            hideLoading();
-            return showToast('Tidak ada data barang untuk dihapus.', 'info');
-        }
-
-        // Ambil daftar semua ID
-        var idsToDelete = allItems.map(item => item.id);
-
-        // Hapus berdasarkan daftar ID tersebut secara aman
-        const { error: delErr } = await supaClient.from('master_barang').delete().in('id', idsToDelete);
-        hideLoading();
+        // Metode paling aman & bersih: Hapus semua baris yang memiliki ID tidak kosong
+        const { error } = await supaClient.from('master_barang').delete().not('id', 'is', null);
         
-        if (delErr) throw delErr;
-        showToast('Semua data master barang berhasil dihapus!', 'success');
+        hideLoading();
+        if (error) throw error;
+        
+        showToast('Semua data master barang berhasil dikosongkan!', 'success');
         loadMasterBarang(true);
       } catch (err) {
         hideLoading();
