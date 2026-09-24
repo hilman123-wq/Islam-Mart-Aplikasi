@@ -2384,19 +2384,20 @@
       if (existingAdmin) { existingAdmin.remove(); } 
 
       var tabDashboardSection = document.getElementById('tab-dashboard');
-      // === LAYOUT KONTROL: SIDEBAR & PANEL HANYA UNTUK GUDANG ===
+      // === LAYOUT KONTROL: PANEL GUDANG (SIDEBAR DIHILANGKAN UNTUK SEMUA) ===
       var mainSidebar = document.getElementById('mainSidebar');
       var mainContent = document.getElementById('mainContent');
       var gudangPanel = document.getElementById('gudangDashboardPanel');
 
+      // 1. Sembunyikan sidebar dan bentangkan layar penuh untuk SEMUA user
+      if (mainSidebar) mainSidebar.style.display = 'none';
+      if (mainContent) mainContent.classList.remove('sm:ml-72');
+
+      // 2. Panel Riwayat di Dashboard tetap dimunculkan khusus Gudang
       if (isGudang) {
-          if (mainSidebar) mainSidebar.style.display = 'flex';
-          if (mainContent) mainContent.classList.add('sm:ml-72');
-          if (gudangPanel) gudangPanel.style.display = 'block'; // Tampilkan panel
+          if (gudangPanel) gudangPanel.style.display = 'block'; 
       } else {
-          if (mainSidebar) mainSidebar.style.display = 'none';
-          if (mainContent) mainContent.classList.remove('sm:ml-72');
-          if (gudangPanel) gudangPanel.style.display = 'none'; // Sembunyikan panel
+          if (gudangPanel) gudangPanel.style.display = 'none'; 
       }
 
       if (isKeuangan && tabDashboardSection) {
