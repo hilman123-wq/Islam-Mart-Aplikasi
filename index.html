@@ -289,14 +289,11 @@
     <div id="mobileSidebarBackdrop" onclick="closeMobileSidebar()" style="display: none;" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-30 sm:hidden"></div>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-1 sm:ml-72 min-h-screen flex flex-col pb-24 sm:pb-10">
+    <main id="mainContent" class="flex-1 min-h-screen flex flex-col pb-24 sm:pb-28">
       
       <!-- Top Header Bar -->
       <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div class="flex items-center gap-3">
-          <button onclick="openMobileSidebar()" class="hidden">
-            <i class="fa-solid fa-bars"></i>
-          </button>
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-black text-xs sm:hidden">
               IM
@@ -313,6 +310,9 @@
             <i class="fa-solid fa-download text-emerald-600"></i>
             <span class="hidden sm:inline">Pasang di HP</span>
           </button>
+          <button onclick="handleLogout()" title="Keluar dari Sistem" class="flex items-center justify-center w-8 h-8 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-rose-600 transition">
+            <i class="fa-solid fa-power-off text-sm"></i>
+          </button>
           <button onclick="openOwnProfileModal()" title="Profil & Kontak WA" class="flex items-center gap-2 py-1.5 px-3 bg-slate-50 hover:bg-slate-100 border rounded-xl text-xs font-bold text-slate-700 transition">
             <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
             <span class="hidden sm:inline">No. WA Saya</span>
@@ -321,7 +321,40 @@
       </header>
 
       <!-- VIEWPORT TAB CONTENT -->
-      <div class="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
+      <div id="viewportContainer" class="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
+         <!-- Seluruh section (dashboard, order, dll) tetap berada di dalam sini, jangan dihapus -->
+      </div>
+    </main>
+
+    <!-- BOTTOM BAR NAVIGASI (UNIVERSAL SEMUA USER) -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-3 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-10 text-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+      <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-14 sm:w-20">
+        <i class="fa-solid fa-gauge-high text-sm sm:text-xl"></i>
+        <span class="text-[9px] sm:text-[11px] font-bold mt-0.5">Beranda</span>
+      </button>
+      <button id="btnNavBtmPO" onclick="switchTab('order-create')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 w-14 sm:w-20">
+        <i class="fa-solid fa-cart-plus text-sm sm:text-xl"></i>
+        <span class="text-[9px] sm:text-[11px] font-bold mt-0.5">Order PO</span>
+      </button>
+      <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-14 sm:w-20">
+        <i class="fa-solid fa-barcode text-sm sm:text-xl"></i>
+        <span class="text-[9px] sm:text-[11px] font-bold mt-0.5">Barang</span>
+      </button>
+      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;" class="flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 w-14 sm:w-20">
+        <i class="fa-solid fa-folder-open text-sm sm:text-xl"></i>
+        <span class="text-[9px] sm:text-[11px] font-bold mt-0.5">Laporan</span>
+      </button>
+      <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold w-14 sm:w-20 relative -top-4 sm:-top-5">
+        <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 sm:border-8 border-slate-100 transition-transform active:scale-95">
+          <i class="fa-solid fa-square-check text-lg sm:text-2xl"></i>
+        </div>
+        <span class="text-[9px] sm:text-[11px] mt-0.5 whitespace-nowrap">Isi Form</span>
+      </button>
+      <button id="btnNavBtmMenu" onclick="openMobileSidebar()" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800 w-14 sm:w-20">
+        <i class="fa-solid fa-bars text-sm sm:text-xl"></i>
+        <span class="text-[9px] sm:text-[11px] font-bold mt-0.5">Menu</span>
+      </button>
+    </div>
 
        <!-- ========================================================================= -->
         <!-- TAB: DASHBOARD (GRAFIK & STATISTIK SAJA) -->
@@ -2065,6 +2098,21 @@
         if (document.getElementById('adminDashboardPanel')) document.getElementById('adminDashboardPanel').style.display = 'none';
       }
 
+      // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
+      var mainSidebar = document.getElementById('mainSidebar');
+      var mainContent = document.getElementById('mainContent');
+      var btnMenuMobile = document.getElementById('btnNavBtmMenu');
+
+      if (isGudang) {
+          if (mainSidebar) mainSidebar.style.display = 'flex';
+          if (mainContent) mainContent.classList.add('sm:ml-72');
+          if (btnMenuMobile) btnMenuMobile.style.display = 'flex';
+      } else {
+          if (mainSidebar) mainSidebar.style.display = 'none';
+          if (mainContent) mainContent.classList.remove('sm:ml-72');
+          if (btnMenuMobile) btnMenuMobile.style.display = 'none'; // Sembunyikan tombol 'Menu' di nav bawah
+      }
+
       loadCriteriaAndBuildForms();
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
@@ -2332,8 +2380,19 @@
          tabDashboardSection.insertAdjacentHTML('beforeend', keuHtml);
       }
 
-      if (isKepalaAdmin && tabDashboardSection) {
-         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi & Laporan</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"><div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan Bulanan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau, unduh, dan cetak rekap laporan seluruh divisi.</p></div><div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WhatsApp</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur divisi yang telat kumpul laporan bulanan.</p></div></div></div>';
+      if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
+         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
+         
+         // 1. Tombol Laporan Bulanan
+         '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
+         
+         // 2. Tombol WA Reminder
+         '<div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WA</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur staf/divisi via WhatsApp.</p></div>' +
+         
+         // 3. Tombol Kelola Karyawan
+         '<div onclick="switchTab(\'user-management\')" class="bg-gradient-to-br from-purple-700 to-purple-950 p-5 rounded-3xl border border-purple-600 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-users-gear"></i></div><h4 class="text-sm font-black text-white">3. Kelola Akun</h4><p class="text-[10px] text-purple-200/70 mt-1">Atur data karyawan & hak akses.</p></div>' +
+         
+         '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
     }
