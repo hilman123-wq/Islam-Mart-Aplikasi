@@ -2054,11 +2054,10 @@
           if(btmForm) btmForm.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
       } 
-      // ATURAN 4: KEPALA ADMINISTRASI / ADMIN (Beranda, PO, Barang, Laporan, Profil, Keluar) - Tanpa Isi Form
+      // ATURAN 4: KEPALA ADMINISTRASI / ADMIN (Hanya Beranda & Laporan)
       else if (isAdmin || isKepalaAdmin) {
           if(btmLaporan) btmLaporan.style.display = 'flex';
-          if(btmPO) btmPO.style.display = 'flex';
-          if(btmBarang) btmBarang.style.display = 'flex';
+          // PO dan Barang tidak dimunculkan, otomatis tersembunyi
       }
 
       // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
@@ -2289,15 +2288,24 @@
       var roleStr = String(currentUser.role || '').toLowerCase();
       var isAdmin = isUserAdmin(currentUser);
       
-      var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
-      if (res.hasFilledToday) {
-        iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-        titleEl.innerText = 'Ceklis Harian Selesai Terisi'; descEl.innerText = 'Terima kasih atas kedisiplinan Anda mengisi ceklis hari ini.';
-        btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var reminderBanner = document.getElementById('dashboardDailyReminderBanner');
+      
+      // Sembunyikan banner ceklis jika yang login adalah Admin atau Kepala Administrasi
+      if (isAdmin || isKepalaAdmin) {
+          if (reminderBanner) reminderBanner.style.display = 'none';
       } else {
-        iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
-        titleEl.innerText = 'Anda Belum Mengisi Ceklis!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda hari ini.';
-        btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
+          if (reminderBanner) reminderBanner.style.display = 'flex';
+          var iconEl = document.getElementById('reminderBannerIcon'), titleEl = document.getElementById('reminderBannerTitle'), descEl = document.getElementById('reminderBannerDesc'), btnEl = document.getElementById('reminderBannerActionBtn');
+          if (res.hasFilledToday) {
+            iconEl.className = 'w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            titleEl.innerText = 'Ceklis Harian Selesai Terisi'; descEl.innerText = 'Terima kasih atas kedisiplinan Anda mengisi ceklis hari ini.';
+            btnEl.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><span>Riwayat Saya</span>'; btnEl.onclick = () => switchTab('data-history');
+          } else {
+            iconEl.className = 'w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-sm'; iconEl.innerHTML = '<i class="fa-solid fa-clock"></i>';
+            titleEl.innerText = 'Anda Belum Mengisi Ceklis!'; descEl.innerText = 'Mohon lengkapi formulir ceklis operasional Anda hari ini.';
+            btnEl.innerHTML = '<span>Isi Form Sekarang</span><i class="fa-solid fa-arrow-right"></i>'; btnEl.onclick = () => goToMyChecklist();
+          }
       }
 
       if(document.getElementById('statTotalPO')) document.getElementById('statTotalPO').innerText = res.stats.totalPO;
