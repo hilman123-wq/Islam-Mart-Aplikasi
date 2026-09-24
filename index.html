@@ -2622,13 +2622,18 @@
 
     async function executeDeleteMasterItem() {
       if (!pendingDeleteItem) return;
-      showLoading('Menghapus barang...');
+      showLoading('Menghapus barang dari sistem...');
       try {
         const { error } = await supaClient.from('master_barang').delete().eq('id', pendingDeleteItem.id);
         hideLoading();
         if (error) throw error;
-        closeModal('itemDeleteConfirmModal'); showToast('Barang dihapus', 'success'); loadMasterBarang(true);
-      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+        closeModal('itemDeleteConfirmModal');
+        showToast('Barang berhasil dihapus!', 'success');
+        loadMasterBarang(true); // Muat ulang tabel master barang
+      } catch (err) {
+        hideLoading();
+        showToast('Gagal menghapus: ' + err.message, 'error');
+      }
     }
 
     // === FITUR IMPORT BARANG DARI EXCEL ===
