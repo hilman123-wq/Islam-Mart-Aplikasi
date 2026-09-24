@@ -1268,38 +1268,52 @@
       </div>
     </main>
 
-    <!-- BOTTOM BAR NAVIGASI MOBILE (KHUSUS HP) -->
-    <!-- BOTTOM BAR NAVIGASI MOBILE (KHUSUS HP) -->
-    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 sm:hidden z-30 px-3 py-2 flex items-center justify-around text-center shadow-lg">
-      <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-12">
-        <i class="fa-solid fa-gauge-high text-sm"></i>
-        <span class="text-[9px] font-bold">Beranda</span>
+   <!-- BOTTOM BAR NAVIGASI (DINAMIS PER DIVISI) -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50 px-1 sm:px-4 py-2 sm:py-3 flex items-center justify-between text-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+      
+      <button id="btnNavBtmBeranda" onclick="switchTab('dashboard')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-solid fa-gauge-high text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Beranda</span>
       </button>
-      <button id="btnNavBtmPO" onclick="switchTab('order-create')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 w-12">
-        <i class="fa-solid fa-cart-plus text-sm"></i>
-        <span class="text-[9px] font-bold">Order PO</span>
+      
+      <button id="btnNavBtmPO" onclick="switchTab('order-create')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+        <i class="fa-solid fa-cart-plus text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Order PO</span>
       </button>
-      <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 w-12">
-        <i class="fa-solid fa-barcode text-sm"></i>
-        <span class="text-[9px] font-bold">Barang</span>
+      
+      <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
       </button>
-      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;" class="flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 w-12">
-        <i class="fa-solid fa-file-excel text-sm"></i>
-        <span class="text-[9px] font-bold">Laporan</span>
+      
+      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+        <i class="fa-solid fa-folder-open text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Laporan</span>
       </button>
-      <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold w-12 relative -top-3">
-        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 border-slate-100">
-          <i class="fa-solid fa-square-check text-base"></i>
+      
+      <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex-1 flex flex-col items-center gap-1 text-emerald-600 font-extrabold relative -top-3 sm:-top-5 transition-transform active:scale-95">
+        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 sm:border-8 border-slate-100">
+          <i class="fa-solid fa-square-check text-base sm:text-2xl"></i>
         </div>
-        <span class="text-[9px] mt-0.5 whitespace-nowrap">Isi Form</span>
+        <span class="text-[8px] sm:text-[11px] mt-0.5 tracking-tight">Isi Form</span>
       </button>
-      <button onclick="openMobileSidebar()" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800 w-12">
-        <i class="fa-solid fa-bars text-sm"></i>
-        <span class="text-[9px] font-bold">Menu</span>
-      </button>
-    </div>
 
-  </div>
+      <button id="btnNavBtmMenu" onclick="openMobileSidebar()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800 transition-colors">
+        <i class="fa-solid fa-bars text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Menu</span>
+      </button>
+
+      <button id="btnNavBtmProfil" onclick="openOwnProfileModal()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-brands fa-whatsapp text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Profil</span>
+      </button>
+
+      <button id="btnNavBtmKeluar" onclick="handleLogout()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+        <i class="fa-solid fa-power-off text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Keluar</span>
+      </button>
+      
+    </div>
 
   <!-- ========================================================================= -->
   <!-- MODAL: DETAIL & CETAK PURCHASE ORDER (PO) -->
@@ -2018,69 +2032,55 @@
         if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
+      // === PENGATURAN BOTTOM NAVIGASI (DINAMIS PER DIVISI) ===
       var btmPO = document.getElementById('btnNavBtmPO');
       var btmBarang = document.getElementById('btnNavBtmBarang');
       var btmLaporan = document.getElementById('btnNavBtmLaporan');
       var btmForm = document.getElementById('btnNavBtmForm');
+      var btmMenu = document.getElementById('btnNavBtmMenu');
 
-      if (isKeuangan || isKepalaAdmin) {
-        if (btmPO) btmPO.style.display = 'none';
-        if (btmBarang) btmBarang.style.display = 'none';
-        if (btmLaporan) btmLaporan.style.display = 'flex'; 
-      } else {
-        if (btmPO) btmPO.style.display = 'flex';
-        if (btmBarang) btmBarang.style.display = 'flex';
-        if (btmLaporan) btmLaporan.style.display = 'none';
-      }
+      // Default: Sembunyikan menu opsional terlebih dahulu agar bersih
+      if(btmPO) btmPO.style.display = 'none';
+      if(btmBarang) btmBarang.style.display = 'none';
+      if(btmLaporan) btmLaporan.style.display = 'none';
+      if(btmForm) btmForm.style.display = 'none';
+      if(btmMenu) btmMenu.style.display = 'none';
 
-      if (isAdmin || (isKepalaAdmin && !isKasir)) {
-        if (btmForm) btmForm.style.display = 'none'; 
-      } else {
-        if (btmForm) btmForm.style.display = 'flex';
-      }
-
-      var waMenu = document.getElementById('nav-wa-reminder');
-      var gudangMenuContainer = document.getElementById('menuNonKasirSection');
-      var adminMenuContainer = document.getElementById('adminMenuSection');
-
-      if (waMenu) {
-        waMenu.style.display = (isGudang || isAdmin || isKepalaAdmin) ? 'flex' : 'none'; 
-        if ((isGudang || isKepalaAdmin) && gudangMenuContainer) {
-            gudangMenuContainer.appendChild(waMenu); 
-        } else if (isAdmin && adminMenuContainer) {
-            adminMenuContainer.appendChild(waMenu);
-        }
-      }
-
-      var waBannerAdmin = document.querySelector('#adminDashboardPanel [onclick="switchTab(\'wa-reminder\')"]');
-      if (waBannerAdmin) waBannerAdmin.style.display = (isAdmin || isKepalaAdmin) ? 'flex' : 'none';
-
-      if (isAdmin) {
-        if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'none';
-        if (document.getElementById('adminMenuSection')) document.getElementById('adminMenuSection').style.display = 'block';
-        if (document.getElementById('staffDashboardPanel')) document.getElementById('staffDashboardPanel').style.display = 'none';
-        if (document.getElementById('adminDashboardPanel')) document.getElementById('adminDashboardPanel').style.display = 'block';
-      } else {
-        if (document.getElementById('nonAdminSidebarItems')) document.getElementById('nonAdminSidebarItems').style.display = 'block';
-        if (document.getElementById('adminMenuSection')) document.getElementById('adminMenuSection').style.display = 'none';
-        if (document.getElementById('menuNonKasirSection')) document.getElementById('menuNonKasirSection').style.display = (isKasir && !isKepalaAdmin) ? 'none' : 'block';
-        if (document.getElementById('staffDashboardPanel')) document.getElementById('staffDashboardPanel').style.display = 'block';
-        if (document.getElementById('adminDashboardPanel')) document.getElementById('adminDashboardPanel').style.display = 'none';
+      // ATURAN 1: KASIR (Beranda, PO, Barang, Isi Form, Profil, Keluar)
+      if (isKasir && !isKepalaAdmin) {
+          if(btmForm) btmForm.style.display = 'flex';
+          if(btmPO) btmPO.style.display = 'flex';
+          if(btmBarang) btmBarang.style.display = 'flex';
+      } 
+      // ATURAN 2: GUDANG (Beranda, PO, Barang, Isi Form, Menu Sidebar, Profil, Keluar)
+      else if (isGudang) {
+          if(btmForm) btmForm.style.display = 'flex';
+          if(btmPO) btmPO.style.display = 'flex';
+          if(btmBarang) btmBarang.style.display = 'flex';
+          if(btmMenu) btmMenu.style.display = 'flex'; 
+      } 
+      // ATURAN 3: KEUANGAN (Beranda, Laporan, Isi Form, Profil, Keluar)
+      else if (isKeuangan) {
+          if(btmForm) btmForm.style.display = 'flex';
+          if(btmLaporan) btmLaporan.style.display = 'flex';
+      } 
+      // ATURAN 4: KEPALA ADMINISTRASI / ADMIN (Beranda, PO, Barang, Laporan, Profil, Keluar) - Tanpa Isi Form
+      else if (isAdmin || isKepalaAdmin) {
+          if(btmLaporan) btmLaporan.style.display = 'flex';
+          if(btmPO) btmPO.style.display = 'flex';
+          if(btmBarang) btmBarang.style.display = 'flex';
       }
 
       // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
       var mainSidebar = document.getElementById('mainSidebar');
       var mainContent = document.getElementById('mainContent');
-      var btnMenuMobile = document.getElementById('btnNavBtmMenu');
 
       if (isGudang) {
           if (mainSidebar) mainSidebar.style.display = 'flex';
           if (mainContent) mainContent.classList.add('sm:ml-72');
-          if (btnMenuMobile) btnMenuMobile.style.display = 'flex';
       } else {
           if (mainSidebar) mainSidebar.style.display = 'none';
           if (mainContent) mainContent.classList.remove('sm:ml-72');
-          if (btnMenuMobile) btnMenuMobile.style.display = 'none'; // Sembunyikan tombol 'Menu' di nav bawah
       }
 
       loadCriteriaAndBuildForms();
