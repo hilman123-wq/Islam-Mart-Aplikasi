@@ -289,85 +289,25 @@
     <div id="mobileSidebarBackdrop" onclick="closeMobileSidebar()" style="display: none;" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-30 sm:hidden"></div>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main id="mainContent" class="flex-1 min-h-screen flex flex-col pb-24 sm:pb-28">
+    <main id="mainContent" class="flex-1 flex flex-col pb-24 sm:pb-28">
       
       <!-- Top Header Bar -->
       <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-black text-xs sm:hidden">
-              IM
-            </div>
+            <div class="w-8 h-8 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-black text-xs sm:hidden">IM</div>
             <div>
               <h1 class="text-sm sm:text-base font-black text-slate-800 leading-tight">Islam Mart Terpadu</h1>
               <p id="headerDate" class="text-[11px] text-slate-500 font-medium">Memuat tanggal...</p>
             </div>
           </div>
         </div>
-
-        <div class="flex items-center gap-2.5">
-          <button onclick="promptInstallPwa()" id="btnInstallPwa" style="display: none;" class="py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-xs">
-            <i class="fa-solid fa-download text-emerald-600"></i>
-            <span class="hidden sm:inline">Pasang di HP</span>
-          </button>
-        </div>
       </header>
 
       <!-- VIEWPORT TAB CONTENT -->
-      <div id="viewportContainer" class="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
-         <!-- Seluruh section (dashboard, order, dll) tetap berada di dalam sini, jangan dihapus -->
-      </div>
-    </main>
+      <div id="viewportContainer" class="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
 
-    <!-- BOTTOM BAR NAVIGASI (UNIVERSAL SEMUA USER) -->
-    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 px-1 py-2 sm:py-3 flex items-center justify-between text-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-      
-      <button onclick="switchTab('dashboard')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-        <i class="fa-solid fa-gauge-high text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Beranda</span>
-      </button>
-      
-      <button id="btnNavBtmPO" onclick="switchTab('order-create')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
-        <i class="fa-solid fa-cart-plus text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Order PO</span>
-      </button>
-      
-      <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-        <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
-      </button>
-      
-      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-        <i class="fa-solid fa-folder-open text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Laporan</span>
-      </button>
-      
-      <!-- Tombol Tengah Menonjol (Isi Form) -->
-      <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex-1 flex flex-col items-center gap-1 text-emerald-600 font-extrabold relative -top-3 sm:-top-5 transition-transform active:scale-95">
-        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 sm:border-8 border-slate-100">
-          <i class="fa-solid fa-square-check text-base sm:text-2xl"></i>
-        </div>
-        <span class="text-[8px] sm:text-[11px] mt-0.5 tracking-tight">Isi Form</span>
-      </button>
-
-      <button onclick="openOwnProfileModal()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-        <i class="fa-brands fa-whatsapp text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Profil</span>
-      </button>
-      
-      <button id="btnNavBtmMenu" onclick="openMobileSidebar()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-slate-800 transition-colors">
-        <i class="fa-solid fa-bars text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Menu</span>
-      </button>
-
-      <button onclick="handleLogout()" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-        <i class="fa-solid fa-power-off text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Keluar</span>
-      </button>
-      
-    </div>
-
-       <!-- ========================================================================= -->
+        <!-- ========================================================================= -->
         <!-- TAB: DASHBOARD (GRAFIK & STATISTIK SAJA) -->
         <!-- ========================================================================= -->
         <section id="tab-dashboard" class="space-y-6">
