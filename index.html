@@ -2077,19 +2077,16 @@
           if(btmLaporan) btmLaporan.style.display = 'flex';
       }
 
-      // === LAYOUT KONTROL: SIDEBAR & PANEL HANYA UNTUK GUDANG ===
+      // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
       var mainSidebar = document.getElementById('mainSidebar');
       var mainContent = document.getElementById('mainContent');
-      var gudangPanel = document.getElementById('gudangDashboardPanel');
 
       if (isGudang) {
           if (mainSidebar) mainSidebar.style.display = 'flex';
           if (mainContent) mainContent.classList.add('sm:ml-72');
-          if (gudangPanel) gudangPanel.style.display = 'block'; // Tampilkan panel
       } else {
           if (mainSidebar) mainSidebar.style.display = 'none';
           if (mainContent) mainContent.classList.remove('sm:ml-72');
-          if (gudangPanel) gudangPanel.style.display = 'none'; // Sembunyikan panel
       }
 
       loadCriteriaAndBuildForms();
@@ -2362,27 +2359,20 @@
       if (existingAdmin) { existingAdmin.remove(); } 
 
       var tabDashboardSection = document.getElementById('tab-dashboard');
-      <!-- PANEL DASHBOARD GUDANG (RIWAYAT) -->
-        <div id="gudangDashboardPanel" style="display: none;" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6">
-          <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 flex items-center gap-2"><i class="fa-solid fa-warehouse"></i> Menu Riwayat Operasional Gudang</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            
-            <div onclick="switchTab('data-history')" class="bg-gradient-to-br from-blue-700 to-blue-900 p-5 rounded-3xl border border-blue-600 shadow-lg hover:shadow-blue-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">
-              <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>
-              <div class="w-12 h-12 rounded-2xl bg-blue-500/30 text-blue-200 flex items-center justify-center text-xl mb-4 border border-blue-500/40"><i class="fa-solid fa-clock-rotate-left"></i></div>
-              <h4 class="text-sm font-black text-white">1. Riwayat Ceklis Harian</h4>
-              <p class="text-[10px] text-blue-200/70 mt-1">Pantau & evaluasi histori ceklis operasional gudang Anda.</p>
-            </div>
-            
-            <div onclick="switchTab('order-history')" class="bg-gradient-to-br from-teal-600 to-teal-900 p-5 rounded-3xl border border-teal-500 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group">
-              <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div>
-              <div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-receipt"></i></div>
-              <h4 class="text-sm font-black text-white">2. Data Riwayat Orderan</h4>
-              <p class="text-[10px] text-teal-200/70 mt-1">Lihat status dan cetak dokumen Purchase Order (PO) barang.</p>
-            </div>
-            
-          </div>
-        </div>
+      // === SUNTIKAN KARTU PINTASAN KHUSUS DASHBOARD GUDANG ===
+      var existingGudang = document.getElementById('gudangDashboardPanel');
+      if (existingGudang) { existingGudang.remove(); }
+      
+      if (isGudang && tabDashboardSection) {
+         var gudangHtml = '<div id="gudangDashboardPanel" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-blue-700 flex items-center gap-2"><i class="fa-solid fa-warehouse"></i> Menu Riwayat Operasional Gudang</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">' +
+         
+         // Tombol 1: Riwayat Ceklis Harian
+         '<div onclick="switchTab(\'data-history\')" class="bg-gradient-to-br from-blue-700 to-blue-900 p-5 rounded-3xl border border-blue-600 shadow-lg hover:shadow-blue-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-blue-500/30 text-blue-200 flex items-center justify-center text-xl mb-4 border border-blue-500/40"><i class="fa-solid fa-clock-rotate-left"></i></div><h4 class="text-sm font-black text-white">1. Riwayat Ceklis Harian</h4><p class="text-[10px] text-blue-200/70 mt-1">Pantau & evaluasi histori ceklis operasional gudang Anda.</p></div>' +
+         
+         // Tombol 2: Data Riwayat Orderan
+         '<div onclick="switchTab(\'order-history\')" class="bg-gradient-to-br from-teal-600 to-teal-900 p-5 rounded-3xl border border-teal-500 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-receipt"></i></div><h4 class="text-sm font-black text-white">2. Data Riwayat Orderan</h4><p class="text-[10px] text-teal-200/70 mt-1">Lihat status dan cetak dokumen Purchase Order (PO) barang.</p></div>' +
+         
+         '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', gudangHtml);
       }
 
