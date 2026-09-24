@@ -2332,22 +2332,51 @@
     // ==========================================
     window.selectedMasterItemIds = []; window.masterCurrentPage = 1; window.masterItemsPerPage = 100; window.filteredMasterItems = [];
 
+   // === FUNGSI PENARIKAN DATA MASSAL (BYPASS LIMIT 1000 SUPABASE) ===
+    async function fetchAllMasterBarang() {
+      let allData = [];
+      let limit = 1000;
+      let start = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        // Tarik data secara bertahap (0-999, 1000-1999, dst)
+        const { data, error } = await supaClient.from('master_barang').select('*').order('nama', { ascending: true }).range(start, start + limit - 1);
+        if (error) throw error;
+        
+        allData = allData.concat(data); // Gabungkan data
+        
+        if (data.length < limit) {
+            hasMore = false; // Berhenti jika tarikan terakhir kurang dari 1000
+        } else {
+            start += limit; // Lanjut ke 1000 berikutnya
+        }
+      }
+      return allData;
+    }
+
     async function loadMasterBarangAutocompleteData() {
-      try { const { data } = await supaClient.from('master_barang').select('*'); if (data) { cachedMasterBarang = data; onOrderStoreChange(); } } catch (err) {}
+      try { 
+        cachedMasterBarang = await fetchAllMasterBarang(); 
+        onOrderStoreChange(); 
+      } catch (err) { console.error(err); }
     }
 
     async function loadMasterBarang(forceRefresh) {
       if (forceRefresh === false && window.isMasterLoaded) { filterAndRenderMasterBarang(); return; }
       var tbody = document.getElementById('masterBarangTableBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-emerald-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Menarik data barang...</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-emerald-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Menarik seluruh data katalog barang...</td></tr>';
       try {
-        const { data, error } = await supaClient.from('master_barang').select('*').order('nama', { ascending: true });
-        if (error) throw error;
-        cachedMasterBarang = data || []; window.isMasterLoaded = true;
-        buildMasterDatalists(cachedMasterBarang); filterAndRenderMasterBarang(); 
-      } catch (err) { if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="py-6 text-center text-red-500 font-bold">Koneksi gagal.</td></tr>'; }
+        // Gunakan fungsi bypass limit di sini
+        cachedMasterBarang = await fetchAllMasterBarang();
+        window.isMasterLoaded = true;
+        buildMasterDatalists(cachedMasterBarang); 
+        filterAndRenderMasterBarang(); 
+      } catch (err) { 
+        if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>'; 
+      }
     }
-
+    
     function buildMasterDatalists(items) {
       var itemDl = document.getElementById('itemMasterDatalist'), bcDl = document.getElementById('barcodeMasterDatalist'), supDl = document.getElementById('supplierMasterDatalist');
       if (!itemDl || !bcDl || !supDl) return;
