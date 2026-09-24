@@ -1868,43 +1868,29 @@
     </div>
   </div>
 
-  <!-- MODAL: NO. WA SAYA -->
-  <div id="ownProfileModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
-      <div class="flex justify-between items-center pb-3 border-b">
-        <div>
-          <h3 class="text-sm sm:text-base font-black text-slate-800">No. WhatsApp Saya</h3>
-          <p class="text-[11px] text-slate-500">Perbarui kontak WA & kata sandi Anda</p>
+  <!-- MODAL: AUTO INSTALL PWA (MUNCUL SENDIRI) -->
+  <div id="autoInstallModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 relative overflow-hidden">
+      <!-- Ornamen Latar Belakang -->
+      <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-100 rounded-full blur-2xl"></div>
+      <div class="absolute -left-6 -bottom-6 w-24 h-24 bg-teal-100 rounded-full blur-2xl"></div>
+      
+      <div class="relative z-10">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center text-3xl font-black mx-auto mb-5 shadow-lg shadow-emerald-500/40 border-4 border-white">
+          IM
         </div>
-        <button onclick="closeModal('ownProfileModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <form id="ownProfileForm" onsubmit="submitOwnProfile(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Pegawai</label>
-          <input type="text" id="ownProfileNameDisplay" readonly class="w-full p-2.5 bg-slate-100 border rounded-xl font-bold text-slate-600">
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Nomor WhatsApp Aktif *</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600"><i class="fa-brands fa-whatsapp font-bold text-base"></i></span>
-            <input type="text" id="ownProfileNoWA" required placeholder="08xxxxxxxxxx" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl font-mono font-bold outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Ganti Password (Kosongkan bila tidak diubah)</label>
-          <input type="password" id="ownProfilePassword" placeholder="Password baru..." class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
-        </div>
-
-        <div class="flex justify-end gap-2 pt-3 border-t">
-          <button type="button" onclick="closeModal('ownProfileModal')" class="px-4 py-2.5 border rounded-xl font-bold text-slate-600">Batal</button>
-          <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow active:scale-95 transition">
-            <i class="fa-solid fa-check mr-1.5"></i>Simpan No. WA
+        <h3 class="text-xl font-black text-slate-800 tracking-tight">Install Aplikasi ISLAM MART</h3>
+        <p class="text-xs text-slate-500 mt-2.5 mb-6 leading-relaxed">Pasang aplikasi ini di HP Anda untuk akses sistem yang lebih cepat, tampilan layar penuh, dan tanpa perlu mengetik link lagi.</p>
+        
+        <div class="flex flex-col gap-3 mt-4">
+          <button onclick="promptInstallPwa()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-wider rounded-xl text-xs shadow-lg shadow-emerald-600/30 active:scale-95 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-download text-sm"></i> Install Sekarang
+          </button>
+          <button onclick="closeModal('autoInstallModal')" class="w-full py-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-bold rounded-xl text-xs transition">
+            Nanti Saja
           </button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -3837,9 +3823,40 @@
       window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
     }
 
-    var deferredPrompt; window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(document.getElementById('btnInstallPwa')) document.getElementById('btnInstallPwa').style.display = 'flex'; });
-    function promptInstallPwa() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(c => { if(c.outcome === 'accepted') showToast('Aplikasi dipasang!', 'success'); deferredPrompt = null; }); } else showToast('Gunakan fitur Tambah ke Layar Utama di browser Anda.', 'info'); }
-  
+    // === SISTEM AUTO-INSTALL PWA ===
+    var deferredPrompt; 
+    window.addEventListener('beforeinstallprompt', e => { 
+        e.preventDefault(); 
+        deferredPrompt = e; 
+        
+        // 1. Tetap munculkan tombol kecil di header
+        if(document.getElementById('btnInstallPwa')) {
+            document.getElementById('btnInstallPwa').style.display = 'flex'; 
+        }
+        
+        // 2. MUNCULKAN POP-UP BESAR SECARA OTOMATIS KE LAYAR
+        // Diberi jeda 1,5 detik setelah web terbuka agar terlihat natural
+        setTimeout(() => {
+            openModal('autoInstallModal');
+        }, 1500);
+    });
+    
+    function promptInstallPwa() { 
+        if (deferredPrompt) { 
+            deferredPrompt.prompt(); 
+            deferredPrompt.userChoice.then(c => { 
+                if(c.outcome === 'accepted') {
+                    showToast('Aplikasi berhasil dipasang!', 'success'); 
+                    closeModal('autoInstallModal');
+                    if(document.getElementById('btnInstallPwa')) document.getElementById('btnInstallPwa').style.display = 'none';
+                }
+                deferredPrompt = null; 
+            }); 
+        } else { 
+            showToast('Gunakan menu "Tambahkan ke Layar Utama" di browser Anda.', 'info'); 
+        } 
+    }
+    
     function cetakLaporanBulanan() {
       var bulanVal = document.getElementById('filterLaporanBulan').value;
       document.getElementById('cetakLaporanBulan').innerText = bulanVal || 'Semua Waktu';
