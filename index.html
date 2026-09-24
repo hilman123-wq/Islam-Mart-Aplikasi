@@ -2596,8 +2596,8 @@
    async function executeDeleteAllMasterItems() {
       showLoading('Menghapus seluruh data master barang...');
       try {
-        // Metode paling aman & bersih: Hapus semua baris yang memiliki ID tidak kosong
-        const { error } = await supaClient.from('master_barang').delete().not('id', 'is', null);
+        // Hapus massal dengan mencocokkan UUID kosong (Paling aman untuk Supabase)
+        const { error } = await supaClient.from('master_barang').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         
         hideLoading();
         if (error) throw error;
