@@ -2692,21 +2692,21 @@
         var unitToko = document.getElementById('importBarangIM').value; 
         
         var rawData = JSON.parse(j);
-        showLoading('Menyinkronkan ' + rawData.length + ' data (proses bertahap)...');
+        showLoading('Menyaring duplikat & menyinkronkan data...');
 
         try {
-            // 1. Ambil data lama untuk dicocokkan (Cegah duplikat & amankan gambar lama)
+            // 1. Ambil data lama dari database
             const existingItems = await fetchAllMasterBarang();
 
             var existingMap = {};
             (existingItems || []).forEach(it => {
                 var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
-                // Simpan ID dan gambar lama ke dalam memori
                 existingMap[key] = { id: it.id, gambar: it.gambar };
             });
 
-            var itemsToInsert = [];
-            var itemsToUpdate = [];
+            // MENGGUNAKAN MAP UNTUK MENCEGAH BARANG DOBEL DARI DALAM EXCEL
+            var insertMap = {};
+            var updateMap = {};
 
             rawData.forEach(row => {
                 var barcode = String(row["Barcode"] || row["barcode"] || row["BARCODE"] || "").trim();
@@ -2722,13 +2722,11 @@
                     var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
                     var matchObj = existingMap[lookupKey];
 
-                    // TRICK AMAN: Pertahankan gambar lama jika kolom gambar di Excel kosong
                     var finalGambar = gbr;
                     if (!finalGambar && matchObj && matchObj.gambar) {
                         finalGambar = matchObj.gambar;
                     }
 
-                    // Struktur PASTI SERAGAM untuk semua baris
                     var payload = {
                         barcode: barcode,
                         nama: nama,
@@ -2742,16 +2740,20 @@
                     };
                     
                     if (matchObj) {
-                        payload.id = matchObj.id; // Wajib ada ID untuk update
-                        itemsToUpdate.push(payload);
+                        payload.id = matchObj.id; 
+                        // Jika ada barang kembar di Excel, ini akan otomatis menimpa/menggabungkannya jadi 1
+                        updateMap[matchObj.id] = payload;
                     } else {
-                        itemsToInsert.push(payload); // Tanpa ID untuk insert
+                        insertMap[lookupKey] = payload; 
                     }
                 }
             });
 
+            // Ubah Map kembali menjadi Array untuk dikirim ke Supabase
+            var itemsToInsert = Object.values(insertMap);
+            var itemsToUpdate = Object.values(updateMap);
+
             // 2. EKSEKUSI JALUR AMAN (BATCH PROCESSING)
-            // Dipecah per 500 baris agar server Supabase tidak kewalahan
             var BATCH_SIZE = 500;
 
             if (itemsToInsert.length > 0) {
