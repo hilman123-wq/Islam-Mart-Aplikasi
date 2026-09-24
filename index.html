@@ -1508,7 +1508,7 @@
           </div>
           <div class="mt-2.5 p-2 bg-slate-100 rounded-lg text-[9px] text-slate-600">
             <p class="font-bold text-slate-800 mb-0.5">Format Judul Kolom Excel (Baris ke-1 harus persis ini):</p>
-            <p class="font-mono">Barcode | Nama Barang | Kategori | Qty | Harga Beli | Harga Jual | Supplier</p>
+            <p class="font-mono text-[10px]">Barcode | Nama Barang | Kategori | Qty | Harga Beli | Harga Jual | Supplier | Gambar</p>
           </div>
         </div>
 
@@ -2670,6 +2670,8 @@
             var hb = parseFloat(row["Harga Beli"] || row["harga beli"] || row["harga_beli"] || 0);
             var hj = parseFloat(row["Harga Jual"] || row["harga jual"] || row["harga_jual"] || 0);
             var sup = row["Supplier"] || row["supplier"] || "";
+            // Penarik Link Gambar dari Excel
+            var gbr = row["Gambar"] || row["gambar"] || row["Link Gambar"] || "";
 
             if (nama) { 
                 payload.push({
@@ -2680,6 +2682,7 @@
                     harga_beli: isNaN(hb) ? 0 : hb,
                     harga_jual: isNaN(hj) ? 0 : hj,
                     supplier: String(sup),
+                    gambar: String(gbr), // <-- Menyimpan gambar secara massal
                     im: unitToko 
                 });
             }
