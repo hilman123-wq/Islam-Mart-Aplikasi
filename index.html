@@ -584,15 +584,15 @@
                   <i class="fa-solid fa-print text-amber-400"></i>
                   <span>Cetak Label (A4)</span>
                 </button>
-                <button type="button" onclick="openImportBarangModal()" class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                <button type="button" id="btnMasterImport" onclick="openImportBarangModal()" class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
                   <i class="fa-solid fa-file-excel"></i>
                   <span>Import</span>
                 </button>
-                <button type="button" onclick="openItemFormModal()" class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                <button type="button" id="btnMasterTambah" onclick="openItemFormModal()" class="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
                   <i class="fa-solid fa-plus"></i>
                   <span>Tambah Baru</span>
                 </button>
-                <button type="button" onclick="promptDeleteAllMasterItems()" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                <button type="button" id="btnMasterHapusSemua" onclick="promptDeleteAllMasterItems()" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
                   <i class="fa-solid fa-trash-arrow-up"></i>
                   <span>Hapus Semua</span>
                 </button>
@@ -611,7 +611,7 @@
                   <option value="Banin">Khusus Banin</option>
                   <option value="Banat">Khusus Banat</option>
                 </select>
-              <div>
+              </div>div>
                 <select id="filterItemCategory" onchange="filterAndRenderMasterBarang()" class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
                   <option value="ALL">Semua Kategori</option>
                   <option value="Makanan">Makanan</option>
@@ -2124,6 +2124,23 @@
           if (mainContent) mainContent.classList.remove('sm:ml-72');
       }
 
+      // HIDE/SHOW TOMBOL MASTER BARANG UNTUK KASIR
+      var btnImport = document.getElementById('btnMasterImport');
+      var btnTambah = document.getElementById('btnMasterTambah');
+      var btnHapusSemua = document.getElementById('btnMasterHapusSemua');
+      
+      if (btnImport && btnTambah && btnHapusSemua) {
+          if (isKasir && !isKepalaAdmin && !isAdmin) {
+              btnImport.style.display = 'none';
+              btnTambah.style.display = 'none';
+              btnHapusSemua.style.display = 'none';
+          } else {
+              btnImport.style.display = 'flex';
+              btnTambah.style.display = 'flex';
+              btnHapusSemua.style.display = 'flex';
+          }
+      }
+
       loadCriteriaAndBuildForms();
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
@@ -2554,6 +2571,14 @@
         var actualIndex = startIndex + i + 1;
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
         
+        // Deteksi apakah yang login adalah Kasir
+        var isRoleKasir = currentUser && String(currentUser.role || '').toLowerCase().includes('kasir');
+        
+        // Pisahkan tombol-tombol berdasarkan Hak Akses
+        var btnCetak = '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700" title="Cetak Label"><i class="fa-solid fa-tag"></i></button>';
+        var btnEdit = (!isRoleKasir) ? '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit Barang"><i class="fa-solid fa-pen-to-square"></i></button>' : '';
+        var btnHapus = (!isRoleKasir) ? '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + String(it.nama).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>' : '';
+
         html += '<tr class="hover:bg-slate-50">' +
           '<td class="py-3 px-3 text-center"><input type="checkbox" value="' + it.id + '" onchange="handleItemSelection(this)" class="item-select-checkbox w-4 h-4 rounded text-emerald-600" ' + isChecked + '></td>' +
           '<td class="py-3 px-2 text-center font-bold text-slate-400">' + actualIndex + '</td>' +
@@ -2566,9 +2591,7 @@
           '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + Number(it.harga_beli || it.hargaBeli || 0).toLocaleString('id-ID') + '</td>' +
           '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</td>' +
           '<td class="py-3 px-3 text-center"><div class="flex items-center justify-center gap-1.5">' +
-            '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700" title="Cetak Label"><i class="fa-solid fa-tag"></i></button>' +
-            '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit Barang"><i class="fa-solid fa-pen-to-square"></i></button>' +
-            '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + String(it.nama).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>' +
+            btnCetak + btnEdit + btnHapus +
           '</div></td></tr>';
       });
 
