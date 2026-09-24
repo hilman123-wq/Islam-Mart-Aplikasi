@@ -2692,20 +2692,20 @@
         var unitToko = document.getElementById('importBarangIM').value; 
         
         var rawData = JSON.parse(j);
-        var successCount = 0;
         var updateCount = 0;
         var insertCount = 0;
 
         showLoading('Menganalisis & menyinkronkan data barang...');
         try {
-            // 1. Ambil seluruh data master barang yang ada di Supabase saat ini
+            // 1. Ambil seluruh data master barang yang ada di Supabase saat ini (Untuk cek duplikat)
             const { data: existingItems, error: fetchErr } = await supaClient.from('master_barang').select('id, barcode, nama, im');
             if (fetchErr) throw fetchErr;
 
-            // Buat kamus (map) pencocokan berdasarkan Barcode dan Nama (lowercase agar akurat)
+            // Buat kamus (map) pencocokan berdasarkan Barcode dan Nama
             var existingMap = {};
             (existingItems || []).forEach(it => {
-                var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim().toLowerCase() + '_' + String(it.im || '').trim().toLowerCase());
+                // Kunci unik: gabungan barcode + nama barang + unit toko (huruf kecil semua agar pendeteksian sangat akurat)
+                var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
                 existingMap[key] = it.id;
             });
 
@@ -2723,48 +2723,51 @@
                 var gbr = String(row["Gambar"] || row["gambar"] || row["Link Gambar"] || "").trim();
 
                 if (nama) {
-                    var lookupKey = barcode + '_' + nama.toLowerCase() + '_' + unitToko.toLowerCase();
+                    // Cari apakah kombinasi barcode + nama + toko ini sudah ada di sistem
+                    var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
                     var matchId = existingMap[lookupKey];
 
                     var itemPayload = {
                         barcode: barcode,
                         nama: nama,
                         kategori: kat,
-                        qty: isNaN(qty) ? 0 : qty,
-                        harga_beli: isNaN(hb) ? 0 : hb,
-                        harga_jual: isNaN(hj) ? 0 : hj,
-                        supplier: sup,
-                        gambar: gbr,
+                        qty: isNaN(qty) ? 0 : qty,           // Update Qty
+                        harga_beli: isNaN(hb) ? 0 : hb,      // Update Harga Beli
+                        harga_jual: isNaN(hj) ? 0 : hj,      // Update Harga Jual
+                        supplier: sup,                       // Update Supplier
                         im: unitToko
                     };
+                    
+                    // Tambahkan gambar hanya jika di Excel ada isinya (agar gambar lama tidak terhapus)
+                    if (gbr) itemPayload.gambar = gbr;
 
                     if (matchId) {
-                        // Jika sudah ada, masukkan ke daftar Update (berdasarkan ID uniknya)
+                        // BARANG DITEMUKAN: Masukkan ke antrean Update (Perbarui harga & stok)
                         itemsToUpdate.push({ id: matchId, ...itemPayload });
                     } else {
-                        // Jika belum ada, masukkan ke daftar Insert (Barang Baru)
+                        // BARANG BARU: Masukkan ke antrean Insert (Tambah baru)
                         itemsToInsert.push(itemPayload);
                     }
                 }
             });
 
-            // 2. Eksekusi Insert untuk barang-barang baru
+            // 2. Eksekusi Insert untuk barang-barang yang benar-benar baru
             if (itemsToInsert.length > 0) {
                 const { error: insErr } = await supaClient.from('master_barang').insert(itemsToInsert);
                 if (insErr) throw insErr;
                 insertCount = itemsToInsert.length;
             }
 
-            // 3. Eksekusi Update satu-satu untuk barang yang harganya berubah
+            // 3. Eksekusi Update untuk barang lama yang harga/stoknya berubah
             for (let item of itemsToUpdate) {
                 var updateId = item.id;
-                delete item.id; // Hapus ID dari payload update
+                delete item.id; // Hapus ID dari payload sebelum di-update ke Supabase
                 const { error: updErr } = await supaClient.from('master_barang').update(item).eq('id', updateId);
                 if (!updErr) updateCount++;
             }
 
             hideLoading();
-            showToast('Sinkronisasi Berhasil! ' + insertCount + ' barang baru ditambahkan, ' + updateCount + ' harga/data lama diperbarui.', 'success');
+            showToast('Sinkronisasi Excel Berhasil! ' + insertCount + ' barang baru ditambah, ' + updateCount + ' harga/data lama diperbarui.', 'success');
             closeModal('importBarangModal');
             loadMasterBarang(true);
 
