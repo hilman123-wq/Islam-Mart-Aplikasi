@@ -453,8 +453,16 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <input type="text" id="poSearchInput" oninput="renderPoCatalog()" placeholder="Ketik nama barang / barcode..." class="w-full pl-9 pr-3 py-2.5 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-600 shadow-sm">
                   </div>
-                  <select id="poCatFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/4">
+                 <select id="poCatFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/4">
                     <option value="ALL">Semua Kategori</option>
+                    <option value="Makanan">Makanan</option>
+                    <option value="Minuman">Minuman</option>
+                    <option value="Peralatan">Peralatan</option>
+                    <option value="Seragam dan Pakaian">Seragam & Pakaian</option>
+                    <option value="Obat-obatan">Obat-obatan</option>
+                    <option value="Makanan Basah">Makanan Basah</option>
+                    <option value="ATK">ATK</option>
+                    <option value="Pembersih">Pembersih</option>
                   </select>
                   <select id="poSortFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/4">
                     <option value="nama_asc">Urut A-Z</option>
@@ -574,15 +582,19 @@
                   <option value="Banin">Khusus Banin</option>
                   <option value="Banat">Khusus Banat</option>
                 </select>
-              </div>
-              <div class="flex gap-2">
+              <div>
                 <select id="filterItemCategory" onchange="filterAndRenderMasterBarang()" class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
                   <option value="ALL">Semua Kategori</option>
-                  <!-- Diisi otomatis dari Supabase -->
+                  <option value="Makanan">Makanan</option>
+                  <option value="Minuman">Minuman</option>
+                  <option value="Peralatan">Peralatan</option>
+                  <option value="Seragam dan Pakaian">Seragam & Pakaian</option>
+                  <option value="Obat-obatan">Obat-obatan</option>
+                  <option value="Makanan Basah">Makanan Basah</option>
+                  <option value="ATK">ATK</option>
+                  <option value="Pembersih">Pembersih</option>
                 </select>
-                <button type="button" onclick="openKelolaKategoriBarangModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-slate-700 transition" title="Kelola Kategori"><i class="fa-solid fa-gear"></i></button>
               </div>
-              <div>
                 <select id="filterItemSort" onchange="filterAndRenderMasterBarang()" class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
                   <option value="nama_asc">Urut: Nama (A-Z)</option>
                   <option value="nama_desc">Urut: Nama (Z-A)</option>
@@ -1514,7 +1526,7 @@
               <option value="Makanan">Makanan</option>
               <option value="Minuman">Minuman</option>
               <option value="Peralatan">Peralatan</option>
-              <option value="Seragam dan Pakaian">Seragam dan Pakaian</option>
+              <option value="Seragam dan Pakaian">Seragam & Pakaian</option>
               <option value="Obat-obatan">Obat-obatan</option>
               <option value="Makanan Basah">Makanan Basah</option>
               <option value="ATK">ATK</option>
@@ -2376,7 +2388,7 @@
         if (tbody) tbody.innerHTML = '<tr><td colspan="11" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>'; 
       }
     }
-    
+
     function buildMasterDatalists(items) {
       var itemDl = document.getElementById('itemMasterDatalist'), bcDl = document.getElementById('barcodeMasterDatalist'), supDl = document.getElementById('supplierMasterDatalist');
       if (!itemDl || !bcDl || !supDl) return;
