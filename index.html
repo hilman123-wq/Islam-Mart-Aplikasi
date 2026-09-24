@@ -592,6 +592,10 @@
                   <i class="fa-solid fa-plus"></i>
                   <span>Tambah Baru</span>
                 </button>
+                <button type="button" onclick="promptDeleteAllMasterItems()" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-trash-arrow-up"></i>
+                  <span>Hapus Semua</span>
+                </button>
               </div>
             </div>
 
@@ -2539,12 +2543,11 @@
       var totalItems = window.filteredMasterItems.length;
       if (totalItems === 0) { tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-400">Tidak ada data barang.</td></tr>'; return; }
 
-      // Potong data untuk Paginasi
       var startIndex = (window.masterCurrentPage - 1) * window.masterItemsPerPage;
       var endIndex = startIndex + window.masterItemsPerPage;
       var itemsToRender = window.filteredMasterItems.slice(startIndex, endIndex);
 
-      var html = '', isAdmin = isUserAdmin(currentUser);
+      var html = '';
 
       itemsToRender.forEach((it, i) => {
         var isChecked = window.selectedMasterItemIds.includes(it.id) ? 'checked' : '';
@@ -2562,10 +2565,10 @@
           '<td class="py-3 px-4 text-slate-600">' + (it.supplier||'-') + '</td>' +
           '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + Number(it.harga_beli || it.hargaBeli || 0).toLocaleString('id-ID') + '</td>' +
           '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</td>' +
-          '<td class="py-3 px-3 text-center"><div class="flex items-center justify-center gap-1">' +
-            '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700"><i class="fa-solid fa-tag"></i></button>' +
-            '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-slate-400 hover:text-emerald-600"><i class="fa-solid fa-pen-to-square"></i></button>' +
-            (isAdmin ? '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + it.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
+          '<td class="py-3 px-3 text-center"><div class="flex items-center justify-center gap-1.5">' +
+            '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700" title="Cetak Label"><i class="fa-solid fa-tag"></i></button>' +
+            '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit Barang"><i class="fa-solid fa-pen-to-square"></i></button>' +
+            '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + String(it.nama).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>' +
           '</div></td></tr>';
       });
 
@@ -2580,6 +2583,29 @@
           '</div></div></td></tr>';
       }
       tbody.innerHTML = html;
+    }
+
+    // Fungsi Tambahan untuk Hapus Semua Barang
+    function promptDeleteAllMasterItems() {
+      if (cachedMasterBarang.length === 0) return showToast('Tidak ada data barang untuk dihapus.', 'info');
+      if (confirm('PERINGATAN KERAS!\n\nAnda akan MENGHAPUS SEMUA data master barang (' + cachedMasterBarang.length + ' item) secara permanen dari database.\n\nYakin ingin melanjutkan?')) {
+          executeDeleteAllMasterItems();
+      }
+    }
+
+    async function executeDeleteAllMasterItems() {
+      showLoading('Menghapus seluruh data master barang...');
+      try {
+        // Hapus berdasarkan kondisi im atau seluruh isi tabel master_barang
+        const { error } = await supaClient.from('master_barang').delete().neq('id', '0'); // Hapus semua baris
+        hideLoading();
+        if (error) throw error;
+        showToast('Semua data master barang berhasil dihapus!', 'success');
+        loadMasterBarang(true);
+      } catch (err) {
+        hideLoading();
+        showToast('Gagal menghapus semua: ' + err.message, 'error');
+      }
     }
 
     function openItemFormModal() {
