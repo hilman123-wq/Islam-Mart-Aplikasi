@@ -2692,10 +2692,10 @@
         var unitToko = document.getElementById('importBarangIM').value; 
         
         var rawData = JSON.parse(j);
-        showLoading('Menyinkronkan data massal dalam 1 detik...');
+        showLoading('Menyinkronkan data massal secara instan...');
 
         try {
-            // 1. Ambil data lama untuk dicocokkan
+            // 1. Ambil data lama untuk dicocokkan (Cegah duplikat)
             const { data: existingItems, error: fetchErr } = await supaClient.from('master_barang').select('id, barcode, nama, im');
             if (fetchErr) throw fetchErr;
 
@@ -2705,8 +2705,9 @@
                 existingMap[key] = it.id;
             });
 
-            // Siapkan satu wadah besar (Bulk Array) untuk menampung semua data
-            var bulkUpsertData = [];
+            // PISAHKAN JALUR: Satu untuk Insert (Baru), Satu untuk Update (Lama)
+            var itemsToInsert = [];
+            var itemsToUpdate = [];
 
             rawData.forEach(row => {
                 var barcode = String(row["Barcode"] || row["barcode"] || row["BARCODE"] || "").trim();
@@ -2722,6 +2723,7 @@
                     var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
                     var matchId = existingMap[lookupKey];
 
+                    // BENTUK PAYLOAD SERAGAM (Semua kolom wajib dideklarasikan meskipun kosong)
                     var payload = {
                         barcode: barcode,
                         nama: nama,
@@ -2730,35 +2732,40 @@
                         harga_beli: isNaN(hb) ? 0 : hb,
                         harga_jual: isNaN(hj) ? 0 : hj,
                         supplier: sup,
-                        im: unitToko
+                        im: unitToko,
+                        gambar: gbr 
                     };
                     
-                    if (gbr) payload.gambar = gbr;
-                    
-                    // JIKA ADA MATCH ID: Kita sertakan ID lamanya agar Supabase tahu ini adalah proses "Timpa/Update"
                     if (matchId) {
-                        payload.id = matchId; 
+                        payload.id = matchId; // Wajib ada ID untuk update
+                        itemsToUpdate.push(payload);
+                    } else {
+                        itemsToInsert.push(payload); // Tanpa ID untuk insert baru
                     }
-                    
-                    bulkUpsertData.push(payload);
                 }
             });
 
-            // 2. Eksekusi JALUR CEPAT (Bulk Upsert)
-            // Mengirim seluruh ribuan data sekaligus dalam 1 kali pengiriman (1 Request)
-            if (bulkUpsertData.length > 0) {
-                const { error: upsertErr } = await supaClient.from('master_barang').upsert(bulkUpsertData, { onConflict: 'id' });
-                if (upsertErr) throw upsertErr;
+            // 2. Eksekusi JALUR CEPAT (Bulk Insert & Bulk Upsert)
+            // Jalur A: Masukkan rombongan barang baru
+            if (itemsToInsert.length > 0) {
+                const { error: insErr } = await supaClient.from('master_barang').insert(itemsToInsert);
+                if (insErr) throw insErr;
+            }
+
+            // Jalur B: Timpa rombongan barang lama dengan harga/stok baru
+            if (itemsToUpdate.length > 0) {
+                const { error: updErr } = await supaClient.from('master_barang').upsert(itemsToUpdate, { onConflict: 'id' });
+                if (updErr) throw updErr;
             }
 
             hideLoading();
-            showToast('Sinkronisasi Berhasil! ' + bulkUpsertData.length + ' barang telah diimpor/diperbarui dengan kilat.', 'success');
+            showToast('Sukses! ' + itemsToInsert.length + ' barang baru, ' + itemsToUpdate.length + ' harga diperbarui.', 'success');
             closeModal('importBarangModal');
             loadMasterBarang(true);
 
         } catch(err) {
             hideLoading();
-            showToast('Gagal Sinkronisasi: ' + err.message, 'error');
+            showToast('Gagal Sinkronisasi: Cek Data Excel', 'error');
             console.error("Detail Error Import:", err);
         }
     }
