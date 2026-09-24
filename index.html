@@ -1285,10 +1285,22 @@
         <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
       </button>
+
+      <!-- TOMBOL KHUSUS GUDANG -->
+      <button id="btnNavBtmLapMingguan" onclick="switchTab('weekly-report')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
+        <i class="fa-solid fa-calendar-week text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Minggu</span>
+      </button>
+
+      <button id="btnNavBtmLapBulanan" onclick="switchTab('monthly-raport')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
+        <i class="fa-solid fa-award text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Bulan</span>
+      </button>
+      <!-- END TOMBOL KHUSUS GUDANG -->
       
-      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
         <i class="fa-solid fa-folder-open text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Laporan</span>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Arsip</span>
       </button>
       
       <button id="btnNavBtmForm" onclick="goToMyChecklist()" class="flex-1 flex flex-col items-center gap-1 text-emerald-600 font-extrabold relative -top-3 sm:-top-5 transition-transform active:scale-95">
@@ -2028,28 +2040,34 @@
       var btmLaporan = document.getElementById('btnNavBtmLaporan');
       var btmForm = document.getElementById('btnNavBtmForm');
       var btmMenu = document.getElementById('btnNavBtmMenu');
+      var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
+      var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
 
-      // Default: Sembunyikan menu opsional terlebih dahulu agar bersih
+      // Default: Sembunyikan semua menu opsional terlebih dahulu
       if(btmPO) btmPO.style.display = 'none';
       if(btmBarang) btmBarang.style.display = 'none';
       if(btmLaporan) btmLaporan.style.display = 'none';
       if(btmForm) btmForm.style.display = 'none';
       if(btmMenu) btmMenu.style.display = 'none';
+      if(btmLapMingguan) btmLapMingguan.style.display = 'none';
+      if(btmLapBulanan) btmLapBulanan.style.display = 'none';
 
-      // ATURAN 1: KASIR (Beranda, PO, Barang, Isi Form, Profil, Keluar)
+      // ATURAN 1: KASIR (Beranda, PO, Barang, Isi Form)
       if (isKasir && !isKepalaAdmin) {
           if(btmForm) btmForm.style.display = 'flex';
           if(btmPO) btmPO.style.display = 'flex';
           if(btmBarang) btmBarang.style.display = 'flex';
       } 
-      // ATURAN 2: GUDANG (Beranda, PO, Barang, Isi Form, Menu Sidebar, Profil, Keluar)
+      // ATURAN 2: GUDANG (Beranda, Lap Mingguan, Lap Bulanan, Arsip Laporan, Barang)
       else if (isGudang) {
-          if(btmForm) btmForm.style.display = 'flex';
-          if(btmPO) btmPO.style.display = 'flex';
+          if(btmLapMingguan) btmLapMingguan.style.display = 'flex';
+          if(btmLapBulanan) btmLapBulanan.style.display = 'flex';
+          if(btmLaporan) btmLaporan.style.display = 'flex';
           if(btmBarang) btmBarang.style.display = 'flex';
-          if(btmMenu) btmMenu.style.display = 'flex'; 
+          // Catatan: Tombol "Isi Form" hijau di tengah dihilangkan, 
+          // Gudang bisa mengisi form dari spanduk notifikasi di Dashboard.
       } 
-      // ATURAN 3: KEUANGAN (Beranda, Laporan, Isi Form, Profil, Keluar)
+      // ATURAN 3: KEUANGAN (Beranda, Laporan, Isi Form)
       else if (isKeuangan) {
           if(btmForm) btmForm.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
@@ -2057,7 +2075,6 @@
       // ATURAN 4: KEPALA ADMINISTRASI / ADMIN (Hanya Beranda & Laporan)
       else if (isAdmin || isKepalaAdmin) {
           if(btmLaporan) btmLaporan.style.display = 'flex';
-          // PO dan Barang tidak dimunculkan, otomatis tersembunyi
       }
 
       // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
@@ -2342,6 +2359,22 @@
       if (existingAdmin) { existingAdmin.remove(); } 
 
       var tabDashboardSection = document.getElementById('tab-dashboard');
+      // === SUNTIKAN KARTU PINTASAN KHUSUS DASHBOARD GUDANG ===
+      var existingGudang = document.getElementById('gudangDashboardPanel');
+      if (existingGudang) { existingGudang.remove(); }
+      
+      if (isGudang && tabDashboardSection) {
+         var gudangHtml = '<div id="gudangDashboardPanel" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-blue-700 flex items-center gap-2"><i class="fa-solid fa-warehouse"></i> Menu Riwayat Operasional Gudang</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">' +
+         
+         // Tombol 1: Riwayat Ceklis Harian
+         '<div onclick="switchTab(\'data-history\')" class="bg-gradient-to-br from-blue-700 to-blue-900 p-5 rounded-3xl border border-blue-600 shadow-lg hover:shadow-blue-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-blue-500/30 text-blue-200 flex items-center justify-center text-xl mb-4 border border-blue-500/40"><i class="fa-solid fa-clock-rotate-left"></i></div><h4 class="text-sm font-black text-white">1. Riwayat Ceklis Harian</h4><p class="text-[10px] text-blue-200/70 mt-1">Pantau & evaluasi histori ceklis operasional gudang Anda.</p></div>' +
+         
+         // Tombol 2: Data Riwayat Orderan
+         '<div onclick="switchTab(\'order-history\')" class="bg-gradient-to-br from-teal-600 to-teal-900 p-5 rounded-3xl border border-teal-500 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-receipt"></i></div><h4 class="text-sm font-black text-white">2. Data Riwayat Orderan</h4><p class="text-[10px] text-teal-200/70 mt-1">Lihat status dan cetak dokumen Purchase Order (PO) barang.</p></div>' +
+         
+         '</div></div>';
+         tabDashboardSection.insertAdjacentHTML('beforeend', gudangHtml);
+      }
 
       if (isKeuangan && tabDashboardSection) {
          var keuHtml = '<div id="keuanganModernDashboard" class="space-y-4 mt-2 mb-6"><h3 class="text-xs font-black uppercase tracking-wider text-purple-700 flex items-center gap-2"><i class="fa-solid fa-wallet"></i> Pusat Operasional Keuangan IM ' + myUnit + '</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"><div onclick="switchTab(\'clhka-form\')" class="bg-gradient-to-br from-purple-800 to-purple-950 p-5 rounded-3xl border border-purple-700 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-file-invoice-dollar"></i></div><h4 class="text-sm font-black text-white">1. Form Ceklis</h4><p class="text-[10px] text-purple-200/70 mt-1">Buka form rekonsiliasi kasir & brankas harian.</p></div><div onclick="switchTab(\'data-history\')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md hover:-translate-y-1 transition duration-300 cursor-pointer group"><div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4 group-hover:bg-indigo-100 transition"><i class="fa-solid fa-clock-rotate-left"></i></div><h4 class="text-sm font-black text-slate-800">2. Riwayat Ceklis</h4><p class="text-[10px] text-slate-500 mt-1">Pantau histori form ceklis yang sudah disubmit.</p></div></div></div>';
