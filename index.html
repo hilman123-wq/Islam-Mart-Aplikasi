@@ -453,17 +453,15 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <input type="text" id="poSearchInput" oninput="renderPoCatalog()" placeholder="Ketik nama barang / barcode..." class="w-full pl-9 pr-3 py-2.5 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-600 shadow-sm">
                   </div>
-                  <select id="poCatFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/3">
+                  <select id="poCatFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/4">
                     <option value="ALL">Semua Kategori</option>
-                    <option value="Makanan">Makanan</option>
-                    <option value="Minuman">Minuman</option>
-                    <option value="Peralatan">Peralatan</option>
-                    <option value="Seragam dan Pakaian">Seragam dan Pakaian</option>
-                    <option value="Obat-obatan">Obat-obatan</option>
-                    <option value="Makanan Basah">Makanan Basah</option>
-                    <option value="ATK">ATK</option>
-                    <option value="Pembersih">Pembersih</option>
-                </select>
+                  </select>
+                  <select id="poSortFilter" onchange="renderPoCatalog()" class="p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none shadow-sm sm:w-1/4">
+                    <option value="nama_asc">Urut A-Z</option>
+                    <option value="nama_desc">Urut Z-A</option>
+                    <option value="harga_asc">Termurah</option>
+                    <option value="harga_desc">Termahal</option>
+                  </select>
                 </div>
                 <!-- List Hasil Pencarian -->
                 <div id="poCatalogContainer" class="max-h-[220px] overflow-y-auto custom-scrollbar bg-white border border-teal-200 rounded-xl divide-y">
@@ -564,8 +562,8 @@
               </div>
             </div>
 
-            <!-- 2. Filter & Pencarian -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 mb-4">
+           <!-- 2. Filter & Pencarian -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 mb-4">
               <div class="sm:col-span-2 relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
                 <input type="text" id="filterItemSearch" oninput="filterAndRenderMasterBarang()" placeholder="Cari nama barang, barcode, supplier..." class="w-full pl-8 pr-3 py-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-600">
@@ -577,17 +575,21 @@
                   <option value="Banat">Khusus Banat</option>
                 </select>
               </div>
-              <div>
+              <div class="flex gap-2">
                 <select id="filterItemCategory" onchange="filterAndRenderMasterBarang()" class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
                   <option value="ALL">Semua Kategori</option>
-                  <option value="Makanan">Makanan</option>
-                  <option value="Minuman">Minuman</option>
-                  <option value="Peralatan">Peralatan</option>
-                  <option value="Seragam dan Pakaian">Seragam</option>
-                  <option value="Obat-obatan">Obat Obatan</option>
-                  <option value="Makanan Basah">Makanan Basah</option>
-                  <option value="ATK">ATK</option>
-                  <option value="Pembersih">Pembersih</option>
+                  <!-- Diisi otomatis dari Supabase -->
+                </select>
+                <button type="button" onclick="openKelolaKategoriBarangModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-slate-700 transition" title="Kelola Kategori"><i class="fa-solid fa-gear"></i></button>
+              </div>
+              <div>
+                <select id="filterItemSort" onchange="filterAndRenderMasterBarang()" class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
+                  <option value="nama_asc">Urut: Nama (A-Z)</option>
+                  <option value="nama_desc">Urut: Nama (Z-A)</option>
+                  <option value="stok_asc">Urut: Stok (Terdikit)</option>
+                  <option value="stok_desc">Urut: Stok (Terbanyak)</option>
+                  <option value="harga_asc">Urut: Harga (Termurah)</option>
+                  <option value="harga_desc">Urut: Harga (Termahal)</option>
                 </select>
               </div>
             </div>
@@ -2365,22 +2367,37 @@
       var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase();
       var imFilter = document.getElementById('filterItemIM').value;
       var kat = document.getElementById('filterItemCategory').value;
+      var sortBy = document.getElementById('filterItemSort') ? document.getElementById('filterItemSort').value : 'nama_asc';
       
       window.filteredMasterItems = cachedMasterBarang.filter(it => {
         var matchIM = (imFilter === 'ALL') || (it.im === imFilter);
-        
-        // Logika cerdas anti-typo
         var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
         var matchKat = (kat === 'ALL') || (itemKat === targetKat);
-        
         var matchQ = true;
         if (q) matchQ = String(it.nama||'').toLowerCase().includes(q) || String(it.barcode||'').toLowerCase().includes(q) || String(it.supplier||'').toLowerCase().includes(q);
-        
         return matchIM && matchKat && matchQ;
       });
-      
-      renderMasterBarangPage(); // Langsung render semua
+
+      // Fitur Sortir Baru
+      window.filteredMasterItems.sort((a, b) => {
+         if(sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
+         if(sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
+         if(sortBy === 'stok_asc') return (a.qty || 0) - (b.qty || 0);
+         if(sortBy === 'stok_desc') return (b.qty || 0) - (a.qty || 0);
+         if(sortBy === 'harga_asc') return (a.harga_jual || a.hargaJual || 0) - (b.harga_jual || b.hargaJual || 0);
+         if(sortBy === 'harga_desc') return (b.harga_jual || b.hargaJual || 0) - (a.harga_jual || a.hargaJual || 0);
+         return 0;
+      });
+
+      window.masterCurrentPage = 1; 
+      renderMasterBarangPage();
+    }
+
+    function changeMasterPage(delta) {
+      var maxPage = Math.ceil(window.filteredMasterItems.length / window.masterItemsPerPage);
+      var newPage = window.masterCurrentPage + delta;
+      if (newPage >= 1 && newPage <= maxPage) { window.masterCurrentPage = newPage; renderMasterBarangPage(); }
     }
 
     function renderMasterBarangPage() {
@@ -2388,12 +2405,16 @@
       var totalItems = window.filteredMasterItems.length;
       if (totalItems === 0) { tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-400">Tidak ada data barang.</td></tr>'; return; }
 
+      // Potong data untuk Paginasi
+      var startIndex = (window.masterCurrentPage - 1) * window.masterItemsPerPage;
+      var endIndex = startIndex + window.masterItemsPerPage;
+      var itemsToRender = window.filteredMasterItems.slice(startIndex, endIndex);
+
       var html = '', isAdmin = isUserAdmin(currentUser);
 
-      // Looping SEMUA data tanpa dipotong (tanpa slice/limit)
-      window.filteredMasterItems.forEach((it, i) => {
+      itemsToRender.forEach((it, i) => {
         var isChecked = window.selectedMasterItemIds.includes(it.id) ? 'checked' : '';
-        var actualIndex = i + 1;
+        var actualIndex = startIndex + i + 1;
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
         
         html += '<tr class="hover:bg-slate-50">' +
@@ -2414,9 +2435,16 @@
           '</div></td></tr>';
       });
 
-      // Hilangkan tombol Next/Prev, ganti dengan info total
-      html += '<tr><td colspan="11" class="py-4 bg-slate-50 sticky bottom-0 text-center text-[10px] font-black tracking-wider text-slate-400 border-t uppercase">Menampilkan semua ' + totalItems + ' barang</td></tr>';
-      
+      var totalPages = Math.ceil(totalItems / window.masterItemsPerPage);
+      if (totalPages > 1) {
+        html += '<tr><td colspan="11" class="py-3 bg-white sticky left-0 border-t"><div class="flex items-center justify-between px-4">' +
+          '<span class="text-[11px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + ' dari total ' + totalItems + '</span>' +
+          '<div class="flex items-center gap-2">' +
+            '<button type="button" onclick="changeMasterPage(-1)" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.masterCurrentPage === 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left mr-1"></i> Prev</button>' +
+            '<span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">Hal ' + window.masterCurrentPage + ' / ' + totalPages + '</span>' +
+            '<button type="button" onclick="changeMasterPage(1)" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.masterCurrentPage === totalPages ? 'disabled' : '') + '>Next <i class="fa-solid fa-chevron-right ml-1"></i></button>' +
+          '</div></div></td></tr>';
+      }
       tbody.innerHTML = html;
     }
 
@@ -2605,25 +2633,40 @@
       if (newPage >= 1 && newPage <= maxPage) { window.poCurrentPage = newPage; renderPoCatalogPage(); }
     }
 
-    function renderPoCatalog() {
+    function renderPoCatalog(isChangePage) {
+      if (isChangePage !== true) window.poCurrentPage = 1; 
       var q = (document.getElementById('poSearchInput').value || '').trim().toLowerCase();
       var cat = document.getElementById('poCatFilter').value;
       var selectedIM = document.getElementById('orderIM').value;
       var sup = (document.getElementById('orderSupplier').value || '').trim().toLowerCase();
+      var sortBy = document.getElementById('poSortFilter') ? document.getElementById('poSortFilter').value : 'nama_asc';
       
       window.filteredPoItems = cachedMasterBarang.filter(it => {
         var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
-        
         var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
         var matchKat = (cat === 'ALL') || (itemKat === targetKat);
-        
         var matchQ = !q || (it.nama||'').toLowerCase().includes(q) || (it.barcode||'').toLowerCase().includes(q);
         var matchSup = !sup || (it.supplier||'').toLowerCase().includes(sup);
         return matchIM && matchKat && matchQ && matchSup;
       });
+
+      // Fitur Sortir PO
+      window.filteredPoItems.sort((a, b) => {
+         if(sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
+         if(sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
+         if(sortBy === 'harga_asc') return (a.harga_beli || a.hargaBeli || 0) - (b.harga_beli || b.hargaBeli || 0);
+         if(sortBy === 'harga_desc') return (b.harga_beli || b.hargaBeli || 0) - (a.harga_beli || a.hargaBeli || 0);
+         return 0;
+      });
       
-      renderPoCatalogPage(); // Langsung render semua
+      renderPoCatalogPage();
+    }
+
+    function changePoPage(delta) {
+      var maxPage = Math.ceil(window.filteredPoItems.length / window.poItemsPerPage);
+      var newPage = window.poCurrentPage + delta;
+      if (newPage >= 1 && newPage <= maxPage) { window.poCurrentPage = newPage; renderPoCatalogPage(); }
     }
 
     function renderPoCatalogPage() {
@@ -2631,17 +2674,20 @@
       var totalItems = window.filteredPoItems.length;
       if (totalItems === 0) { container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">Tidak ada barang yang sesuai pencarian.</div>'; return; }
 
+      var startIndex = (window.poCurrentPage - 1) * window.poItemsPerPage;
+      var endIndex = startIndex + window.poItemsPerPage;
+      var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
+
       var html = '';
-      
-      // Looping SEMUA data pencarian
-      window.filteredPoItems.forEach(it => {
+      itemsToRender.forEach(it => {
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
         html += '<div class="flex items-center justify-between p-2.5 hover:bg-teal-50 transition border-b border-teal-100/50"><div class="flex-1 pr-2"><h4 class="font-bold text-slate-800 text-[11px] leading-tight mb-0.5">' + it.nama + '</h4><p class="text-[9px] text-slate-500 font-mono">' + (it.barcode || '-') + ' | Rp' + Number(it.harga_beli||it.hargaBeli||0).toLocaleString('id-ID') + ' | ' + (it.supplier||'-') + '</p></div><button type="button" onclick=\'addItmToCart(' + safeIt + ')\' class="px-3 py-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white rounded-lg font-bold text-[10px] shadow-sm active:scale-95 transition"><i class="fa-solid fa-plus mr-1"></i> Tambah</button></div>';
       });
 
-      // Hilangkan tombol Next/Prev
-      html += '<div class="p-3 bg-slate-50 sticky bottom-0 text-center text-[10px] font-bold text-slate-400 border-t border-teal-200">Menampilkan ' + totalItems + ' barang</div>';
-      
+      var totalPages = Math.ceil(totalItems / window.poItemsPerPage);
+      if (totalPages > 1) {
+        html += '<div class="p-3 bg-slate-50 sticky bottom-0 flex justify-between items-center gap-3 border-t border-teal-200"><span class="text-[10px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + '</span><div class="flex items-center gap-2"><button type="button" onclick="changePoPage(-1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[11px] font-black" ' + (window.poCurrentPage === 1 ? 'disabled' : '') + '>Prev</button><span class="text-[11px] font-black text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg">Hal ' + window.poCurrentPage + '/' + totalPages + '</span><button type="button" onclick="changePoPage(1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[11px] font-black" ' + (window.poCurrentPage === totalPages ? 'disabled' : '') + '>Next</button></div></div>';
+      }
       container.innerHTML = html;
     }
 
