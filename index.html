@@ -1591,9 +1591,18 @@
           </div>
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Nama Distributor / Supplier</label>
-          <input type="text" id="itemFormSupplier" placeholder="Contoh: PT. Sumber Alfaria / Wilmar" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
+       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Nama Distributor / Supplier</label>
+            <input type="text" id="itemFormSupplier" placeholder="Contoh: PT. Sumber Alfaria" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Link Gambar (G-Drive)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-link"></i></span>
+              <input type="url" id="itemFormGambar" placeholder="Paste link Google Drive di sini..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t">
@@ -2574,12 +2583,12 @@
     }
 
     function openItemFormModal() {
-      document.getElementById('itemFormId').value = ''; document.getElementById('itemFormBarcode').value = ''; document.getElementById('itemFormNama').value = ''; document.getElementById('itemFormKategori').value = 'Makanan'; document.getElementById('itemFormIM').value = currentUser ? (currentUser.im || 'Banin') : 'Banin'; document.getElementById('itemFormQty').value = '0'; document.getElementById('itemFormHargaBeli').value = '0'; document.getElementById('itemFormHargaJual').value = '0'; document.getElementById('itemFormSupplier').value = ''; document.getElementById('itemFormModalTitle').innerText = 'Tambah Barang Baru';
+      document.getElementById('itemFormId').value = ''; document.getElementById('itemFormBarcode').value = ''; document.getElementById('itemFormNama').value = ''; document.getElementById('itemFormKategori').value = 'Makanan'; document.getElementById('itemFormIM').value = currentUser ? (currentUser.im || 'Banin') : 'Banin'; document.getElementById('itemFormQty').value = '0'; document.getElementById('itemFormHargaBeli').value = '0'; document.getElementById('itemFormHargaJual').value = '0'; document.getElementById('itemFormGambar').value = ''; document.getElementById('itemFormGambar').value = ''; document.getElementById('itemFormModalTitle').innerText = 'Tambah Barang Baru';
       openModal('itemFormModal');
     }
 
     function openEditItemModal(it) {
-      document.getElementById('itemFormId').value = it.id; document.getElementById('itemFormBarcode').value = it.barcode || ''; document.getElementById('itemFormNama').value = it.nama; document.getElementById('itemFormKategori').value = it.kategori || 'Makanan'; document.getElementById('itemFormIM').value = it.im || 'Banin'; document.getElementById('itemFormQty').value = it.qty || 0; document.getElementById('itemFormHargaBeli').value = it.harga_beli || it.hargaBeli || 0; document.getElementById('itemFormHargaJual').value = it.harga_jual || it.hargaJual || 0; document.getElementById('itemFormSupplier').value = it.supplier || ''; document.getElementById('itemFormModalTitle').innerText = 'Edit Data Barang';
+      document.getElementById('itemFormId').value = it.id; document.getElementById('itemFormBarcode').value = it.barcode || ''; document.getElementById('itemFormNama').value = it.nama; document.getElementById('itemFormKategori').value = it.kategori || 'Makanan'; document.getElementById('itemFormIM').value = it.im || 'Banin'; document.getElementById('itemFormQty').value = it.qty || 0; document.getElementById('itemFormHargaBeli').value = it.harga_beli || it.hargaBeli || 0; document.getElementById('itemFormHargaJual').value = it.harga_jual || it.hargaJual || 0; document.getElementById('itemFormGambar').value = it.gambar || ''; document.getElementById('itemFormModalTitle').innerText = 'Edit Data Barang';
       openModal('itemFormModal');
     }
 
@@ -2594,7 +2603,8 @@
         qty: Number(document.getElementById('itemFormQty').value) || 0,
         harga_beli: Number(document.getElementById('itemFormHargaBeli').value) || 0,
         harga_jual: Number(document.getElementById('itemFormHargaJual').value) || 0,
-        supplier: document.getElementById('itemFormSupplier').value.trim()
+        supplier: document.getElementById('itemFormSupplier').value.trim(),
+        gambar: document.getElementById('itemFormGambar').value.trim()
       };
 
       showLoading('Menyimpan data barang...');
@@ -2809,7 +2819,19 @@
       itemsToRender.forEach(it => {
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
         var placeholderImg = 'https://placehold.co/400x400/e2e8f0/64748b?text=IM';
-        var imgUrl = it.gambar || it.image || placeholderImg; // Mengambil gambar jika nanti ditambahkan di database
+        var rawImg = it.gambar || it.image || '';
+        var imgUrl = placeholderImg;
+        
+        if (rawImg) {
+            // Deteksi otomatis jika yang dipaste adalah Link Google Drive biasa
+            var gdriveMatch = rawImg.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (gdriveMatch && gdriveMatch[1]) {
+                // Sulap link Google Drive menjadi link gambar langsung (Direct Image Link)
+                imgUrl = 'https://drive.google.com/uc?export=view&id=' + gdriveMatch[1];
+            } else {
+                imgUrl = rawImg; // Gunakan link normal jika bukan dari GDrive
+            }
+        }
         
         // Desain Kartu Shopee-style
         html += `
