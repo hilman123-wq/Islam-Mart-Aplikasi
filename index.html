@@ -497,7 +497,7 @@
                   </select>
                 </div>
                 <!-- List Hasil Pencarian -->
-                <div id="poCatalogContainer" class="max-h-[220px] overflow-y-auto custom-scrollbar bg-white border border-teal-200 rounded-xl divide-y">
+                <div id="poCatalogContainer" class="max-h-[55vh] overflow-y-auto custom-scrollbar bg-slate-50 border border-teal-200 rounded-xl relative">
                   <div class="p-6 text-center text-slate-400 text-xs font-medium">Ketik nama barang atau pilih supplier untuk mencari barang.</div>
                 </div>
               </div>
@@ -2794,24 +2794,59 @@
       if (newPage >= 1 && newPage <= maxPage) { window.poCurrentPage = newPage; renderPoCatalogPage(); }
     }
 
-    function renderPoCatalogPage() {
+   function renderPoCatalogPage() {
       var container = document.getElementById('poCatalogContainer'); if (!container) return;
       var totalItems = window.filteredPoItems.length;
-      if (totalItems === 0) { container.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">Tidak ada barang yang sesuai pencarian.</div>'; return; }
+      if (totalItems === 0) { container.innerHTML = '<div class="p-10 flex flex-col items-center justify-center text-slate-400"><i class="fa-solid fa-box-open text-4xl mb-3 text-slate-300"></i><span class="text-xs font-bold">Tidak ada barang yang sesuai.</span></div>'; return; }
 
       var startIndex = (window.poCurrentPage - 1) * window.poItemsPerPage;
       var endIndex = startIndex + window.poItemsPerPage;
       var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
 
-      var html = '';
+      // Buka kerangka Grid (2 kolom di HP, 3-4 kolom di Tablet/PC)
+      var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3">';
+      
       itemsToRender.forEach(it => {
         var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
-        html += '<div class="flex items-center justify-between p-2.5 hover:bg-teal-50 transition border-b border-teal-100/50"><div class="flex-1 pr-2"><h4 class="font-bold text-slate-800 text-[11px] leading-tight mb-0.5">' + it.nama + '</h4><p class="text-[9px] text-slate-500 font-mono">' + (it.barcode || '-') + ' | Rp' + Number(it.harga_beli||it.hargaBeli||0).toLocaleString('id-ID') + ' | ' + (it.supplier||'-') + '</p></div><button type="button" onclick=\'addItmToCart(' + safeIt + ')\' class="px-3 py-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white rounded-lg font-bold text-[10px] shadow-sm active:scale-95 transition"><i class="fa-solid fa-plus mr-1"></i> Tambah</button></div>';
+        var placeholderImg = 'https://placehold.co/400x400/e2e8f0/64748b?text=IM';
+        var imgUrl = it.gambar || it.image || placeholderImg; // Mengambil gambar jika nanti ditambahkan di database
+        
+        // Desain Kartu Shopee-style
+        html += `
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
+            <!-- Area Gambar -->
+            <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
+              <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
+              <!-- Label Info (Stok / Kategori) -->
+              <div class="absolute top-2 left-2 flex flex-col gap-1">
+                <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
+              </div>
+            </div>
+            
+            <!-- Area Info & Tombol -->
+            <div class="p-2.5 sm:p-3 flex flex-col flex-1">
+              <h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1" title="${it.nama}">${it.nama}</h4>
+              <p class="text-[9px] text-slate-400 font-mono mb-2 truncate" title="${it.supplier||'-'}">${it.supplier || '-'}</p>
+              
+              <div class="mt-auto pt-1">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="font-black text-teal-600 text-xs sm:text-sm">Rp${Number(it.harga_beli||it.hargaBeli||0).toLocaleString('id-ID')}</span>
+                </div>
+                
+                <button type="button" onclick='addItmToCart(${safeIt})' class="w-full py-2 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white border border-teal-200 hover:border-teal-600 rounded-xl font-bold text-[10px] sm:text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-cart-plus"></i> <span class="tracking-wide">TAMBAH</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
       });
+      html += '</div>'; // Tutup Grid
 
+      // Paginasi di Bawah Grid
       var totalPages = Math.ceil(totalItems / window.poItemsPerPage);
       if (totalPages > 1) {
-        html += '<div class="p-3 bg-slate-50 sticky bottom-0 flex justify-between items-center gap-3 border-t border-teal-200"><span class="text-[10px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + '</span><div class="flex items-center gap-2"><button type="button" onclick="changePoPage(-1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[11px] font-black" ' + (window.poCurrentPage === 1 ? 'disabled' : '') + '>Prev</button><span class="text-[11px] font-black text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg">Hal ' + window.poCurrentPage + '/' + totalPages + '</span><button type="button" onclick="changePoPage(1)" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[11px] font-black" ' + (window.poCurrentPage === totalPages ? 'disabled' : '') + '>Next</button></div></div>';
+        html += '<div class="p-3 bg-white sticky bottom-0 flex justify-between items-center gap-3 border-t border-teal-200 shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)] rounded-b-xl"><span class="text-[10px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + '</span><div class="flex items-center gap-2"><button type="button" onclick="changePoPage(-1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === 1 ? 'disabled' : '') + '>Prev</button><span class="text-[11px] font-black text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg border border-teal-200 shadow-sm">Hal ' + window.poCurrentPage + '/' + totalPages + '</span><button type="button" onclick="changePoPage(1)" class="px-3 py-1.5 bg-slate-50 border border-slate-300 hover:bg-slate-100 rounded-lg text-[11px] font-black transition" ' + (window.poCurrentPage === totalPages ? 'disabled' : '') + '>Next</button></div></div>';
       }
       container.innerHTML = html;
     }
