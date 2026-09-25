@@ -708,28 +708,43 @@
           </div>
         </section>
 
-        <!-- ========================================================================= -->
-        <!-- TAB: DATA RIWAYAT ORDERAN (PURCHASE ORDER) -->
+       <!-- ========================================================================= -->
+        <!-- TAB: DATA RIWAYAT ORDERAN (DIPISAH: PO SUPPLIER & PESANAN SANTRI) -->
         <!-- ========================================================================= -->
         <section id="tab-order-history" style="display: none;" class="space-y-6">
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between gap-3">
+            
+            <!-- TOMBOL PEMISAH KATEGORI RIWAYAT (KHUSUS STAF / KASIR / GUDANG / ADMIN) -->
+            <div id="orderHistoryTabSwitcher" class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+              <button type="button" id="btnTabHistPO" onclick="switchOrderHistoryType('PO')" class="py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 bg-white text-teal-800 shadow-sm">
+                <i class="fa-solid fa-truck-field"></i>
+                <span>Riwayat Order ke Supplier (PO)</span>
+                <span id="badgeCountHistPO" class="px-2 py-0.5 rounded-full text-[10px] bg-teal-100 text-teal-800">0</span>
+              </button>
+              <button type="button" id="btnTabHistSNT" onclick="switchOrderHistoryType('SNT')" class="py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 text-slate-600 hover:text-emerald-700">
+                <i class="fa-solid fa-user-graduate"></i>
+                <span>Riwayat Pesanan Santri</span>
+                <span id="badgeCountHistSNT" class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800">0</span>
+              </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between gap-3 pt-1">
               <div>
                 <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
                   <i class="fa-solid fa-receipt text-teal-600"></i>
-                  <span>Daftar Riwayat Orderan Barang (PO)</span>
+                  <span id="orderHistoryTitleText">Daftar Riwayat Orderan Barang (PO Supplier)</span>
                 </h2>
-                <p class="text-[11px] sm:text-xs text-slate-500">Pantau status persetujuan, cetak surat pesanan, hubungi supplier, atau ekspor ke file Excel.</p>
+                <p id="orderHistoryDescText" class="text-[11px] sm:text-xs text-slate-500">Pantau status persetujuan, cetak surat pesanan, hubungi supplier, atau ekspor ke file Excel.</p>
               </div>
               <div class="flex flex-wrap gap-2">
-                <button type="button" onclick="exportOrdersHistoryToExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
+                <button type="button" id="btnExportOrderHistExcel" onclick="exportOrdersHistoryToExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
                   <i class="fa-solid fa-file-excel"></i>
-                  <span>Ekspor Excel (Rincian)</span>
+                  <span>Ekspor Excel</span>
                 </button>
                 <select id="filterOrderStatus" onchange="loadOrdersTable()" class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
                   <option value="ALL">Semua Status</option>
                   <option value="Diajukan">Diajukan</option>
-                  <option value="Disetujui">Disetujui</option>
+                  <option value="Disetujui">Disetujui / Disiapkan</option>
                   <option value="Dikirim">Dikirim</option>
                   <option value="Selesai">Selesai</option>
                 </select>
@@ -747,11 +762,11 @@
                 <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
                   <tr>
                     <th class="py-3 px-3">Tanggal</th>
-                    <th class="py-3 px-3">Nomor PO</th>
-                    <th class="py-3 px-4">Distributor / Supplier</th>
-                    <th class="py-3 px-3">Pemohon</th>
+                    <th id="thOrderKode" class="py-3 px-3">Nomor PO</th>
+                    <th id="thOrderTujuan" class="py-3 px-4">Distributor / Supplier</th>
+                    <th id="thOrderPemohon" class="py-3 px-3">Pemohon</th>
                     <th class="py-3 px-2 text-center">Unit</th>
-                    <th class="py-3 px-3 text-right">Est. Total</th>
+                    <th class="py-3 px-3 text-right">Total Nominal</th>
                     <th class="py-3 px-3 text-center">Status</th>
                     <th class="py-3 px-4 text-center">Aksi</th>
                   </tr>
@@ -3942,43 +3957,110 @@
       window.open("https://api.whatsapp.com/send?phone=" + adminPhone + "&text=" + encodeURIComponent(msg), '_blank');
     }
 
+    window.activeOrderHistoryType = 'PO'; // 'PO' (Supplier) atau 'SNT' (Santri)
+
+    function switchOrderHistoryType(type) {
+      window.activeOrderHistoryType = type;
+      var btnPO = document.getElementById('btnTabHistPO');
+      var btnSNT = document.getElementById('btnTabHistSNT');
+
+      if (type === 'SNT') {
+        if (btnSNT) btnSNT.className = 'py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 bg-white text-emerald-800 shadow-sm';
+        if (btnPO) btnPO.className = 'py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 text-slate-500 hover:text-teal-700';
+        if (document.getElementById('orderHistoryTitleText')) document.getElementById('orderHistoryTitleText').innerText = 'Daftar Riwayat Pesanan Kebutuhan Santri';
+        if (document.getElementById('orderHistoryDescText')) document.getElementById('orderHistoryDescText').innerText = 'Pantau pesanan wali santri, status pembayaran transfer, dan unggah foto bukti serah terima paket santri.';
+        if (document.getElementById('thOrderKode')) document.getElementById('thOrderKode').innerText = 'No. Pesanan';
+        if (document.getElementById('thOrderTujuan')) document.getElementById('thOrderTujuan').innerText = 'Identitas Santri Penerima';
+        if (document.getElementById('thOrderPemohon')) document.getElementById('thOrderPemohon').innerText = 'Wali Pemesan';
+      } else {
+        if (btnPO) btnPO.className = 'py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 bg-white text-teal-800 shadow-sm';
+        if (btnSNT) btnSNT.className = 'py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 text-slate-500 hover:text-emerald-700';
+        if (document.getElementById('orderHistoryTitleText')) document.getElementById('orderHistoryTitleText').innerText = 'Daftar Riwayat Orderan Barang (PO Supplier)';
+        if (document.getElementById('orderHistoryDescText')) document.getElementById('orderHistoryDescText').innerText = 'Pantau status persetujuan PO toko, cetak surat pesanan, atau kirim PO ke distributor/supplier.';
+        if (document.getElementById('thOrderKode')) document.getElementById('thOrderKode').innerText = 'Nomor PO';
+        if (document.getElementById('thOrderTujuan')) document.getElementById('thOrderTujuan').innerText = 'Distributor / Supplier';
+        if (document.getElementById('thOrderPemohon')) document.getElementById('thOrderPemohon').innerText = 'Petugas Pemohon';
+      }
+      renderOrdersTable(cachedOrdersList);
+    }
+
     async function loadOrdersTable(forceRefresh) {
-      if (forceRefresh === false && window.isOrdersLoaded) return;
+      var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+      var switcher = document.getElementById('orderHistoryTabSwitcher');
+      var btnExportExcel = document.getElementById('btnExportOrderHistExcel');
+
+      // Jika Wali Santri login: kunci otomatis ke tab SNT & sembunyikan tab PO Supplier
+      if (isWali) {
+        window.activeOrderHistoryType = 'SNT';
+        if (switcher) switcher.style.display = 'none';
+        if (btnExportExcel) btnExportExcel.style.display = 'none';
+        if (document.getElementById('orderHistoryTitleText')) document.getElementById('orderHistoryTitleText').innerText = 'Riwayat Pembelanjaan Putra/Putri Anda';
+        if (document.getElementById('orderHistoryDescText')) document.getElementById('orderHistoryDescText').innerText = 'Pantau status paket dan lihat foto bukti penerimaan barang oleh santri.';
+        if (document.getElementById('thOrderKode')) document.getElementById('thOrderKode').innerText = 'No. Pesanan';
+        if (document.getElementById('thOrderTujuan')) document.getElementById('thOrderTujuan').innerText = 'Santri Penerima';
+        if (document.getElementById('thOrderPemohon')) document.getElementById('thOrderPemohon').innerText = 'Wali Pemesan';
+      } else {
+        if (switcher) switcher.style.display = 'grid';
+        if (btnExportExcel) btnExportExcel.style.display = 'flex';
+      }
+
+      if (forceRefresh === false && window.isOrdersLoaded) {
+        renderOrdersTable(cachedOrdersList);
+        return;
+      }
+
       var tbody = document.getElementById('ordersTableBody');
       if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Mengambil data pesanan...</td></tr>';
       
       var st = document.getElementById('filterOrderStatus').value, im = document.getElementById('filterOrderIM').value, m = document.getElementById('filterOrderMonth').value;
       try {
-        let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
+        let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(200);
         if (st !== 'ALL') query = query.eq('status', st);
         if (im !== 'ALL') query = query.eq('im', im);
         if (m) {
           var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
           query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
         }
-        // JIKA WALI SANTRI: Hanya tampilkan pesanan miliknya sendiri
-        if (isWaliSantri(currentUser)) {
+        if (isWali) {
           query = query.eq('username_pemohon', currentUser.username);
         }
 
         const { data, error } = await query;
         if (error) throw error;
         window.isOrdersLoaded = true;
-        renderOrdersTable(data);
+        cachedOrdersList = data || [];
+        renderOrdersTable(cachedOrdersList);
       } catch (err) { if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>'; }
     }
 
     function renderOrdersTable(list) {
       cachedOrdersList = list || [];
       var tbody = document.getElementById('ordersTableBody'); if (!tbody) return;
-      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-400">Belum ada data pesanan.</td></tr>'; return; }
+
+      // Pisahkan data PO Supplier vs Pesanan Santri (SNT-)
+      var listSNT = cachedOrdersList.filter(o => String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:'));
+      var listPO = cachedOrdersList.filter(o => !(String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:')));
+
+      // Update angka badge di kedua tab
+      if (document.getElementById('badgeCountHistPO')) document.getElementById('badgeCountHistPO').innerText = listPO.length;
+      if (document.getElementById('badgeCountHistSNT')) document.getElementById('badgeCountHistSNT').innerText = listSNT.length;
+
+      var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+      var activeList = (isWali || window.activeOrderHistoryType === 'SNT') ? listSNT : listPO;
+
+      if (activeList.length === 0) {
+        var emptyMsg = (window.activeOrderHistoryType === 'SNT') ? 'Belum ada riwayat pesanan santri pada periode ini.' : 'Belum ada riwayat orderan PO ke supplier pada periode ini.';
+        tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400 font-medium">' + emptyMsg + '</td></tr>';
+        return;
+      }
 
       var html = '';
       var isAdmin = isUserAdmin(currentUser);
       var roleStr = String(currentUser.role || '').toLowerCase();
       var canManageStatus = isAdmin || roleStr.includes('kasir') || roleStr.includes('gudang');
 
-      list.forEach(o => {
+      activeList.forEach(o => {
+        var isSantriOrder = String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:');
         var bc = 'bg-slate-100 text-slate-700';
         if (o.status === 'Diajukan') bc = 'bg-amber-100 text-amber-800'; 
         else if (o.status === 'Disetujui') bc = 'bg-teal-100 text-teal-800'; 
@@ -3988,21 +4070,24 @@
         
         var safeO = JSON.stringify(o).replace(/'/g, "&apos;");
 
-        // Badge jika sudah ada foto bukti diterima santri
-        var badgeFoto = o.bukti_foto 
+        // Badge & Tombol Kamera HANYA untuk Pesanan Santri (SNT-)
+        var badgeFoto = (isSantriOrder && o.bukti_foto) 
           ? '<div class="mt-1"><span onclick=\'viewOrderDetail(' + safeO + ')\' class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black bg-emerald-600 text-white cursor-pointer shadow-xs hover:bg-emerald-700"><i class="fa-solid fa-camera"></i> Lihat Foto Bukti</span></div>' 
           : '';
 
-        // Tombol Kamera khusus Kasir / Gudang / Admin untuk memfoto santri saat terima paket
-        var btnKameraKasir = canManageStatus 
+        var btnKameraKasir = (canManageStatus && isSantriOrder) 
           ? '<button type="button" onclick=\'openSerahTerimaModal(' + safeO + ')\' title="Fotokan Santri Terima Paket" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs"><i class="fa-solid fa-camera"></i> ' + (o.bukti_foto ? 'Ubah Foto' : 'Foto Serah') + '</button>'
           : '';
 
-        var adS = canManageStatus ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white"><option disabled selected>Ubah...</option><option value="Disetujui">✔ Disiapkan</option><option value="Dikirim">🚚 Dikirim ke Pondok</option><option value="Selesai">🏁 Selesai Diterima</option><option value="Ditolak">✖ Ditolak</option></select>' : '';
+        var statusOptions = isSantriOrder
+          ? '<option disabled selected>Ubah...</option><option value="Disetujui">✔ Disiapkan</option><option value="Dikirim">🚚 Dikirim ke Pondok</option><option value="Selesai">🏁 Selesai Diterima</option><option value="Ditolak">✖ Ditolak</option>'
+          : '<option disabled selected>Ubah...</option><option value="Disetujui">✔ Disetujui</option><option value="Dikirim">🚚 Dikirim Supplier</option><option value="Selesai">🏁 Selesai Masuk</option><option value="Ditolak">✖ Ditolak</option>';
+
+        var adS = canManageStatus ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white">' + statusOptions + '</select>' : '';
         
         html += '<tr class="hover:bg-slate-50">' +
           '<td class="py-3 px-3">' + o.tanggal + '</td>' +
-          '<td class="py-3 px-3 font-mono font-bold text-teal-700">' + o.no_po + '</td>' +
+          '<td class="py-3 px-3 font-mono font-bold ' + (isSantriOrder ? 'text-emerald-700' : 'text-teal-700') + '">' + o.no_po + '</td>' +
           '<td class="py-3 px-4 font-bold">' + o.supplier + '</td>' +
           '<td class="py-3 px-3">' + o.nama_pemohon + '</td>' +
           '<td class="py-3 px-2 text-center">' + o.im + '</td>' +
@@ -4010,27 +4095,11 @@
           '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ' + bc + '">' + o.status + '</span>' + badgeFoto + '</td>' +
           '<td class="py-3 px-4 text-center"><div class="flex flex-wrap items-center gap-1 justify-center">' + 
             btnKameraKasir + adS + 
-            '<button type="button" onclick=\'viewOrderDetail(' + safeO + ')\' class="p-1.5 text-slate-500 hover:text-teal-700" title="Lihat Detail & Bukti Foto"><i class="fa-solid fa-eye"></i></button>' +
+            '<button type="button" onclick=\'viewOrderDetail(' + safeO + ')\' class="p-1.5 text-slate-500 hover:text-teal-700" title="Lihat Detail"><i class="fa-solid fa-eye"></i></button>' +
             (isAdmin ? '<button type="button" onclick="promptDeleteOrder(\'' + o.id + '\', \'' + o.no_po + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
           '</div></td></tr>';
       });
       tbody.innerHTML = html;
-    }
-
-    async function changeOrderStatus(id, newStatus) {
-      // Jika Kasir memilih status "Selesai", tawarkan langsung buka kamera foto bukti
-      var ord = cachedOrdersList.find(x => x.id === id);
-      if (newStatus === 'Selesai' && ord && !ord.bukti_foto && String(ord.no_po || '').startsWith('SNT-')) {
-        if (confirm('Ingin sekalian mengambil FOTO BUKTI santri menerima paket agar terlihat oleh Wali Santri?')) {
-          openSerahTerimaModal(ord);
-          return;
-        }
-      }
-      showLoading('Mengubah status...');
-      try {
-        const { error } = await supaClient.from('orders').update({ status: newStatus }).eq('id', id);
-        hideLoading(); if (error) throw error; showToast('Status PO diperbarui!', 'success'); loadOrdersTable(true);
-      } catch(e) { hideLoading(); showToast('Gagal: ' + e.message, 'error'); }
     }
 
     function viewOrderDetail(o) {
