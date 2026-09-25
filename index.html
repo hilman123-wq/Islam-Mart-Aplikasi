@@ -2541,7 +2541,13 @@
       var lblCatatan = document.querySelector('#orderCatatan') ? document.querySelector('#orderCatatan').previousElementSibling : null;
       var thHargaModal = document.querySelector('#tab-order-create table thead tr th:nth-child(6)');
 
+      var btnWaProfile = document.querySelector('header button[onclick="openOwnProfileModal()"]');
+      var btnExportCart = document.querySelector('button[onclick="exportCurrentPoToExcel()"]');
+
       if (isWali) {
+        if (btnWaProfile) btnWaProfile.style.display = 'none';
+        if (btnExportCart) btnExportCart.style.display = 'none';
+
         if (titleOrderEl) titleOrderEl.innerText = 'Pesan Barang Kebutuhan Santri';
         if (descOrderEl) descOrderEl.innerText = 'Pilih barang kebutuhan putra/putri Anda di bawah ini.';
         if (lblSupplier) lblSupplier.innerText = 'Identitas Santri Penerima *';
@@ -2557,6 +2563,9 @@
         if (thHargaModal) thHargaModal.innerText = 'Harga (Rp)';
         if (document.getElementById('btnSubmitOrderText')) document.getElementById('btnSubmitOrderText').innerText = 'Kirim Pesanan Santri';
       } else {
+        if (btnWaProfile) btnWaProfile.style.display = 'flex';
+        if (btnExportCart) btnExportCart.style.display = 'flex';
+
         if (titleOrderEl) titleOrderEl.innerText = 'Buat Orderan Barang (PO)';
         if (descOrderEl) descOrderEl.innerText = 'Cari barang di bawah, klik tombol tambah, lalu kirim PO ke distributor.';
         if (lblSupplier) lblSupplier.innerText = 'Cari Distributor / Supplier';
