@@ -622,21 +622,22 @@
 
               <!-- Info Penerima (Wali Santri) ATAU Dropdown Pilih Distributor (Kasir/Staf) -->
               <div
-                class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-3 py-2 rounded-xl text-[11px] gap-2">
+                class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-2.5 py-2 rounded-xl text-[11px] gap-2 w-full overflow-hidden">
                 <!-- Tampilan Khusus Wali Santri -->
-                <div id="waliRecipientInfoBox" class="flex items-center gap-2 truncate">
-                  <i class="fa-solid fa-location-dot text-amber-300"></i>
-                  <span class="text-emerald-100">Penerima:</span>
-                  <b id="waliShopeeSantriLabel" class="text-white truncate">-</b>
+                <div id="waliRecipientInfoBox" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                  <i class="fa-solid fa-location-dot text-amber-300 shrink-0"></i>
+                  <span class="text-emerald-100 shrink-0">Penerima:</span>
+                  <b id="waliShopeeSantriLabel" class="text-white truncate block">-</b>
                 </div>
 
-                <!-- Tampilan Khusus Kasir/Staf: Dropdown Pilih Distributor -->
-                <div id="stafSupplierDropdownBox" style="display: none;" class="flex items-center gap-2 flex-1 min-w-0">
+                <!-- Tampilan Khusus Kasir/Staf: Dropdown Pilih Distributor (Pas di Layar HP) -->
+                <div id="stafSupplierDropdownBox" style="display: none;"
+                  class="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                   <i class="fa-solid fa-truck-field text-amber-300 shrink-0"></i>
-                  <span class="text-emerald-100 font-bold shrink-0">Distributor:</span>
+                  <span class="text-emerald-100 font-bold shrink-0 text-[10px] sm:text-[11px]">Distributor:</span>
                   <select id="stafTopSupplierSelect" onchange="onTopSupplierDropdownChange(this.value)"
-                    class="flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
-                    <option value="">-- Semua Distributor / Supplier --</option>
+                    class="w-full min-w-0 max-w-full flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
+                    <option value="">-- Semua Distributor --</option>
                   </select>
                 </div>
 
@@ -4471,6 +4472,8 @@
         var unitBadge = document.getElementById('waliShopeeUnitBadge');
         var waliRecBox = document.getElementById('waliRecipientInfoBox');
         var stafSupBox = document.getElementById('stafSupplierDropdownBox');
+        var catTitle = document.getElementById('waliActiveCatTitle');
+        var btmRiwayat = document.getElementById('btnNavBtmRiwayatPO');
 
         if (isWali) {
           if (waliRecBox) waliRecBox.style.display = 'flex';
@@ -4478,12 +4481,16 @@
           if (searchInp) searchInp.placeholder = 'Cari jajanan, sabun, alat tulis santri...';
           if (santriLbl) santriLbl.innerText = currentUser.info_santri || currentUser.nama_santri || '-';
           if (unitBadge) unitBadge.innerText = 'IM ' + (currentUser.im || 'Banin');
+          if (catTitle && catTitle.innerText.includes('Katalog')) catTitle.innerText = '🔥 Katalog Produk Santri';
+          if (btmRiwayat && btmRiwayat.querySelector('span')) btmRiwayat.querySelector('span').innerText = 'Riwayat Pembelanjaan';
         } else {
           if (waliRecBox) waliRecBox.style.display = 'none';
           if (stafSupBox) stafSupBox.style.display = 'flex';
           if (searchInp) searchInp.placeholder = 'Ketik nama barang / barcode untuk Order PO...';
           var curUnit = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
           if (unitBadge) unitBadge.innerText = 'PO IM ' + curUnit;
+          if (catTitle && catTitle.innerText.includes('Katalog')) catTitle.innerText = '📦 Katalog Order PO Toko';
+          if (btmRiwayat && btmRiwayat.querySelector('span')) btmRiwayat.querySelector('span').innerText = 'Riwayat Pesanan';
           populateTopSupplierDropdown();
         }
       }
