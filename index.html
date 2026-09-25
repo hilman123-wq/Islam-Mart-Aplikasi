@@ -1196,6 +1196,279 @@
         </section>
 
         <!-- ========================================================================= -->
+        <!-- TAB: MANAJEMEN BAZAR BANIN & BANAT (STOK, NOTA BELI, KASIR, LABA/RUGI) -->
+        <!-- ========================================================================= -->
+        <section id="tab-bazar-management" style="display: none;" class="space-y-6">
+          <!-- Header & Filter Bazar -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-store text-amber-600"></i>
+                    <span id="bazarTitleHeader">Pusat Operasional Bazar</span>
+                  </h2>
+                  <span id="bazarUnitBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 uppercase">Banin & Banat</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Kelola stok bazar, input harga beli & jual, nota pembelian, catat pembeli, dan laporan untung/rugi.</p>
+              </div>
+
+              <!-- Tombol Aksi Cepat Bazar -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openBazarTransModal('PENJUALAN')" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-cash-register"></i>
+                  <span>Catat Pembeli</span>
+                </button>
+                <button onclick="openBazarTransModal('NOTA_PEMBELIAN')" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-invoice-dollar"></i>
+                  <span>Input Nota Pembelian</span>
+                </button>
+                <button onclick="openBazarTransModal('KERUGIAN')" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Catat Barang Rusak/Rugi</span>
+                </button>
+                <button onclick="openBazarItemModal()" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Tambah Barang Baru</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filter Unit & Periode Laporan -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <div id="wrapFilterBazarIM">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Unit Bazar</label>
+                <select id="filterBazarIM" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+                  <option value="ALL">Semua Unit (Banin & Banat)</option>
+                  <option value="Banin">Stok & Laporan Bazar Banin</option>
+                  <option value="Banat">Stok & Laporan Bazar Banat</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filter Bulan Laporan</label>
+                <input type="month" id="filterBazarMonth" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Cari Nama Barang / Nota</label>
+                <input type="text" id="filterBazarSearch" oninput="renderAllBazarData()" placeholder="Ketik nama barang atau keterangan..." class="w-full p-2.5 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+              </div>
+            </div>
+
+            <!-- RINGKASAN LAPORAN KEUNTUNGAN & KERUGIAN -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <span class="text-[10px] font-bold uppercase text-emerald-700 block">Total Penjualan (Omzet)</span>
+                <h3 id="bazarStatOmzet" class="text-sm sm:text-base font-black text-emerald-900 mt-1">Rp 0</h3>
+                <p id="bazarStatQtyTerjual" class="text-[10px] text-emerald-600 mt-0.5">0 item terjual</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                <span class="text-[10px] font-bold uppercase text-blue-700 block">Total Nota Pembelian</span>
+                <h3 id="bazarStatBelanja" class="text-sm sm:text-base font-black text-blue-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-blue-600 mt-0.5">Modal belanja stok</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-teal-50 border border-teal-200">
+                <span class="text-[10px] font-bold uppercase text-teal-700 block">Keuntungan Penjualan</span>
+                <h3 id="bazarStatUntungKotor" class="text-sm sm:text-base font-black text-teal-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-teal-600 mt-0.5">(Harga Jual - Harga Beli)</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                <span class="text-[10px] font-bold uppercase text-rose-700 block">Total Kerugian / Rusak</span>
+                <h3 id="bazarStatRugi" class="text-sm sm:text-base font-black text-rose-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-rose-600 mt-0.5">Barang rusak/hilang</p>
+              </div>
+              <div class="col-span-2 lg:col-span-1 p-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-md">
+                <span class="text-[10px] font-bold uppercase text-amber-400 block">Laba / Rugi Bersih</span>
+                <h3 id="bazarStatLabaBersih" class="text-sm sm:text-base font-black text-white mt-1">Rp 0</h3>
+                <p id="bazarStatStatusLaba" class="text-[10px] text-emerald-400 font-bold mt-0.5">Untung Bersih</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABEL 1: DAFTAR STOK BARANG BAZAR (BANIN / BANAT) -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
+                <span>Daftar Stok & Harga Barang Bazar</span>
+              </h3>
+              <button onclick="loadBazarData(true)" class="text-xs font-bold text-teal-600 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-rotate"></i> Segarkan Data
+              </button>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+              <table class="w-full text-left text-xs min-w-[750px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3 w-10 text-center">No</th>
+                    <th class="py-3 px-4">Nama Barang Bazar</th>
+                    <th class="py-3 px-3 text-center">Unit Bazar</th>
+                    <th class="py-3 px-3 text-right">Harga Beli (Modal)</th>
+                    <th class="py-3 px-3 text-right">Harga Jual</th>
+                    <th class="py-3 px-3 text-right">Untung / Pcs</th>
+                    <th class="py-3 px-3 text-center">Sisa Stok</th>
+                    <th class="py-3 px-4 text-center">Aksi Cepat</th>
+                  </tr>
+                </thead>
+                <tbody id="bazarStokTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <tr><td colspan="8" class="py-8 text-center text-slate-400">Memuat stok barang bazar...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TABEL 2: RIWAYAT TRANSAKSI PEMBELI, NOTA PEMBELIAN, & KERUGIAN -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
+                <span>Riwayat Penjualan, Nota Pembelian, & Catatan Kerugian</span>
+              </h3>
+              <select id="filterBazarJenisTrans" onchange="renderAllBazarData()" class="p-2 bg-slate-50 border rounded-xl text-xs font-bold text-slate-700">
+                <option value="ALL">Semua Jenis Catatan</option>
+                <option value="PENJUALAN">Hanya Penjualan (Pembeli)</option>
+                <option value="NOTA_PEMBELIAN">Hanya Input Nota Pembelian</option>
+                <option value="KERUGIAN">Hanya Catatan Kerugian/Rusak</option>
+              </select>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+              <table class="w-full text-left text-xs min-w-[800px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3">Tanggal</th>
+                    <th class="py-3 px-3">Jenis</th>
+                    <th class="py-3 px-3 text-center">Unit</th>
+                    <th class="py-3 px-4">Nama Barang</th>
+                    <th class="py-3 px-2 text-center">Qty</th>
+                    <th class="py-3 px-3 text-right">Total Nominal</th>
+                    <th class="py-3 px-3 text-right">Untung / Rugi</th>
+                    <th class="py-3 px-4">Keterangan / No. Nota / Pembeli</th>
+                    <th class="py-3 px-3 text-center">Hapus</th>
+                  </tr>
+                </thead>
+                <tbody id="bazarTransTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <tr><td colspan="9" class="py-8 text-center text-slate-400">Belum ada riwayat transaksi bazar.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- MODAL 1: TAMBAH / EDIT BARANG & HARGA BAZAR -->
+        <div id="bazarItemModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div>
+                <h3 id="bazarItemModalTitle" class="text-sm sm:text-base font-black text-slate-800">Input Barang & Harga Bazar</h3>
+                <p class="text-[11px] text-slate-500">Atur stok barang, harga beli (modal), dan harga jual bazar</p>
+              </div>
+              <button onclick="closeModal('bazarItemModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="bazarItemForm" onsubmit="submitBazarItemForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="bazarItemId" value="">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Unit Bazar *</label>
+                  <select id="bazarItemIM" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                    <option value="Banin">Bazar Banin</option>
+                    <option value="Banat">Bazar Banat</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Stok Fisik Saat Ini *</label>
+                  <input type="number" id="bazarItemStok" required min="0" value="0" class="w-full p-2.5 bg-slate-50 border rounded-xl font-black text-center">
+                </div>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Barang Bazar *</label>
+                <input type="text" id="bazarItemNama" required placeholder="Contoh: Sosis Bakar / Es Coklat / Buku" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Harga Beli / Modal (Rp) *</label>
+                  <input type="number" id="bazarItemHargaBeli" required min="0" placeholder="5000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-bold text-slate-700">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Harga Jual (Rp) *</label>
+                  <input type="number" id="bazarItemHargaJual" required min="0" placeholder="7000" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-black text-emerald-700">
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('bazarItemModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow">Simpan Barang</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL 2: CATAT PEMBELI / INPUT NOTA PEMBELIAN / CATAT KERUGIAN -->
+        <div id="bazarTransModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div>
+                <h3 id="bazarTransModalTitle" class="text-sm sm:text-base font-black text-slate-800">Catat Transaksi Bazar</h3>
+                <p id="bazarTransModalDesc" class="text-[11px] text-slate-500">Stok dan laporan laba/rugi akan otomatis diperbarui</p>
+              </div>
+              <button onclick="closeModal('bazarTransModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="bazarTransForm" onsubmit="submitBazarTransForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="bazarTransJenis" value="PENJUALAN">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal *</label>
+                  <input type="date" id="bazarTransTanggal" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Unit Bazar *</label>
+                  <select id="bazarTransIM" onchange="populateBazarBarangDropdown()" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                    <option value="Banin">Bazar Banin</option>
+                    <option value="Banat">Bazar Banat</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih Barang Bazar *</label>
+                <select id="bazarTransBarangId" onchange="onBazarBarangSelectChange()" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-800">
+                  <option value="">-- Pilih Barang --</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label id="lblBazarTransQty" class="block font-bold text-slate-700 uppercase mb-1">Jumlah (Qty) *</label>
+                  <input type="number" id="bazarTransQty" required min="1" value="1" oninput="calcBazarTransPreview()" class="w-full p-2.5 bg-white border rounded-xl font-black text-center">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Harga Beli (Rp)</label>
+                  <input type="number" id="bazarTransHargaBeli" required min="0" oninput="calcBazarTransPreview()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-bold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Harga Jual (Rp)</label>
+                  <input type="number" id="bazarTransHargaJual" required min="0" oninput="calcBazarTransPreview()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-bold text-emerald-700">
+                </div>
+              </div>
+
+              <div>
+                <label id="lblBazarTransKet" class="block font-bold text-slate-700 uppercase mb-1">Catatan / Nama Pembeli / No. Nota</label>
+                <input type="text" id="bazarTransKet" placeholder="Contoh: Nota Toko Berkah / Pembeli Tunai" class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold">
+              </div>
+
+              <div class="p-3 rounded-2xl bg-slate-100 flex items-center justify-between">
+                <span id="lblBazarPreviewTotal" class="text-[11px] font-bold text-slate-600">Total Nominal:</span>
+                <span id="valBazarPreviewTotal" class="text-sm font-black text-slate-900">Rp 0</span>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('bazarTransModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" id="btnBazarTransSubmit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow">Simpan Catatan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
         <!-- TAB: MASTER DATA SANTRI (KHUSUS LOGIN WALI SANTRI) -->
         <!-- ========================================================================= -->
         <section id="tab-santri-management" style="display: none;" class="space-y-6">
@@ -1475,6 +1748,11 @@
       <button id="btnNavBtmRiwayatPO" onclick="switchTab('order-history')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
         <i class="fa-solid fa-receipt text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat Pesanan</span>
+      </button>
+
+      <button id="btnNavBtmBazar" onclick="switchTab('bazar-management')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
+        <i class="fa-solid fa-store text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kasir & Stok Bazar</span>
       </button>
 
       <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
@@ -1942,7 +2220,8 @@
               <option value="Driver Purchasing">Driver Purchasing</option>
               <option value="Permak">Permak</option>
               <option value="Sarpras">Sarpras</option>
-              <option value="Bazar">Bazar</option>
+              <option value="Bazar Banin">Bazar Banin</option>
+              <option value="Bazar Banat">Bazar Banat</option>
               <option value="Kantin Daycare">Kantin Daycare</option>
               <option value="Kepala Toko">Kepala Toko</option>
               <option value="Kepala Islam Mart">Kepala Islam Mart</option>
@@ -2242,6 +2521,8 @@
       var isKeuangan = roleStr.includes('keuangan');
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
       var isWali = isWaliSantri(currentUser);
+      var isBazar = roleStr.includes('bazar');
+      var bazarUnit = roleStr.includes('banat') ? 'Banat' : (roleStr.includes('banin') ? 'Banin' : (currentUser.im || 'Banin'));
 
       // Sesuaikan Label Form Order untuk Wali Santri vs Staf Toko
       var titleOrderEl = document.querySelector('#tab-order-create h2 span');
@@ -2316,6 +2597,7 @@
       var btmMenu = document.getElementById('btnNavBtmMenu');
       var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
       var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
+      var btmBazar = document.getElementById('btnNavBtmBazar');
 
       if(btmBeranda) btmBeranda.style.display = 'flex';
       if(btmPO) btmPO.style.display = 'none';
@@ -2326,6 +2608,7 @@
       if(btmMenu) btmMenu.style.display = 'none';
       if(btmLapMingguan) btmLapMingguan.style.display = 'none';
       if(btmLapBulanan) btmLapBulanan.style.display = 'none';
+      if (btmBazar) btmBazar.style.display = 'none';
 
       // ATURAN KHUSUS WALI SANTRI (Hanya Belanja & Riwayat Pesanan)
       if (isWali) {
@@ -2400,6 +2683,9 @@
       // Jika Wali Santri, langsung buka tab Belanja. Jika staf, buka Dashboard.
       if (isWali) {
         switchTab('order-create');
+      } else if (isBazar) {
+        currentUser.im = bazarUnit;
+        switchTab('bazar-management');
       } else {
         switchTab('dashboard');
       }
@@ -2443,7 +2729,7 @@
       var activeBtn = document.getElementById('nav-' + tabId);
       if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-      ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management'].forEach(t => {
+      ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
         if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
       });
       if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
@@ -2460,6 +2746,7 @@
       else if (tabId === 'user-management') loadUsersTable(false);
       else if (tabId === 'wa-reminder') loadWaReminder(false);
       else if (tabId === 'santri-management') loadSantriTable(false);
+      else if (tabId === 'bazar-management') initBazarView(false);
     }
 
     function refreshTab() { 
@@ -2696,7 +2983,7 @@
       }
 
      if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
-         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">' +
+         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">' +
          
          // 1. Tombol Laporan Bulanan
          '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
@@ -2709,11 +2996,14 @@
 
          // 4. Tombol Master Data Santri
          '<div onclick="switchTab(\'santri-management\')" class="bg-gradient-to-br from-teal-700 to-teal-950 p-5 rounded-3xl border border-teal-600 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-user-graduate"></i></div><h4 class="text-sm font-black text-white">4. Master Santri</h4><p class="text-[10px] text-teal-200/70 mt-1">Database login santri & wali santri.</p></div>' +
+
+         // 5. Tombol Operasional Bazar
+         '<div onclick="switchTab(\'bazar-management\')" class="bg-gradient-to-br from-amber-600 to-amber-900 p-5 rounded-3xl border border-amber-500 shadow-lg hover:shadow-amber-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-amber-400/30 text-amber-100 flex items-center justify-center text-xl mb-4 border border-amber-400/40"><i class="fa-solid fa-store"></i></div><h4 class="text-sm font-black text-white">5. Toko Bazar</h4><p class="text-[10px] text-amber-100/70 mt-1">Stok, nota beli, & laba/rugi bazar.</p></div>' +
          
          '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
-    }
+      
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
     // ==========================================
@@ -4390,6 +4680,388 @@
         closeModal('importSantriModal');
         loadSantriTable(true);
       } catch (err) { hideLoading(); showToast('Gagal import: ' + err.message, 'error'); }
+    }
+
+    // =========================================================================
+    // MODUL MANAJEMEN BAZAR BANIN & BANAT (STOK, NOTA BELI, KASIR, LABA/RUGI)
+    // =========================================================================
+    var cachedBazarBarang = [];
+    var cachedBazarTrans = [];
+
+    function initBazarView(forceRefresh) {
+      var mInput = document.getElementById('filterBazarMonth');
+      if (mInput && !mInput.value) mInput.value = new Date().toISOString().substring(0, 7);
+
+      var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
+      var isAdmin = isUserAdmin(currentUser) || roleStr.includes('kepala administrasi');
+      var selIM = document.getElementById('filterBazarIM');
+      var badge = document.getElementById('bazarUnitBadge');
+
+      if (!isAdmin && roleStr.includes('bazar')) {
+        var myUnit = roleStr.includes('banat') ? 'Banat' : (roleStr.includes('banin') ? 'Banin' : (currentUser.im || 'Banin'));
+        if (selIM) { selIM.value = myUnit; selIM.disabled = true; }
+        if (badge) badge.innerText = 'Khusus Bazar ' + myUnit;
+      } else {
+        if (selIM) selIM.disabled = false;
+        if (badge) badge.innerText = 'Banin & Banat';
+      }
+      loadBazarData(forceRefresh);
+    }
+
+    async function loadBazarData(forceRefresh) {
+      if (forceRefresh === false && window.isBazarLoaded) { renderAllBazarData(); return; }
+      var tbStok = document.getElementById('bazarStokTableBody');
+      if (tbStok) tbStok.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Memuat data bazar...</td></tr>';
+
+      try {
+        const [resBarang, resTrans] = await Promise.all([
+          supaClient.from('bazar_barang').select('*').order('nama_barang', { ascending: true }),
+          supaClient.from('bazar_transaksi').select('*').order('created_at', { ascending: false }).limit(500)
+        ]);
+        if (resBarang.error) throw resBarang.error;
+        if (resTrans.error) throw resTrans.error;
+
+        cachedBazarBarang = resBarang.data || [];
+        cachedBazarTrans = resTrans.data || [];
+        window.isBazarLoaded = true;
+        renderAllBazarData();
+      } catch (err) {
+        if (tbStok) tbStok.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-rose-600 font-bold">Gagal memuat: ' + err.message + '</td></tr>';
+      }
+    }
+
+    function renderAllBazarData() {
+      var unit = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
+      var month = document.getElementById('filterBazarMonth') ? document.getElementById('filterBazarMonth').value : '';
+      var q = (document.getElementById('filterBazarSearch') ? document.getElementById('filterBazarSearch').value : '').trim().toLowerCase();
+      var jenisFilter = document.getElementById('filterBazarJenisTrans') ? document.getElementById('filterBazarJenisTrans').value : 'ALL';
+
+      // 1. Render Tabel Stok Barang Bazar
+      var tbStok = document.getElementById('bazarStokTableBody');
+      var filteredStok = cachedBazarBarang.filter(b => {
+        var matchIM = (unit === 'ALL') || (b.im === unit);
+        var matchQ = !q || (b.nama_barang || '').toLowerCase().includes(q);
+        return matchIM && matchQ;
+      });
+
+      if (tbStok) {
+        if (filteredStok.length === 0) {
+          tbStok.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">Belum ada stok barang bazar. Klik "Tambah Barang Baru".</td></tr>';
+        } else {
+          var htmlStok = '';
+          filteredStok.forEach((b, idx) => {
+            var hBeli = Number(b.harga_beli || 0);
+            var hJual = Number(b.harga_jual || 0);
+            var margin = hJual - hBeli;
+            var safeB = JSON.stringify(b).replace(/'/g, "&apos;");
+            htmlStok += '<tr class="hover:bg-slate-50">' +
+              '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (idx + 1) + '</td>' +
+              '<td class="py-3 px-4 font-black text-slate-800">' + b.nama_barang + '</td>' +
+              '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (b.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">Bazar ' + b.im + '</span></td>' +
+              '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + hBeli.toLocaleString('id-ID') + '</td>' +
+              '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + hJual.toLocaleString('id-ID') + '</td>' +
+              '<td class="py-3 px-3 text-right font-mono font-bold ' + (margin >= 0 ? 'text-teal-600' : 'text-rose-600') + '">+Rp ' + margin.toLocaleString('id-ID') + '</td>' +
+              '<td class="py-3 px-3 text-center font-black text-sm ' + (Number(b.stok) <= 5 ? 'text-rose-600' : 'text-slate-800') + '">' + Number(b.stok || 0) + '</td>' +
+              '<td class="py-3 px-4 text-center"><div class="flex items-center justify-center gap-1.5">' +
+                '<button onclick="quickSellBazarItem(\'' + b.id + '\')" title="Catat Ada yang Beli" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-cart-check"></i> Beli</button>' +
+                '<button onclick=\'openEditBazarItemModal(' + safeB + ')\' title="Edit Harga & Stok" class="p-1.5 text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen-to-square"></i></button>' +
+                '<button onclick="deleteBazarItem(\'' + b.id + '\', \'' + b.nama_barang.replace(/'/g, "\\'") + '\')" title="Hapus Barang" class="p-1.5 text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>' +
+              '</div></td></tr>';
+          });
+          tbStok.innerHTML = htmlStok;
+        }
+      }
+
+      // 2. Hitung Laporan Keuntungan & Kerugian serta Render Tabel Transaksi
+      var totalOmzet = 0, totalQtyTerjual = 0, totalBelanjaNota = 0, totalUntungPenjualan = 0, totalKerugian = 0;
+
+      var transBulanIni = cachedBazarTrans.filter(t => {
+        var matchIM = (unit === 'ALL') || (t.im === unit);
+        var matchMonth = !month || String(t.tanggal || '').startsWith(month);
+        var matchQ = !q || (t.nama_barang || '').toLowerCase().includes(q) || (t.keterangan || '').toLowerCase().includes(q);
+        return matchIM && matchMonth && matchQ;
+      });
+
+      transBulanIni.forEach(t => {
+        var nom = Number(t.total_nominal || 0);
+        var lr = Number(t.laba_rugi || 0);
+        if (t.jenis === 'PENJUALAN') {
+          totalOmzet += nom;
+          totalQtyTerjual += Number(t.qty || 0);
+          totalUntungPenjualan += lr;
+        } else if (t.jenis === 'NOTA_PEMBELIAN') {
+          totalBelanjaNota += nom;
+        } else if (t.jenis === 'KERUGIAN') {
+          totalKerugian += Math.abs(lr || nom);
+        }
+      });
+
+      var labaBersih = totalUntungPenjualan - totalKerugian;
+
+      if (document.getElementById('bazarStatOmzet')) document.getElementById('bazarStatOmzet').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
+      if (document.getElementById('bazarStatQtyTerjual')) document.getElementById('bazarStatQtyTerjual').innerText = totalQtyTerjual + ' item terjual';
+      if (document.getElementById('bazarStatBelanja')) document.getElementById('bazarStatBelanja').innerText = 'Rp ' + totalBelanjaNota.toLocaleString('id-ID');
+      if (document.getElementById('bazarStatUntungKotor')) document.getElementById('bazarStatUntungKotor').innerText = 'Rp ' + totalUntungPenjualan.toLocaleString('id-ID');
+      if (document.getElementById('bazarStatRugi')) document.getElementById('bazarStatRugi').innerText = 'Rp ' + totalKerugian.toLocaleString('id-ID');
+      if (document.getElementById('bazarStatLabaBersih')) document.getElementById('bazarStatLabaBersih').innerText = (labaBersih < 0 ? '-Rp ' : 'Rp ') + Math.abs(labaBersih).toLocaleString('id-ID');
+      if (document.getElementById('bazarStatStatusLaba')) {
+        var elSt = document.getElementById('bazarStatStatusLaba');
+        elSt.innerText = labaBersih >= 0 ? '✔ Status: Untung Bersih' : '⚠ Status: Mengalami Kerugian';
+        elSt.className = 'text-[10px] font-bold mt-0.5 ' + (labaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      }
+
+      var tbTrans = document.getElementById('bazarTransTableBody');
+      var displayTrans = transBulanIni.filter(t => jenisFilter === 'ALL' || t.jenis === jenisFilter);
+
+      if (tbTrans) {
+        if (displayTrans.length === 0) {
+          tbTrans.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">Belum ada catatan transaksi pada filter ini.</td></tr>';
+        } else {
+          var htmlTr = '';
+          displayTrans.forEach(t => {
+            var badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">PENJUALAN</span>';
+            var lrText = '<span class="font-bold text-emerald-600">+Rp ' + Number(t.laba_rugi || 0).toLocaleString('id-ID') + '</span>';
+            if (t.jenis === 'NOTA_PEMBELIAN') {
+              badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">NOTA BELI</span>';
+              lrText = '<span class="text-slate-400">Stok +' + t.qty + '</span>';
+            } else if (t.jenis === 'KERUGIAN') {
+              badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">KERUGIAN</span>';
+              lrText = '<span class="font-bold text-rose-600">-Rp ' + Math.abs(Number(t.laba_rugi || t.total_nominal || 0)).toLocaleString('id-ID') + '</span>';
+            }
+
+            htmlTr += '<tr class="hover:bg-slate-50">' +
+              '<td class="py-3 px-3 font-mono">' + t.tanggal + '</td>' +
+              '<td class="py-3 px-3">' + badgeJenis + '</td>' +
+              '<td class="py-3 px-3 text-center font-bold">' + t.im + '</td>' +
+              '<td class="py-3 px-4 font-bold text-slate-800">' + t.nama_barang + '</td>' +
+              '<td class="py-3 px-2 text-center font-black">' + t.qty + '</td>' +
+              '<td class="py-3 px-3 text-right font-mono font-bold">Rp ' + Number(t.total_nominal || 0).toLocaleString('id-ID') + '</td>' +
+              '<td class="py-3 px-3 text-right font-mono">' + lrText + '</td>' +
+              '<td class="py-3 px-4 text-slate-600">' + (t.keterangan || '-') + ' <span class="text-[10px] text-slate-400">(' + (t.petugas || '') + ')</span></td>' +
+              '<td class="py-3 px-3 text-center"><button onclick="deleteBazarTrans(\'' + t.id + '\')" class="p-1.5 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>' +
+            '</tr>';
+          });
+          tbTrans.innerHTML = htmlTr;
+        }
+      }
+    }
+
+    function openBazarItemModal() {
+      document.getElementById('bazarItemForm').reset();
+      document.getElementById('bazarItemId').value = '';
+      var activeUnit = document.getElementById('filterBazarIM').value;
+      document.getElementById('bazarItemIM').value = (activeUnit === 'Banat') ? 'Banat' : 'Banin';
+      document.getElementById('bazarItemModalTitle').innerText = 'Tambah Barang & Harga Bazar';
+      openModal('bazarItemModal');
+    }
+
+    function openEditBazarItemModal(b) {
+      document.getElementById('bazarItemId').value = b.id;
+      document.getElementById('bazarItemIM').value = b.im || 'Banin';
+      document.getElementById('bazarItemStok').value = b.stok || 0;
+      document.getElementById('bazarItemNama').value = b.nama_barang || '';
+      document.getElementById('bazarItemHargaBeli').value = b.harga_beli || 0;
+      document.getElementById('bazarItemHargaJual').value = b.harga_jual || 0;
+      document.getElementById('bazarItemModalTitle').innerText = 'Edit Barang & Harga Bazar';
+      openModal('bazarItemModal');
+    }
+
+    async function submitBazarItemForm(e) {
+      e.preventDefault();
+      var id = document.getElementById('bazarItemId').value.trim() || null;
+      var payload = {
+        im: document.getElementById('bazarItemIM').value,
+        stok: Number(document.getElementById('bazarItemStok').value) || 0,
+        nama_barang: document.getElementById('bazarItemNama').value.trim(),
+        harga_beli: Number(document.getElementById('bazarItemHargaBeli').value) || 0,
+        harga_jual: Number(document.getElementById('bazarItemHargaJual').value) || 0
+      };
+      showLoading('Menyimpan barang bazar...');
+      try {
+        let err;
+        if (id) { const res = await supaClient.from('bazar_barang').update(payload).eq('id', id); err = res.error; }
+        else { const res = await supaClient.from('bazar_barang').insert([payload]); err = res.error; }
+        hideLoading();
+        if (err) throw err;
+        showToast('Data barang bazar disimpan!', 'success');
+        closeModal('bazarItemModal');
+        loadBazarData(true);
+      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+    }
+
+    async function deleteBazarItem(id, nama) {
+      if (!confirm('Hapus barang bazar "' + nama + '"?')) return;
+      showLoading('Menghapus...');
+      try {
+        const { error } = await supaClient.from('bazar_barang').delete().eq('id', id);
+        hideLoading();
+        if (error) throw error;
+        showToast('Barang dihapus!', 'success');
+        loadBazarData(true);
+      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+    }
+
+    function openBazarTransModal(jenis, preselectedId) {
+      document.getElementById('bazarTransForm').reset();
+      document.getElementById('bazarTransJenis').value = jenis;
+      document.getElementById('bazarTransTanggal').value = new Date().toISOString().split('T')[0];
+
+      var activeUnit = document.getElementById('filterBazarIM').value;
+      document.getElementById('bazarTransIM').value = (activeUnit === 'Banat') ? 'Banat' : 'Banin';
+
+      var titleEl = document.getElementById('bazarTransModalTitle');
+      var lblKet = document.getElementById('lblBazarTransKet');
+      var btnSub = document.getElementById('btnBazarTransSubmit');
+
+      if (jenis === 'PENJUALAN') {
+        titleEl.innerText = '🛒 Catat Pembeli (Penjualan Bazar)';
+        lblKet.innerText = 'Nama Pembeli / Catatan (Opsional)';
+        btnSub.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow';
+      } else if (jenis === 'NOTA_PEMBELIAN') {
+        titleEl.innerText = '🧾 Input Nota Pembelian (Tambah Stok)';
+        lblKet.innerText = 'No. Nota / Nama Toko Supplier *';
+        btnSub.className = 'px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow';
+      } else {
+        titleEl.innerText = '⚠️ Catat Kerugian / Barang Rusak';
+        lblKet.innerText = 'Alasan Kerugian (Basi / Rusak / Hilang) *';
+        btnSub.className = 'px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow';
+      }
+
+      populateBazarBarangDropdown(preselectedId);
+      openModal('bazarTransModal');
+    }
+
+    function quickSellBazarItem(barangId) {
+      var item = cachedBazarBarang.find(b => b.id === barangId);
+      if (item && document.getElementById('filterBazarIM').value === 'ALL') {
+        document.getElementById('bazarTransIM').value = item.im;
+      }
+      openBazarTransModal('PENJUALAN', barangId);
+    }
+
+    function populateBazarBarangDropdown(selectedId) {
+      var im = document.getElementById('bazarTransIM').value;
+      var sel = document.getElementById('bazarTransBarangId');
+      var list = cachedBazarBarang.filter(b => b.im === im);
+      var html = '<option value="">-- Pilih Barang Bazar ' + im + ' --</option>';
+      list.forEach(b => {
+        var isSel = (selectedId && b.id === selectedId) ? 'selected' : '';
+        html += '<option value="' + b.id + '" ' + isSel + '>' + b.nama_barang + ' (Stok: ' + b.stok + ')</option>';
+      });
+      sel.innerHTML = html;
+      onBazarBarangSelectChange();
+    }
+
+    function onBazarBarangSelectChange() {
+      var id = document.getElementById('bazarTransBarangId').value;
+      var item = cachedBazarBarang.find(b => b.id === id);
+      if (item) {
+        document.getElementById('bazarTransHargaBeli').value = item.harga_beli || 0;
+        document.getElementById('bazarTransHargaJual').value = item.harga_jual || 0;
+      }
+      calcBazarTransPreview();
+    }
+
+    function calcBazarTransPreview() {
+      var jenis = document.getElementById('bazarTransJenis').value;
+      var qty = Number(document.getElementById('bazarTransQty').value) || 0;
+      var hBeli = Number(document.getElementById('bazarTransHargaBeli').value) || 0;
+      var hJual = Number(document.getElementById('bazarTransHargaJual').value) || 0;
+      var lbl = document.getElementById('lblBazarPreviewTotal');
+      var val = document.getElementById('valBazarPreviewTotal');
+
+      if (jenis === 'PENJUALAN') {
+        var totalBayar = qty * hJual;
+        var untung = qty * (hJual - hBeli);
+        lbl.innerText = 'Total Bayar Pembeli (Untung Rp ' + untung.toLocaleString('id-ID') + '):';
+        val.innerText = 'Rp ' + totalBayar.toLocaleString('id-ID');
+      } else if (jenis === 'NOTA_PEMBELIAN') {
+        lbl.innerText = 'Total Nilai Nota Pembelian:';
+        val.innerText = 'Rp ' + (qty * hBeli).toLocaleString('id-ID');
+      } else {
+        lbl.innerText = 'Total Nilai Kerugian Modal:';
+        val.innerText = '-Rp ' + (qty * hBeli).toLocaleString('id-ID');
+      }
+    }
+
+    async function submitBazarTransForm(e) {
+      e.preventDefault();
+      var jenis = document.getElementById('bazarTransJenis').value;
+      var barangId = document.getElementById('bazarTransBarangId').value;
+      var item = cachedBazarBarang.find(b => b.id === barangId);
+      if (!item) return showToast('Pilih barang bazar terlebih dahulu!', 'error');
+
+      var qty = Number(document.getElementById('bazarTransQty').value) || 0;
+      var hBeli = Number(document.getElementById('bazarTransHargaBeli').value) || 0;
+      var hJual = Number(document.getElementById('bazarTransHargaJual').value) || 0;
+
+      if ((jenis === 'PENJUALAN' || jenis === 'KERUGIAN') && qty > Number(item.stok)) {
+        return showToast('Stok tidak cukup! Sisa stok saat ini: ' + item.stok, 'error');
+      }
+
+      var totalNom = (jenis === 'PENJUALAN') ? (qty * hJual) : (qty * hBeli);
+      var labaRugi = 0;
+      var newStok = Number(item.stok);
+
+      if (jenis === 'PENJUALAN') {
+        labaRugi = qty * (hJual - hBeli);
+        newStok -= qty;
+      } else if (jenis === 'NOTA_PEMBELIAN') {
+        labaRugi = 0;
+        newStok += qty;
+      } else if (jenis === 'KERUGIAN') {
+        labaRugi = -(qty * hBeli);
+        newStok -= qty;
+      }
+
+      var payloadTrans = {
+        tanggal: document.getElementById('bazarTransTanggal').value,
+        jenis: jenis,
+        im: document.getElementById('bazarTransIM').value,
+        barang_id: item.id,
+        nama_barang: item.nama_barang,
+        qty: qty,
+        harga_beli: hBeli,
+        harga_jual: hJual,
+        total_nominal: totalNom,
+        laba_rugi: labaRugi,
+        keterangan: document.getElementById('bazarTransKet').value.trim(),
+        petugas: currentUser ? currentUser.nama : 'Petugas'
+      };
+
+      showLoading('Menyimpan transaksi & memperbarui stok...');
+      try {
+        const { error: err1 } = await supaClient.from('bazar_transaksi').insert([payloadTrans]);
+        if (err1) throw err1;
+
+        // Update stok dan harga terbaru di tabel bazar_barang
+        const { error: err2 } = await supaClient.from('bazar_barang').update({
+          stok: newStok,
+          harga_beli: hBeli,
+          harga_jual: hJual
+        }).eq('id', item.id);
+        if (err2) throw err2;
+
+        hideLoading();
+        showToast('Transaksi berhasil disimpan & stok diperbarui!', 'success');
+        closeModal('bazarTransModal');
+        loadBazarData(true);
+      } catch (err) {
+        hideLoading();
+        showToast('Gagal menyimpan: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteBazarTrans(id) {
+      if (!confirm('Hapus catatan transaksi bazar ini?')) return;
+      showLoading('Menghapus...');
+      try {
+        const { error } = await supaClient.from('bazar_transaksi').delete().eq('id', id);
+        hideLoading();
+        if (error) throw error;
+        showToast('Catatan dihapus!', 'success');
+        loadBazarData(true);
+      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
     }
 
   </script>
