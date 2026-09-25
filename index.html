@@ -337,6 +337,41 @@
         <!-- ========================================================================= -->
         <section id="tab-dashboard" class="space-y-6">
           
+          <!-- PANEL KHUSUS DASHBOARD WALI SANTRI -->
+          <div id="waliDashboardPanel" style="display: none;" class="space-y-5">
+            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+              <div class="relative z-10">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 uppercase tracking-wider">Portal Wali Santri</span>
+                <h2 id="waliDashGreeting" class="text-lg sm:text-xl font-black mt-2">Ahlan wa Sahlan, Wali Santri</h2>
+                <p id="waliDashSantriInfo" class="text-xs text-emerald-100/90 mt-1 font-medium">Memuat informasi santri...</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Menu 1: Belanja -->
+              <div onclick="switchTab('order-create')" class="bg-white p-6 rounded-3xl border-2 border-emerald-100 hover:border-emerald-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 cursor-pointer flex items-center gap-4 group">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-2xl transition shrink-0">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-slate-800">Belanja</h3>
+                  <p class="text-xs text-slate-500 mt-0.5">Pesan barang & kebutuhan harian putra/putri Anda di pondok.</p>
+                </div>
+              </div>
+
+              <!-- Menu 2: Riwayat Pembelanjaan -->
+              <div onclick="switchTab('order-history')" class="bg-white p-6 rounded-3xl border-2 border-teal-100 hover:border-teal-500 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 cursor-pointer flex items-center gap-4 group">
+                <div class="w-14 h-14 rounded-2xl bg-teal-100 text-teal-700 group-hover:bg-teal-600 group-hover:text-white flex items-center justify-center text-2xl transition shrink-0">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-slate-800">Riwayat Pembelanjaan</h3>
+                  <p class="text-xs text-slate-500 mt-0.5">Pantau status pesanan, rincian nota, dan instruksi transfer.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Banner Pengingat Ceklis (Tetap dipertahankan agar staf ingat mengisi form) -->
           <div id="dashboardDailyReminderBanner" class="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-center gap-3.5">
@@ -1791,6 +1826,69 @@
       
     </div>
 
+    <!-- ========================================================================= -->
+  <!-- MODAL: INSTRUKSI TRANSFER & KODE UNIK (KHUSUS SELESAI BELANJA WALI SANTRI) -->
+  <!-- ========================================================================= -->
+  <div id="waliTransferModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto shadow-inner">
+        <i class="fa-solid fa-money-bill-transfer"></i>
+      </div>
+      <div>
+        <span id="tfModalNoPo" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-slate-100 text-slate-700">SNT-000000</span>
+        <h3 class="text-base sm:text-lg font-black text-slate-800 mt-1">Instruksi Pembayaran Transfer</h3>
+        <p class="text-[11px] text-slate-500">Mohon transfer <b>tepat hingga 3 digit terakhir (kode unik)</b> agar pesanan otomatis terverifikasi.</p>
+      </div>
+
+      <!-- Informasi Rekening Tujuan -->
+      <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase text-slate-400">Bank Tujuan</span>
+          <span id="tfBankName" class="text-xs font-black text-slate-800">BSI (Bank Syariah Indonesia)</span>
+        </div>
+        <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 block">Nomor Rekening</span>
+            <span id="tfRekeningNum" class="text-sm sm:text-base font-mono font-black text-emerald-700 tracking-wider">7123456789</span>
+            <span id="tfRekeningName" class="text-[10px] font-bold text-slate-600 block">a.n. Islam Mart Pesantren</span>
+          </div>
+          <button type="button" onclick="copyTextToClipboard(document.getElementById('tfRekeningNum').innerText, 'Nomor Rekening')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-200">
+            <i class="fa-regular fa-copy mr-1"></i>Salin
+          </button>
+        </div>
+      </div>
+
+      <!-- Rincian Nominal + Kode Unik -->
+      <div class="bg-emerald-50/70 p-4 rounded-2xl border-2 border-dashed border-emerald-300 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-600">
+          <span>Total Belanja:</span>
+          <span id="tfSubTotal" class="font-mono font-bold">Rp 0</span>
+        </div>
+        <div class="flex justify-between text-amber-700 font-bold">
+          <span>Kode Unik Transfer:</span>
+          <span id="tfKodeUnik" class="font-mono">+ Rp 0</span>
+        </div>
+        <div class="border-t border-emerald-200 pt-2 flex items-center justify-between">
+          <span class="font-black text-slate-800 uppercase text-[11px]">Total Harus Ditransfer:</span>
+          <button type="button" onclick="copyTextToClipboard(window.lastUniqueTransferAmount, 'Nominal Transfer')" class="text-xs text-emerald-700 underline font-bold">Salin Nominal</button>
+        </div>
+        <div id="tfTotalBayar" class="text-2xl font-mono font-black text-emerald-800 tracking-tight bg-white py-2 rounded-xl border border-emerald-200">
+          Rp 0
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-2">
+        <button type="button" onclick="confirmTransferViaWA()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+          <i class="fa-brands fa-whatsapp text-sm"></i>
+          <span>Kirim Konfirmasi & Bukti TF via WA</span>
+        </button>
+        <button type="button" onclick="closeModal('waliTransferModal'); switchTab('order-history');" class="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold">
+          Lihat Riwayat Pembelanjaan
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========================================================================= -->
   <!-- MODAL: DETAIL & CETAK PURCHASE ORDER (PO) -->
   <!-- ========================================================================= -->
@@ -2612,14 +2710,17 @@
           if(btmBazar) btmBazar.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
       }
-      // ATURAN KHUSUS WALI SANTRI
+     // ATURAN KHUSUS WALI SANTRI
       else if (isWali) {
-          if(btmBeranda) btmBeranda.style.display = 'none';
+          if(btmBeranda) btmBeranda.style.display = 'flex';
           if(btmPO) {
               btmPO.style.display = 'flex';
-              btmPO.querySelector('span').innerText = 'Belanja Santri';
+              btmPO.querySelector('span').innerText = 'Belanja';
           }
-          if(btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
+          if(btmRiwayatPO) {
+              btmRiwayatPO.style.display = 'flex';
+              btmRiwayatPO.querySelector('span').innerText = 'Riwayat Pembelanjaan';
+          }
       }
       // ATURAN 1: KASIR
       else if (isKasir && !isKepalaAdmin) {
@@ -2681,12 +2782,10 @@
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
       
-      // Arahkan langsung sesuai Role
+      // Arahkan langsung sesuai Role (Wali Santri masuk ke Dashboard Wali)
       if (isBazar) {
         currentUser.im = bazarUnit;
         switchTab('bazar-management');
-      } else if (isWali) {
-        switchTab('order-create');
       } else {
         switchTab('dashboard');
       }
@@ -2907,7 +3006,24 @@
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
-      
+      var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+      var waliPanel = document.getElementById('waliDashboardPanel');
+      var tabDash = document.getElementById('tab-dashboard');
+
+      if (isWali) {
+        // Sembunyikan grafik & statistik staf, tampilkan hanya Dashboard Wali Santri
+        if (tabDash) {
+          Array.from(tabDash.children).forEach(el => {
+            el.style.display = (el.id === 'waliDashboardPanel') ? 'block' : 'none';
+          });
+        }
+        if (document.getElementById('waliDashGreeting')) document.getElementById('waliDashGreeting').innerText = 'Ahlan wa Sahlan, ' + (currentUser.nama || 'Wali Santri');
+        if (document.getElementById('waliDashSantriInfo')) document.getElementById('waliDashSantriInfo').innerText = 'Santri: ' + (currentUser.info_santri || currentUser.nama_santri || '-') + ' • Unit IM ' + (currentUser.im || 'Banin');
+        return;
+      } else {
+        if (waliPanel) waliPanel.style.display = 'none';
+      }
+
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
       var reminderBanner = document.getElementById('dashboardDailyReminderBanner');
       
@@ -3609,6 +3725,16 @@
       if(document.getElementById('orderTotalEstSummary')) document.getElementById('orderTotalEstSummary').innerText = 'Rp ' + totalEst.toLocaleString('id-ID');
     }
 
+    // KONFIGURASI NOMOR REKENING TRANSFER TOKO (SILAKAN SESUAIKAN)
+    var REKENING_TOKO = {
+      Banin: { bank: 'BSI (Bank Syariah Indonesia)', norek: '7112233445', atas_nama: 'Islam Mart Banin' },
+      Banat: { bank: 'BSI (Bank Syariah Indonesia)', norek: '7556677889', atas_nama: 'Islam Mart Banat' }
+    };
+    var WA_ADMIN_KONFIRMASI = {
+      Banin: '085724400013',
+      Banat: '085724400013'
+    };
+
     async function submitPurchaseOrder(e) {
       e.preventDefault();
       var items = [], totalQ = 0, totalE = 0;
@@ -3642,38 +3768,101 @@
       var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
       var prefixKode = isWali ? 'SNT-' : 'PO-';
       var supplierOrSantri = document.getElementById('orderSupplier').value.trim();
+      var unitIM = document.getElementById('orderIM').value || 'Banin';
       
       if (isWali && !supplierOrSantri) {
-        return showToast('Mohon isi Nama Santri & Kelas terlebih dahulu!', 'error');
+        return showToast('Mohon isi Identitas Santri terlebih dahulu!', 'error');
       }
 
+      // Generate Kode Unik 3 Digit (101 - 999) khusus untuk Belanja Wali Santri
+      var kodeUnik = isWali ? (Math.floor(Math.random() * 899) + 101) : 0;
+      var totalTransferUnik = totalE + kodeUnik;
+      var rekInfo = REKENING_TOKO[unitIM] || REKENING_TOKO.Banin;
+
+      var catatanUser = document.getElementById('orderCatatan').value.trim();
+      var catatanFinal = isWali 
+        ? ('[TF ' + rekInfo.bank + ' ' + rekInfo.norek + ' | Belanja: Rp' + totalE.toLocaleString('id-ID') + ' + Kode Unik: ' + kodeUnik + ' = TOTAL TF: Rp' + totalTransferUnik.toLocaleString('id-ID') + '] ' + catatanUser).trim()
+        : catatanUser;
+
+      var noPoGenerated = prefixKode + Date.now().toString().slice(-6);
       var payload = {
-        no_po: prefixKode + Date.now().toString().slice(-6),
+        no_po: noPoGenerated,
         tanggal: document.getElementById('orderTanggal').value,
         supplier: isWali ? ('Santri: ' + supplierOrSantri) : (supplierOrSantri || '-'),
         no_wa_supplier: document.getElementById('orderNoWaSupplier').value.trim(),
-        im: document.getElementById('orderIM').value,
-        catatan: document.getElementById('orderCatatan').value.trim(),
+        im: unitIM,
+        catatan: catatanFinal,
         nama_pemohon: currentUser.nama, 
         username_pemohon: currentUser.username,
         status: 'Diajukan', 
-        estimasi_total: totalE, 
+        estimasi_total: totalTransferUnik, 
         total_qty: totalQ, 
         items: items
       };
 
-      showLoading(isWali ? 'Mengirim pesanan santri...' : 'Mengajukan PO...');
+      showLoading(isWali ? 'Memproses pesanan & kode unik transfer...' : 'Mengajukan PO...');
       try {
         const { error } = await supaClient.from('orders').insert([payload]);
         hideLoading();
         if (error) throw error;
-        showToast(isWali ? 'Pesanan Santri Berhasil Dikirim!' : 'PO Berhasil Diajukan!', 'success'); 
-        resetOrderForm(); 
-        switchTab('order-history');
+        
+        window.isOrdersLoaded = false;
+        resetOrderForm();
+
+        if (isWali) {
+          showWaliTransferModal(payload, totalE, kodeUnik, totalTransferUnik, rekInfo);
+        } else {
+          showToast('PO Berhasil Diajukan!', 'success'); 
+          switchTab('order-history');
+        }
       } catch (err) { 
         hideLoading(); 
         showToast('Gagal: ' + err.message, 'error'); 
       }
+    }
+
+    function showWaliTransferModal(orderData, subTotal, kodeUnik, totalTf, rekInfo) {
+      window.lastWaliOrderData = { order: orderData, subTotal: subTotal, kodeUnik: kodeUnik, totalTf: totalTf, rekInfo: rekInfo };
+      window.lastUniqueTransferAmount = totalTf;
+
+      if (document.getElementById('tfModalNoPo')) document.getElementById('tfModalNoPo').innerText = orderData.no_po;
+      if (document.getElementById('tfBankName')) document.getElementById('tfBankName').innerText = rekInfo.bank;
+      if (document.getElementById('tfRekeningNum')) document.getElementById('tfRekeningNum').innerText = rekInfo.norek;
+      if (document.getElementById('tfRekeningName')) document.getElementById('tfRekeningName').innerText = 'a.n. ' + rekInfo.atas_nama;
+      if (document.getElementById('tfSubTotal')) document.getElementById('tfSubTotal').innerText = 'Rp ' + Number(subTotal).toLocaleString('id-ID');
+      if (document.getElementById('tfKodeUnik')) document.getElementById('tfKodeUnik').innerText = '+ Rp ' + kodeUnik;
+      if (document.getElementById('tfTotalBayar')) document.getElementById('tfTotalBayar').innerText = 'Rp ' + Number(totalTf).toLocaleString('id-ID');
+
+      openModal('waliTransferModal');
+    }
+
+    function copyTextToClipboard(txt, label) {
+      navigator.clipboard.writeText(String(txt)).then(() => {
+        showToast(label + ' berhasil disalin!', 'success');
+      }).catch(() => {
+        showToast('Gagal menyalin teks', 'error');
+      });
+    }
+
+    function confirmTransferViaWA() {
+      var d = window.lastWaliOrderData;
+      if (!d) return;
+      var o = d.order;
+      var msg = "*KONFIRMASI TRANSFER BELANJA SANTRI*\n" +
+        "No. Pesanan: *" + o.no_po + "*\n" +
+        "Tanggal: " + o.tanggal + "\n" +
+        "Penerima: *" + o.supplier + "*\n" +
+        "Unit Toko: Islam Mart " + o.im + "\n\n" +
+        "*Rincian Pembayaran:*\n" +
+        "Total Belanja: Rp " + Number(d.subTotal).toLocaleString('id-ID') + "\n" +
+        "Kode Unik: *" + d.kodeUnik + "*\n" +
+        "*TOTAL TRANSFER: Rp " + Number(d.totalTf).toLocaleString('id-ID') + "*\n" +
+        "Tujuan: " + d.rekInfo.bank + " - " + d.rekInfo.norek + "\n\n" +
+        "Berikut saya lampirkan bukti transfernya. Terima kasih.";
+
+      var adminPhone = (WA_ADMIN_KONFIRMASI[o.im] || '085724400013').replace(/[^0-9]/g, '');
+      if (adminPhone.startsWith('0')) adminPhone = '62' + adminPhone.substring(1);
+      window.open("https://api.whatsapp.com/send?phone=" + adminPhone + "&text=" + encodeURIComponent(msg), '_blank');
     }
 
     async function loadOrdersTable(forceRefresh) {
