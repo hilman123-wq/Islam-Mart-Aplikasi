@@ -1198,6 +1198,163 @@
         </section>
 
         <!-- ========================================================================= -->
+        <!-- TAB: MASTER DATA SANTRI (KHUSUS LOGIN WALI SANTRI) -->
+        <!-- ========================================================================= -->
+        <section id="tab-santri-management" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-user-graduate text-teal-600"></i>
+                  <span>Master Data Santri (Akses Belanja Wali Santri)</span>
+                </h2>
+                <p class="text-[11px] sm:text-xs text-slate-500">Wali santri dapat login menggunakan <b>Nama Santri</b> (atau NIS) dan Password yang terdaftar di sini.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openImportSantriModal()" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-excel"></i>
+                  <span>Import Excel Santri</span>
+                </button>
+                <button onclick="openSantriFormModal()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Tambah Santri</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div class="sm:col-span-2 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+                <input type="text" id="filterSantriSearch" oninput="filterAndRenderSantri()" placeholder="Cari nama santri, NIS, kelas, asrama..." class="w-full pl-8 pr-3 py-2 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-600">
+              </div>
+              <div>
+                <select id="filterSantriIM" onchange="filterAndRenderSantri()" class="w-full p-2 bg-white border rounded-xl text-xs font-bold text-slate-700">
+                  <option value="ALL">Semua Unit Pondok</option>
+                  <option value="Banin">Santri Banin (Putra)</option>
+                  <option value="Banat">Santri Banat (Putri)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+              <table class="w-full text-left text-xs min-w-[750px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3 w-10 text-center">No</th>
+                    <th class="py-3 px-3">NIS</th>
+                    <th class="py-3 px-4">Nama Santri (Username Login)</th>
+                    <th class="py-3 px-3">Kelas & Asrama</th>
+                    <th class="py-3 px-3 text-center">Unit</th>
+                    <th class="py-3 px-3">No. WA Wali</th>
+                    <th class="py-3 px-3">Password</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="santriTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <tr><td colspan="8" class="py-6 text-center text-slate-400">Memuat data santri...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- MODAL: TAMBAH / EDIT SANTRI -->
+        <div id="santriFormModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div>
+                <h3 id="santriFormModalTitle" class="text-sm sm:text-base font-black text-slate-800">Tambah Data Santri</h3>
+                <p class="text-[11px] text-slate-500">Data ini digunakan Wali Santri untuk login & berbelanja</p>
+              </div>
+              <button onclick="closeModal('santriFormModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="santriForm" onsubmit="submitSantriForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="santriFormId" value="">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">NIS (Opsional)</label>
+                  <input type="text" id="santriFormNis" placeholder="2026001" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-semibold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Unit Pondok *</label>
+                  <select id="santriFormIM" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                    <option value="Banin">Banin (Putra)</option>
+                    <option value="Banat">Banat (Putri)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Lengkap Santri (Untuk Login) *</label>
+                <input type="text" id="santriFormNama" required placeholder="Contoh: Ahmad Fauzi" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold outline-none focus:bg-white focus:ring-2 focus:ring-teal-600">
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Kelas *</label>
+                  <input type="text" id="santriFormKelas" required placeholder="Contoh: 8A" class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Asrama / Kamar</label>
+                  <input type="text" id="santriFormAsrama" placeholder="Contoh: Al-Faruq 2" class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">No. WA Wali Santri</label>
+                  <input type="text" id="santriFormWa" placeholder="0812xxxxxxx" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-semibold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Password Login *</label>
+                  <input type="text" id="santriFormPassword" required value="123456" class="w-full p-2.5 bg-slate-50 border rounded-xl font-mono font-bold text-teal-800">
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('santriFormModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow">Simpan Santri</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: IMPORT EXCEL SANTRI -->
+        <div id="importSantriModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div>
+                <h3 class="text-sm sm:text-base font-black text-slate-800">Import Excel Master Santri</h3>
+                <p class="text-[11px] text-slate-500">Unggah daftar santri sekaligus dari file Excel</p>
+              </div>
+              <button onclick="closeModal('importSantriModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitImportSantri(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="importSantriRawJson" value="">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Unit Pondok *</label>
+                <select id="importSantriIM" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                  <option value="Banin">Santri Banin (Putra)</option>
+                  <option value="Banat">Santri Banat (Putri)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih File Excel (.xlsx) *</label>
+                <div class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-4 text-center hover:border-teal-400 transition cursor-pointer relative">
+                  <i class="fa-solid fa-file-excel text-3xl text-teal-600 mb-2"></i>
+                  <p id="importSantriFileName" class="text-xs font-semibold text-slate-600">Klik untuk Pilih File Excel</p>
+                  <input type="file" accept=".xlsx, .xls" onchange="parseImportSantriExcel(event)" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+                <div class="mt-2 p-2 bg-slate-100 rounded-lg text-[10px] text-slate-600">
+                  <p class="font-bold text-slate-800">Format Judul Kolom Baris Pertama Excel:</p>
+                  <p class="font-mono">NIS | Nama Santri | Kelas | Asrama | No WA | Password</p>
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('importSantriModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow">Mulai Import</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
         <!-- TAB: KELOLA KARYAWAN (ADMIN) -->
         <!-- ========================================================================= -->
         <section id="tab-user-management" style="display: none;" class="space-y-6">
@@ -2005,21 +2162,58 @@
       if (e) e.preventDefault();
       var u = document.getElementById('loginUsername').value.trim();
       var p = document.getElementById('loginPassword').value.trim();
-      if (!u || !p) return showToast('Username dan Password wajib diisi!', 'error');
+      if (!u || !p) return showToast('Username/Nama Santri dan Password wajib diisi!', 'error');
 
       showLoading('Memverifikasi akun...');
       try {
-        const { data, error } = await supaClient.from('users').select('*').eq('username', u).eq('password', p).maybeSingle();
-        hideLoading();
-        if (error || !data) showToast('Username atau Password salah!', 'error');
-        else if (data.status && data.status.toLowerCase() !== 'aktif') showToast('Akun Anda sedang dinonaktifkan!', 'error');
-        else {
-          currentUser = data;
+        // 1. Cek terlebih dahulu di tabel Karyawan/Staf (users)
+        const { data: staffData } = await supaClient.from('users').select('*').ilike('username', u).eq('password', p).maybeSingle();
+        
+        if (staffData) {
+          hideLoading();
+          if (staffData.status && staffData.status.toLowerCase() !== 'aktif') return showToast('Akun Anda sedang dinonaktifkan!', 'error');
+          currentUser = staffData;
           sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser));
           showToast('Selamat datang, ' + currentUser.nama + '!', 'success');
           setupSession();
+          return;
         }
-      } catch (err) { hideLoading(); showToast('Koneksi gagal: ' + err.message, 'error'); }
+
+        // 2. Jika bukan staf, cek di tabel Master Santri (Bisa login pakai Nama Santri atau NIS)
+        const { data: santriList, error: santriErr } = await supaClient
+          .from('master_santri')
+          .select('*')
+          .or(`nama_santri.ilike.${u},nis.eq.${u}`)
+          .eq('password', p)
+          .limit(1);
+
+        hideLoading();
+        if (santriErr || !santriList || santriList.length === 0) {
+          showToast('Nama Santri / Username atau Password salah!', 'error');
+        } else {
+          var s = santriList[0];
+          if (s.status && s.status.toLowerCase() !== 'aktif') return showToast('Status santri sedang nonaktif!', 'error');
+          
+          // Bentuk sesi otomatis sebagai Wali Santri
+          var infoLengkapSantri = s.nama_santri + (s.kelas ? ' - Kelas ' + s.kelas : '') + (s.asrama ? ' (' + s.asrama + ')' : '');
+          currentUser = {
+            id: s.id,
+            username: s.nis || s.nama_santri,
+            nama: 'Wali: ' + s.nama_santri,
+            nama_santri: s.nama_santri,
+            info_santri: infoLengkapSantri,
+            role: 'Wali Santri',
+            im: s.im || 'Banin',
+            nowa: s.no_wa_wali || ''
+          };
+          sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser));
+          showToast('Selamat berbelanja, Wali dari ' + s.nama_santri + '!', 'success');
+          setupSession();
+        }
+      } catch (err) { 
+        hideLoading(); 
+        showToast('Koneksi gagal: ' + err.message, 'error'); 
+      }
     }
 
     function isWaliSantri(u) {
@@ -2063,9 +2257,16 @@
 
       if (isWali) {
         if (titleOrderEl) titleOrderEl.innerText = 'Pesan Barang Kebutuhan Santri';
-        if (descOrderEl) descOrderEl.innerText = 'Pilih unit toko (Banin/Banat), isi nama santri, lalu pilih barang yang ingin dibeli.';
-        if (lblSupplier) lblSupplier.innerText = 'Nama Santri & Kelas / Asrama *';
-        if (inpSupplier) { inpSupplier.placeholder = 'Contoh: Ahmad Fauzi - Kelas 8A'; inpSupplier.removeAttribute('list'); inpSupplier.required = true; }
+        if (descOrderEl) descOrderEl.innerText = 'Pilih barang kebutuhan putra/putri Anda di bawah ini.';
+        if (lblSupplier) lblSupplier.innerText = 'Identitas Santri Penerima *';
+        if (inpSupplier) { 
+          inpSupplier.value = currentUser.info_santri || currentUser.nama_santri || ''; 
+          inpSupplier.readOnly = true;
+          inpSupplier.classList.add('bg-slate-100', 'cursor-not-allowed');
+        }
+        if (document.getElementById('orderIM')) {
+          document.getElementById('orderIM').value = currentUser.im || 'Banin';
+        }
         if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Wali Santri *';
         if (inpWaSupplier) { inpWaSupplier.value = currentUser.nowa || ''; inpWaSupplier.required = true; }
         if (lblCatatan) lblCatatan.innerText = 'Pesan / Catatan Untuk Petugas Toko';
@@ -2230,9 +2431,10 @@
     function switchTab(tabId) {
       var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
       var isGudang = roleStr.includes('gudang');
-      var isAdmin = isUserAdmin(currentUser);
+      var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var isAdmin = isUserAdmin(currentUser) || isKepalaAdmin;
 
-      if (['user-management', 'supplier-management'].includes(tabId) && !isAdmin) {
+      if (['user-management', 'supplier-management', 'santri-management'].includes(tabId) && !isAdmin) {
         showToast('Menu khusus Administrator!', 'error'); tabId = 'dashboard';
       } else if (tabId === 'wa-reminder' && !isGudang && !isAdmin) {
         showToast('Menu Pengingat WA khusus untuk Kepala Toko dan Gudang!', 'error'); tabId = 'dashboard';
@@ -2243,7 +2445,7 @@
       var activeBtn = document.getElementById('nav-' + tabId);
       if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-      ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder'].forEach(t => {
+      ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management'].forEach(t => {
         if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
       });
       if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
@@ -2259,6 +2461,7 @@
       else if (tabId === 'laporan-bulanan') initLaporanBulanView(false);
       else if (tabId === 'user-management') loadUsersTable(false);
       else if (tabId === 'wa-reminder') loadWaReminder(false);
+      else if (tabId === 'santri-management') loadSantriTable(false);
     }
 
     function refreshTab() { 
@@ -2494,17 +2697,20 @@
          tabDashboardSection.insertAdjacentHTML('beforeend', keuHtml);
       }
 
-      if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
-         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">' +
+     if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
+         var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">' +
          
          // 1. Tombol Laporan Bulanan
-         '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
+         '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
          
          // 2. Tombol WA Reminder
-         '<div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WA</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur staf/divisi via WhatsApp.</p></div>' +
+         '<div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WA</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur staf/divisi via WhatsApp.</p></div>' +
          
          // 3. Tombol Kelola Karyawan
-         '<div onclick="switchTab(\'user-management\')" class="bg-gradient-to-br from-purple-700 to-purple-950 p-5 rounded-3xl border border-purple-600 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition duration-500"></div><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-users-gear"></i></div><h4 class="text-sm font-black text-white">3. Kelola Akun</h4><p class="text-[10px] text-purple-200/70 mt-1">Atur data karyawan & hak akses.</p></div>' +
+         '<div onclick="switchTab(\'user-management\')" class="bg-gradient-to-br from-purple-700 to-purple-950 p-5 rounded-3xl border border-purple-600 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-users-gear"></i></div><h4 class="text-sm font-black text-white">3. Kelola Staf</h4><p class="text-[10px] text-purple-200/70 mt-1">Atur akun karyawan & hak akses.</p></div>' +
+
+         // 4. Tombol Master Data Santri
+         '<div onclick="switchTab(\'santri-management\')" class="bg-gradient-to-br from-teal-700 to-teal-950 p-5 rounded-3xl border border-teal-600 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-user-graduate"></i></div><h4 class="text-sm font-black text-white">4. Master Santri</h4><p class="text-[10px] text-teal-200/70 mt-1">Database login santri & wali santri.</p></div>' +
          
          '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
@@ -2913,8 +3119,22 @@
 
     function getUnitMultiplier(unitStr) { var m = String(unitStr).match(/\((\d+)\s*pcs\)/i); return (m && m[1]) ? parseInt(m[1], 10) : 1; }
     function clearPoCart() { var tb = document.getElementById('orderItemsTableBody'); if(tb) tb.innerHTML = '<tr id="poCartEmptyMsg"><td colspan="8" class="py-6 text-center text-slate-400">Keranjang kosong. Tambah barang.</td></tr>'; calcOrderTotals(); }
-    function resetOrderForm() { document.getElementById('orderForm').reset(); document.getElementById('orderId').value = ''; document.getElementById('orderTanggal').value = new Date().toISOString().split('T')[0]; if (currentUser) document.getElementById('orderIM').value = currentUser.im || 'Banin'; clearPoCart(); onOrderStoreChange(); }
     
+    function resetOrderForm() { 
+      document.getElementById('orderForm').reset(); 
+      document.getElementById('orderId').value = ''; 
+      document.getElementById('orderTanggal').value = new Date().toISOString().split('T')[0]; 
+      if (currentUser) {
+        document.getElementById('orderIM').value = currentUser.im || 'Banin';
+        if (isWaliSantri(currentUser)) {
+          document.getElementById('orderSupplier').value = currentUser.info_santri || currentUser.nama_santri || '';
+          document.getElementById('orderNoWaSupplier').value = currentUser.nowa || '';
+        }
+      }
+      clearPoCart(); 
+      onOrderStoreChange(); 
+    }
+
     function onOrderStoreChange() {
       var selectedIM = document.getElementById('orderIM').value;
       var filteredItems = cachedMasterBarang.filter(it => !it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
@@ -4004,6 +4224,176 @@
       appContent.style.display = 'flex';
     }
   
+    // ==========================================
+    // KELOLA DATABASE MASTER SANTRI
+    // ==========================================
+    var cachedSantriList = [];
+
+    async function loadSantriTable(forceRefresh) {
+      if (forceRefresh === false && window.isSantriLoaded) { filterAndRenderSantri(); return; }
+      var tb = document.getElementById('santriTableBody');
+      if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat database santri...</td></tr>';
+      try {
+        const { data, error } = await supaClient.from('master_santri').select('*').order('nama_santri', { ascending: true });
+        if (error) throw error;
+        cachedSantriList = data || [];
+        window.isSantriLoaded = true;
+        filterAndRenderSantri();
+      } catch (err) {
+        if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500 font-bold">Gagal memuat: ' + err.message + '</td></tr>';
+      }
+    }
+
+    function filterAndRenderSantri() {
+      var q = (document.getElementById('filterSantriSearch').value || '').trim().toLowerCase();
+      var im = document.getElementById('filterSantriIM').value;
+      var tb = document.getElementById('santriTableBody'); if (!tb) return;
+
+      var filtered = cachedSantriList.filter(s => {
+        var matchIM = (im === 'ALL') || (s.im === im);
+        var matchQ = !q || (s.nama_santri||'').toLowerCase().includes(q) || (s.nis||'').toLowerCase().includes(q) || (s.kelas||'').toLowerCase().includes(q) || (s.asrama||'').toLowerCase().includes(q);
+        return matchIM && matchQ;
+      });
+
+      if (filtered.length === 0) {
+        tb.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">Tidak ada data santri.</td></tr>';
+        return;
+      }
+
+      var html = '';
+      filtered.forEach((s, i) => {
+        var safeS = JSON.stringify(s).replace(/'/g, "&apos;");
+        html += '<tr class="hover:bg-slate-50">' +
+          '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (i + 1) + '</td>' +
+          '<td class="py-3 px-3 font-mono text-slate-600">' + (s.nis || '-') + '</td>' +
+          '<td class="py-3 px-4 font-black text-slate-800">' + s.nama_santri + '</td>' +
+          '<td class="py-3 px-3 font-semibold text-slate-600">' + (s.kelas || '-') + (s.asrama ? ' / ' + s.asrama : '') + '</td>' +
+          '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (s.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + s.im + '</span></td>' +
+          '<td class="py-3 px-3 font-mono text-emerald-700">' + (s.no_wa_wali || '-') + '</td>' +
+          '<td class="py-3 px-3 font-mono font-bold text-slate-500">' + (s.password || '123456') + '</td>' +
+          '<td class="py-3 px-4 text-center"><button onclick=\'openEditSantriModal(' + safeS + ')\' class="p-1.5 text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteSantri(\'' + s.id + '\', \'' + s.nama_santri.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button></td>' +
+        '</tr>';
+      });
+      tb.innerHTML = html;
+    }
+
+    function openSantriFormModal() {
+      document.getElementById('santriForm').reset();
+      document.getElementById('santriFormId').value = '';
+      document.getElementById('santriFormPassword').value = '123456';
+      document.getElementById('santriFormModalTitle').innerText = 'Tambah Data Santri';
+      openModal('santriFormModal');
+    }
+
+    function openEditSantriModal(s) {
+      document.getElementById('santriFormId').value = s.id;
+      document.getElementById('santriFormNis').value = s.nis || '';
+      document.getElementById('santriFormNama').value = s.nama_santri || '';
+      document.getElementById('santriFormKelas').value = s.kelas || '';
+      document.getElementById('santriFormAsrama').value = s.asrama || '';
+      document.getElementById('santriFormIM').value = s.im || 'Banin';
+      document.getElementById('santriFormWa').value = s.no_wa_wali || '';
+      document.getElementById('santriFormPassword').value = s.password || '123456';
+      document.getElementById('santriFormModalTitle').innerText = 'Edit Data Santri';
+      openModal('santriFormModal');
+    }
+
+    async function submitSantriForm(e) {
+      e.preventDefault();
+      var id = document.getElementById('santriFormId').value.trim() || null;
+      var payload = {
+        nis: document.getElementById('santriFormNis').value.trim(),
+        nama_santri: document.getElementById('santriFormNama').value.trim(),
+        kelas: document.getElementById('santriFormKelas').value.trim(),
+        asrama: document.getElementById('santriFormAsrama').value.trim(),
+        im: document.getElementById('santriFormIM').value,
+        no_wa_wali: document.getElementById('santriFormWa').value.trim(),
+        password: document.getElementById('santriFormPassword').value.trim() || '123456',
+        status: 'Aktif'
+      };
+      showLoading('Menyimpan data santri...');
+      try {
+        let err;
+        if (id) { const res = await supaClient.from('master_santri').update(payload).eq('id', id); err = res.error; }
+        else { const res = await supaClient.from('master_santri').insert([payload]); err = res.error; }
+        hideLoading();
+        if (err) throw err;
+        showToast('Data santri berhasil disimpan!', 'success');
+        closeModal('santriFormModal');
+        loadSantriTable(true);
+      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+    }
+
+    async function deleteSantri(id, nama) {
+      if (!confirm('Hapus data santri "' + nama + '"?')) return;
+      showLoading('Menghapus...');
+      try {
+        const { error } = await supaClient.from('master_santri').delete().eq('id', id);
+        hideLoading();
+        if (error) throw error;
+        showToast('Santri dihapus!', 'success');
+        loadSantriTable(true);
+      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+    }
+
+    function openImportSantriModal() {
+      document.getElementById('importSantriRawJson').value = '';
+      document.getElementById('importSantriFileName').innerText = 'Klik untuk Pilih File Excel';
+      openModal('importSantriModal');
+    }
+
+    function parseImportSantriExcel(e) {
+      var file = e.target.files[0]; if (!file) return;
+      document.getElementById('importSantriFileName').innerText = file.name;
+      var r = new FileReader();
+      r.onload = function(evt) {
+        try {
+          var wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+          var json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+          if (!json.length) throw new Error('File Excel kosong');
+          document.getElementById('importSantriRawJson').value = JSON.stringify(json);
+          showToast(json.length + ' baris data santri siap diimport!', 'success');
+        } catch (err) { showToast('Gagal baca Excel: ' + err.message, 'error'); }
+      };
+      r.readAsArrayBuffer(file);
+    }
+
+    async function submitImportSantri(e) {
+      e.preventDefault();
+      var j = document.getElementById('importSantriRawJson').value;
+      if (!j) return showToast('Pilih file Excel terlebih dahulu!', 'error');
+      var unitIM = document.getElementById('importSantriIM').value;
+      var raw = JSON.parse(j);
+
+      showLoading('Mengimpor data santri...');
+      try {
+        var batchInsert = [];
+        raw.forEach(row => {
+          var nama = String(row['Nama Santri'] || row['Nama'] || row['nama_santri'] || '').trim();
+          if (nama) {
+            batchInsert.push({
+              nis: String(row['NIS'] || row['nis'] || '').trim(),
+              nama_santri: nama,
+              kelas: String(row['Kelas'] || row['kelas'] || '').trim(),
+              asrama: String(row['Asrama'] || row['asrama'] || '').trim(),
+              no_wa_wali: String(row['No WA'] || row['WA'] || row['no_wa_wali'] || '').trim(),
+              password: String(row['Password'] || row['password'] || '123456').trim(),
+              im: unitIM,
+              status: 'Aktif'
+            });
+          }
+        });
+        if (batchInsert.length > 0) {
+          const { error } = await supaClient.from('master_santri').insert(batchInsert);
+          if (error) throw error;
+        }
+        hideLoading();
+        showToast('Berhasil mengimpor ' + batchInsert.length + ' data santri!', 'success');
+        closeModal('importSantriModal');
+        loadSantriTable(true);
+      } catch (err) { hideLoading(); showToast('Gagal import: ' + err.message, 'error'); }
+    }
+
   </script>
   <!-- Register Service Worker PWA -->
   <script>
