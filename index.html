@@ -2995,6 +2995,8 @@
          '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
+    } // <--- TAMBAHKAN KURUNG KURAWAL PENUTUP INI!
+      
 
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
@@ -3498,9 +3500,7 @@
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
             <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
               <img src="${imgUrl}" onerror="this.src='${errorImg}'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
-              <div class="absolute top-2 left-2 flex flex-col gap-1">
-                <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
-              </div>
+              <div class="absolute top-2 left-2 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span></div>`}
             </div>
             
             <div class="p-2.5 sm:p-3 flex flex-col flex-1">
@@ -3565,22 +3565,6 @@
       var lockPriceAttr = isWali ? 'readonly class="item-price w-20 p-1.5 bg-slate-100 border rounded-lg text-xs font-bold text-right cursor-not-allowed"' : 'oninput="calcOrderTotals()" class="item-price w-20 p-1.5 bg-slate-50 border rounded-lg text-xs font-semibold text-right"';
 
       tr.innerHTML = '<td class="py-2 px-2 text-center"><input type="checkbox" checked onchange="calcOrderTotals()" class="item-order-checkbox w-4 h-4 text-teal-600"></td><td class="py-2 px-2 text-center font-bold text-slate-400 row-num">' + rowCount + '</td><td class="py-2 px-3"><input type="hidden" class="item-barcode" value="' + (it.barcode||'') + '"><input type="hidden" class="item-name" value="' + it.nama + '"><input type="hidden" class="item-supplier" value="' + (it.supplier||'') + '"><span class="font-bold text-slate-800 text-[11px]">' + it.nama + '</span><br><span class="text-[9px] text-slate-500 font-mono">' + (it.barcode||'-') + '</span></td><td class="py-2 px-2 text-center"><input type="number" min="1" value="1" oninput="calcOrderTotals()" class="item-qty w-14 p-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-center"></td><td class="py-2 px-2"><select onchange="calcOrderTotals()" class="item-unit w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-semibold"><option value="Pcs">Pcs</option><option value="Lusin (12 pcs)">Lusin (12 pcs)</option><option value="Renceng (10 pcs)">Renceng (10)</option><option value="Dus (24 pcs)">Dus (24)</option><option value="Pack">Pack</option></select></td><td class="py-2 px-2"><input type="number" min="0" step="any" value="' + itemPrice + '" ' + lockPriceAttr + '></td><td class="py-2 px-3 text-right font-bold text-slate-800 item-subtotal">Rp ' + Number(itemPrice).toLocaleString('id-ID') + '</td><td class="py-2 px-2 text-center"><button type="button" onclick="removePoCartItem(this)" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></td>';
-      tbody.appendChild(tr); calcOrderTotals(); showToast('Masuk keranjang!', 'success');
-    }
-
-    function addItmToCart(it) {
-      var tbody = document.getElementById('orderItemsTableBody');
-      var existingRow = tbody.querySelector('tr[data-id="'+it.id+'"]');
-      if (existingRow) {
-         var qtyInput = existingRow.querySelector('.item-qty'); qtyInput.value = Number(qtyInput.value) + 1; calcOrderTotals(); showToast(it.nama + ' ditambah', 'success'); return;
-      }
-      if(document.getElementById('poCartEmptyMsg')) document.getElementById('poCartEmptyMsg').style.display = 'none';
-
-      var tr = document.createElement('tr'); tr.setAttribute('data-id', it.id); tr.className = 'hover:bg-slate-50 border-b border-slate-100';
-      var rowCount = tbody.querySelectorAll('tr[data-id]').length + 1;
-      var hb = it.harga_beli || it.hargaBeli || 0;
-
-      tr.innerHTML = '<td class="py-2 px-2 text-center"><input type="checkbox" checked onchange="calcOrderTotals()" class="item-order-checkbox w-4 h-4 text-teal-600"></td><td class="py-2 px-2 text-center font-bold text-slate-400 row-num">' + rowCount + '</td><td class="py-2 px-3"><input type="hidden" class="item-barcode" value="' + (it.barcode||'') + '"><input type="hidden" class="item-name" value="' + it.nama + '"><input type="hidden" class="item-supplier" value="' + (it.supplier||'') + '"><span class="font-bold text-slate-800 text-[11px]">' + it.nama + '</span><br><span class="text-[9px] text-slate-500 font-mono">' + (it.barcode||'-') + '</span></td><td class="py-2 px-2 text-center"><input type="number" min="1" value="1" oninput="calcOrderTotals()" class="item-qty w-14 p-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-center"></td><td class="py-2 px-2"><select onchange="calcOrderTotals()" class="item-unit w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-semibold"><option value="Pcs">Pcs</option><option value="Lusin (12 pcs)">Lusin (12 pcs)</option><option value="Renceng (10 pcs)">Renceng (10)</option><option value="Dus (24 pcs)">Dus (24)</option><option value="Pack">Pack</option><option value="Bal">Bal</option><option value="Kg">Kg</option></select></td><td class="py-2 px-2"><input type="number" min="0" step="any" value="' + hb + '" oninput="calcOrderTotals()" class="item-price w-20 p-1.5 bg-slate-50 border rounded-lg text-xs font-semibold text-right"></td><td class="py-2 px-3 text-right font-bold text-slate-800 item-subtotal">Rp ' + Number(hb).toLocaleString('id-ID') + '</td><td class="py-2 px-2 text-center"><button type="button" onclick="removePoCartItem(this)" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></td>';
       tbody.appendChild(tr); calcOrderTotals(); showToast('Masuk keranjang!', 'success');
     }
 
