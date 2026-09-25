@@ -394,9 +394,10 @@
 
       <!-- Top Header Bar -->
       <header
-        class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
+        class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
 
-        <div class="flex items-center gap-3">
+        <!-- Logo & Tanggal (Otomatis disembunyikan khusus Wali Santri) -->
+        <div id="headerBrandBox" class="flex items-center gap-3">
           <div class="flex items-center gap-2">
             <div
               class="w-8 h-8 rounded-lg bg-emerald-700 flex items-center justify-center text-white font-black text-xs sm:hidden">
@@ -408,15 +409,32 @@
           </div>
         </div>
 
-        <!-- Tombol Kanan (Profil, Pengingat WA & Keluar) -->
-        <div class="flex items-center gap-2 sm:gap-2.5">
+        <!-- Penyangga kosong saat Logo disembunyikan agar tombol tetap di pojok kanan -->
+        <div id="waliHeaderSpacer" style="display: none;">
+          <button type="button" id="btnWaliBackToShop" onclick="switchTab('order-create')" style="display: none;"
+            class="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs active:scale-95 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali Belanja</span>
+          </button>
+        </div>
+
+        <!-- Tombol Kanan (Riwayat Wali, Profil, Pengingat WA & Keluar) -->
+        <div class="flex items-center gap-2 sm:gap-2.5 ml-auto">
           <button onclick="promptInstallPwa()" id="btnInstallPwa" style="display: none;"
             class="py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-xs">
             <i class="fa-solid fa-download text-emerald-600"></i>
             <span class="hidden sm:inline">Pasang PWA</span>
           </button>
 
-          <!-- TOMBOL BARU: Pengingat WA (Khusus Gudang & Admin) -->
+          <!-- TOMBOL KHUSUS WALI SANTRI: Ikon Riwayat Pembelanjaan di Dekat Tombol Power -->
+          <button onclick="switchTab('order-history')" id="btnHeaderWaliHistory" style="display: none;"
+            title="Riwayat Pembelanjaan Santri"
+            class="flex items-center gap-1.5 py-1.5 px-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl text-xs font-black text-teal-800 transition active:scale-95 shadow-xs">
+            <i class="fa-solid fa-receipt text-teal-600 text-sm sm:text-base"></i>
+            <span>Riwayat</span>
+          </button>
+
+          <!-- Pengingat WA (Khusus Gudang & Admin) -->
           <button onclick="switchTab('wa-reminder')" id="btnHeaderWaReminder" style="display: none;"
             title="Pengingat WA Karyawan"
             class="relative flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-[11px] sm:text-xs font-bold text-emerald-800 transition active:scale-95 shadow-xs">
@@ -2352,7 +2370,7 @@
     </main>
 
     <!-- BOTTOM BAR NAVIGASI (DINAMIS PER DIVISI) -->
-    <div
+    <div id="bottomNavBar"
       class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50 px-1 sm:px-4 py-2 sm:py-3 flex items-center justify-between text-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
 
       <button id="btnNavBtmBeranda" onclick="switchTab('dashboard')"
@@ -3503,17 +3521,11 @@
           if (btmBazar) btmBazar.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
-        // ATURAN KHUSUS WALI SANTRI
+        // ATURAN KHUSUS WALI SANTRI (Sembunyikan Bottom Bar, Logo Header, & tampilkan Ikon Riwayat di atas)
         else if (isWali) {
-          if (btmBeranda) btmBeranda.style.display = 'flex';
-          if (btmPO) {
-            btmPO.style.display = 'flex';
-            btmPO.querySelector('span').innerText = 'Belanja';
-          }
-          if (btmRiwayatPO) {
-            btmRiwayatPO.style.display = 'flex';
-            btmRiwayatPO.querySelector('span').innerText = 'Riwayat Pembelanjaan';
-          }
+          if (btmBeranda) btmBeranda.style.display = 'none';
+          if (btmPO) btmPO.style.display = 'none';
+          if (btmRiwayatPO) btmRiwayatPO.style.display = 'none';
         }
         // ATURAN 1: KASIR
         else if (isKasir && !isKepalaAdmin) {
@@ -3539,6 +3551,27 @@
           if (btmBazar) btmBazar.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
+        }
+
+        // Atur visibilitas Header Logo, Bottom Bar, & Ikon Riwayat Pojok Kanan Atas khusus Wali Santri
+        var bottomNavBarEl = document.getElementById('bottomNavBar');
+        var headerBrandEl = document.getElementById('headerBrandBox');
+        var waliSpacerEl = document.getElementById('waliHeaderSpacer');
+        var btnWaliHistHeader = document.getElementById('btnHeaderWaliHistory');
+        var floatCheckoutBar = document.getElementById('waliFloatingCheckoutBar');
+
+        if (isWali) {
+          if (bottomNavBarEl) bottomNavBarEl.style.setProperty('display', 'none', 'important');
+          if (headerBrandEl) headerBrandEl.style.display = 'none';
+          if (waliSpacerEl) waliSpacerEl.style.display = 'block';
+          if (btnWaliHistHeader) btnWaliHistHeader.style.display = 'flex';
+          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-4 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none';
+        } else {
+          if (bottomNavBarEl) bottomNavBarEl.style.display = 'flex';
+          if (headerBrandEl) headerBrandEl.style.display = 'flex';
+          if (waliSpacerEl) waliSpacerEl.style.display = 'none';
+          if (btnWaliHistHeader) btnWaliHistHeader.style.display = 'none';
+          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-16 sm:bottom-20 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none';
         }
 
         var mainSidebar = document.getElementById('mainSidebar');
@@ -3575,10 +3608,12 @@
         loadUsersForDropdowns();
         loadMasterBarangAutocompleteData();
 
-        // Arahkan langsung sesuai Role (Wali Santri masuk ke Dashboard Wali)
+        // Arahkan langsung sesuai Role (Wali Santri langsung masuk ke Belanja tanpa Dashboard)
         if (isBazar) {
           currentUser.im = bazarUnit;
           switchTab('bazar-management');
+        } else if (isWali) {
+          switchTab('order-create');
         } else {
           switchTab('dashboard');
         }
@@ -3627,6 +3662,11 @@
         });
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
         window.scrollTo(0, 0);
+
+        if (typeof isWaliSantri === 'function' && isWaliSantri(currentUser)) {
+          var btnBackShop = document.getElementById('btnWaliBackToShop');
+          if (btnBackShop) btnBackShop.style.display = (tabId === 'order-history') ? 'flex' : 'none';
+        }
 
         if (tabId === 'dashboard') loadDashboard();
         else if (tabId === 'order-create') { document.getElementById('orderTanggal').value = new Date().toISOString().substring(0, 10); clearPoCart(); renderPoCatalog(); }
