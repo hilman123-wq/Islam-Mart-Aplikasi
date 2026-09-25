@@ -620,18 +620,30 @@
                 </button>
               </div>
 
-              <!-- Info Penerima Santri Ala Alamat Shopee -->
+              <!-- Info Penerima (Wali Santri) ATAU Dropdown Pilih Distributor (Kasir/Staf) -->
               <div
-                class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-3 py-2 rounded-xl text-[11px]">
-                <div class="flex items-center gap-2 truncate">
+                class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-3 py-2 rounded-xl text-[11px] gap-2">
+                <!-- Tampilan Khusus Wali Santri -->
+                <div id="waliRecipientInfoBox" class="flex items-center gap-2 truncate">
                   <i class="fa-solid fa-location-dot text-amber-300"></i>
                   <span class="text-emerald-100">Penerima:</span>
                   <b id="waliShopeeSantriLabel" class="text-white truncate">-</b>
                 </div>
+
+                <!-- Tampilan Khusus Kasir/Staf: Dropdown Pilih Distributor -->
+                <div id="stafSupplierDropdownBox" style="display: none;" class="flex items-center gap-2 flex-1 min-w-0">
+                  <i class="fa-solid fa-truck-field text-amber-300 shrink-0"></i>
+                  <span class="text-emerald-100 font-bold shrink-0">Distributor:</span>
+                  <select id="stafTopSupplierSelect" onchange="onTopSupplierDropdownChange(this.value)"
+                    class="flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2.5 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
+                    <option value="">-- Semua Distributor / Supplier --</option>
+                  </select>
+                </div>
+
                 <span id="waliShopeeUnitBadge"
-                  class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-black uppercase shrink-0 ml-2">IM Banin</span>
+                  class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-black uppercase shrink-0">IM Banin</span>
               </div>
-            </div>
+            </div> <!-- <-- WAJIB TAMBAHKAN 1 PENUTUP DIV INI -->
 
             <!-- Menu Ikon Kategori Ala Shopee -->
             <div class="bg-white p-3.5 rounded-3xl border border-slate-200 shadow-xs">
@@ -933,7 +945,7 @@
 
           <!-- ================= 4. MODAL KERANJANG & CHECKOUT ALA SHOPEE (WALI SANTRI) ================= -->
           <div id="waliCheckoutModal" style="display: none;"
-            class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-100 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div
               class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
               <div
@@ -4402,6 +4414,38 @@
       }
 
       // Aktifkan Tampilan Ala Shopee untuk SEMUA USER (Wali Santri & Kasir/Staf)
+      function populateTopSupplierDropdown() {
+        var sel = document.getElementById('stafTopSupplierSelect');
+        if (!sel) return;
+        var currentVal = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
+        var selectedIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
+
+        var uniqueSuppliers = [];
+        (cachedMasterBarang || []).forEach(it => {
+          var matchIM = !it.im || it.im.toLowerCase() === String(selectedIM).toLowerCase() || it.im.toLowerCase() === 'all';
+          var sup = String(it.supplier || '').trim();
+          if (matchIM && sup && !uniqueSuppliers.includes(sup)) {
+            uniqueSuppliers.push(sup);
+          }
+        });
+        uniqueSuppliers.sort((a, b) => a.localeCompare(b));
+
+        var html = '<option value="">-- Semua Distributor (' + uniqueSuppliers.length + ' Supplier) --</option>';
+        uniqueSuppliers.forEach(s => {
+          var isSel = (s === currentVal) ? 'selected' : '';
+          html += '<option value="' + s.replace(/"/g, '&quot;') + '" ' + isSel + '>' + s + '</option>';
+        });
+        sel.innerHTML = html;
+      }
+
+      function onTopSupplierDropdownChange(supName) {
+        var inpSup = document.getElementById('orderSupplier');
+        if (inpSup) inpSup.value = supName;
+        window.poCurrentPage = 1;
+        renderPoCatalog();
+      }
+
+      // Aktifkan Tampilan Ala Shopee untuk SEMUA USER (Wali Santri & Kasir/Staf)
       function toggleWaliShopeeLayout() {
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
         var shopeeBox = document.getElementById('waliShopeeContainer');
@@ -4425,17 +4469,22 @@
         var searchInp = document.getElementById('waliSearchInput');
         var santriLbl = document.getElementById('waliShopeeSantriLabel');
         var unitBadge = document.getElementById('waliShopeeUnitBadge');
+        var waliRecBox = document.getElementById('waliRecipientInfoBox');
+        var stafSupBox = document.getElementById('stafSupplierDropdownBox');
 
         if (isWali) {
+          if (waliRecBox) waliRecBox.style.display = 'flex';
+          if (stafSupBox) stafSupBox.style.display = 'none';
           if (searchInp) searchInp.placeholder = 'Cari jajanan, sabun, alat tulis santri...';
           if (santriLbl) santriLbl.innerText = currentUser.info_santri || currentUser.nama_santri || '-';
           if (unitBadge) unitBadge.innerText = 'IM ' + (currentUser.im || 'Banin');
         } else {
+          if (waliRecBox) waliRecBox.style.display = 'none';
+          if (stafSupBox) stafSupBox.style.display = 'flex';
           if (searchInp) searchInp.placeholder = 'Ketik nama barang / barcode untuk Order PO...';
-          var supVal = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
-          if (santriLbl) santriLbl.innerText = (currentUser ? currentUser.nama : 'Kasir') + (supVal ? ' • Supplier: ' + supVal : ' (Order PO Toko)');
           var curUnit = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
           if (unitBadge) unitBadge.innerText = 'PO IM ' + curUnit;
+          populateTopSupplierDropdown();
         }
       }
 
@@ -4488,6 +4537,26 @@
       function openWaliCheckoutModal() {
         var rows = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
         if (rows.length === 0) return showToast('Keranjang masih kosong, silakan pilih barang dulu.', 'info');
+
+        var modal = document.getElementById('waliCheckoutModal');
+        if (modal) {
+          if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal); // Pindahkan ke body agar di atas Bottom Navigation Bar
+          }
+          modal.style.zIndex = '9999';
+          modal.style.paddingBottom = '85px'; // Ruang aman agar tombol bawah tidak pernah tertutup
+          modal.style.alignItems = 'center';
+          modal.style.paddingLeft = '12px';
+          modal.style.paddingRight = '12px';
+          var card = modal.firstElementChild;
+          if (card) {
+            card.style.maxHeight = '80vh';
+            card.style.borderRadius = '24px';
+          }
+          var h3 = modal.querySelector('h3');
+          if (h3) h3.innerText = isWaliSantri(currentUser) ? 'Keranjang Belanja Santri' : 'Keranjang Order PO Toko';
+        }
+
         renderWaliCheckoutModalList();
         openModal('waliCheckoutModal');
       }
