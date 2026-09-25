@@ -1317,6 +1317,11 @@
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Order PO</span>
       </button>
       
+      <button id="btnNavBtmRiwayatPO" onclick="switchTab('order-history')" style="display: none;" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+        <i class="fa-solid fa-receipt text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat Pesanan</span>
+      </button>
+
       <button id="btnNavBtmBarang" onclick="switchTab('master-barang')" class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
         <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
@@ -1772,8 +1777,8 @@
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">Divisi / Role *</label>
             <select id="userFormRole" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+              <option value="Wali Santri">Wali Santri</option>
               <option value="Kasir">Kasir</option>
               <option value="Gudang Banin">Gudang Banin</option>
               <option value="Gudang Banat">Gudang Banat</option>
@@ -2017,6 +2022,11 @@
       } catch (err) { hideLoading(); showToast('Koneksi gagal: ' + err.message, 'error'); }
     }
 
+    function isWaliSantri(u) {
+      if (!u) return false;
+      return String(u.role || '').toLowerCase().includes('wali');
+    }
+
     function setupSession() {
       if (!currentUser) return;
       document.getElementById('loginPage').style.setProperty('display', 'none', 'important');
@@ -2039,14 +2049,46 @@
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
+      var isWali = isWaliSantri(currentUser);
+
+      // Sesuaikan Label Form Order untuk Wali Santri vs Staf Toko
+      var titleOrderEl = document.querySelector('#tab-order-create h2 span');
+      var descOrderEl = document.querySelector('#tab-order-create p');
+      var lblSupplier = document.querySelector('#orderSupplier').closest('div').previousElementSibling;
+      var inpSupplier = document.getElementById('orderSupplier');
+      var lblWaSupplier = document.querySelector('#orderNoWaSupplier').closest('div').previousElementSibling;
+      var inpWaSupplier = document.getElementById('orderNoWaSupplier');
+      var lblCatatan = document.querySelector('#orderCatatan').previousElementSibling;
+      var thHargaModal = document.querySelector('#tab-order-create table thead tr th:nth-child(6)');
+
+      if (isWali) {
+        if (titleOrderEl) titleOrderEl.innerText = 'Pesan Barang Kebutuhan Santri';
+        if (descOrderEl) descOrderEl.innerText = 'Pilih unit toko (Banin/Banat), isi nama santri, lalu pilih barang yang ingin dibeli.';
+        if (lblSupplier) lblSupplier.innerText = 'Nama Santri & Kelas / Asrama *';
+        if (inpSupplier) { inpSupplier.placeholder = 'Contoh: Ahmad Fauzi - Kelas 8A'; inpSupplier.removeAttribute('list'); inpSupplier.required = true; }
+        if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Wali Santri *';
+        if (inpWaSupplier) { inpWaSupplier.value = currentUser.nowa || ''; inpWaSupplier.required = true; }
+        if (lblCatatan) lblCatatan.innerText = 'Pesan / Catatan Untuk Petugas Toko';
+        if (thHargaModal) thHargaModal.innerText = 'Harga (Rp)';
+        if (document.getElementById('btnSubmitOrderText')) document.getElementById('btnSubmitOrderText').innerText = 'Kirim Pesanan Santri';
+      } else {
+        if (titleOrderEl) titleOrderEl.innerText = 'Buat Orderan Barang (PO)';
+        if (descOrderEl) descOrderEl.innerText = 'Cari barang di bawah, klik tombol tambah, lalu kirim PO ke distributor.';
+        if (lblSupplier) lblSupplier.innerText = 'Cari Distributor / Supplier';
+        if (inpSupplier) { inpSupplier.placeholder = 'Ketik nama supplier...'; inpSupplier.setAttribute('list', 'supplierMasterDatalist'); inpSupplier.required = false; }
+        if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Sales';
+        if (inpWaSupplier) inpWaSupplier.required = false;
+        if (lblCatatan) lblCatatan.innerText = 'Catatan Tambahan untuk Distributor';
+        if (thHargaModal) thHargaModal.innerText = 'Modal (Rp)';
+        if (document.getElementById('btnSubmitOrderText')) document.getElementById('btnSubmitOrderText').innerText = 'Simpan & Ajukan PO';
+      }
 
       if (document.getElementById('nav-clhk-form')) document.getElementById('nav-clhk-form').style.display = isKasir ? 'flex' : 'none';
       if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
       if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
 
-      // Laporan Bulanan muncul untuk Admin & Kepala Admin, Sembunyi dari Kasir
       var navLaporan = document.getElementById('nav-laporan-bulanan');
-      if (navLaporan) navLaporan.style.display = (isKasir && !isKepalaAdmin) ? 'none' : 'flex';
+      if (navLaporan) navLaporan.style.display = (isKasir || isWali) && !isKepalaAdmin ? 'none' : 'flex';
 
       var navOrderCreate = document.getElementById('nav-order-create');
       var navOrderHistory = document.getElementById('nav-order-history');
@@ -2061,12 +2103,14 @@
       } else {
         if (navOrderCreate) navOrderCreate.style.display = 'flex';
         if (navOrderHistory) navOrderHistory.style.display = 'flex';
-        if (navMasterBarang) navMasterBarang.style.display = 'flex';
+        if (navMasterBarang) navMasterBarang.style.display = isWali ? 'none' : 'flex';
         if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
       // === PENGATURAN BOTTOM NAVIGASI (DINAMIS PER DIVISI) ===
+      var btmBeranda = document.getElementById('btnNavBtmBeranda');
       var btmPO = document.getElementById('btnNavBtmPO');
+      var btmRiwayatPO = document.getElementById('btnNavBtmRiwayatPO');
       var btmBarang = document.getElementById('btnNavBtmBarang');
       var btmLaporan = document.getElementById('btnNavBtmLaporan');
       var btmForm = document.getElementById('btnNavBtmForm');
@@ -2074,8 +2118,9 @@
       var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
       var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
 
-      // Default: Sembunyikan semua menu opsional terlebih dahulu
+      if(btmBeranda) btmBeranda.style.display = 'flex';
       if(btmPO) btmPO.style.display = 'none';
+      if(btmRiwayatPO) btmRiwayatPO.style.display = 'none';
       if(btmBarang) btmBarang.style.display = 'none';
       if(btmLaporan) btmLaporan.style.display = 'none';
       if(btmForm) btmForm.style.display = 'none';
@@ -2083,50 +2128,51 @@
       if(btmLapMingguan) btmLapMingguan.style.display = 'none';
       if(btmLapBulanan) btmLapBulanan.style.display = 'none';
 
-      // ATURAN 1: KASIR (Beranda, PO, Barang, Isi Form)
-      if (isKasir && !isKepalaAdmin) {
+      // ATURAN KHUSUS WALI SANTRI (Hanya Belanja & Riwayat Pesanan)
+      if (isWali) {
+          if(btmBeranda) btmBeranda.style.display = 'none';
+          if(btmPO) {
+              btmPO.style.display = 'flex';
+              btmPO.querySelector('span').innerText = 'Belanja Santri';
+          }
+          if(btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
+      }
+      // ATURAN 1: KASIR
+      else if (isKasir && !isKepalaAdmin) {
           if(btmForm) btmForm.style.display = 'flex';
-          if(btmPO) btmPO.style.display = 'flex';
+          if(btmPO) { btmPO.style.display = 'flex'; btmPO.querySelector('span').innerText = 'Order PO'; }
+          if(btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
           if(btmBarang) btmBarang.style.display = 'flex';
       } 
-      // ATURAN 2: GUDANG (Beranda, Lap Mingguan, Lap Bulanan, Arsip Laporan, Barang)
+      // ATURAN 2: GUDANG
       else if (isGudang) {
           if(btmLapMingguan) btmLapMingguan.style.display = 'flex';
           if(btmLapBulanan) btmLapBulanan.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
           if(btmBarang) btmBarang.style.display = 'flex';
-          // Catatan: Tombol "Isi Form" hijau di tengah dihilangkan, 
-          // Gudang bisa mengisi form dari spanduk notifikasi di Dashboard.
       } 
-      // ATURAN 3: KEUANGAN (Beranda, Laporan, Isi Form)
+      // ATURAN 3: KEUANGAN
       else if (isKeuangan) {
           if(btmForm) btmForm.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
       } 
-      // ATURAN 4: KEPALA ADMINISTRASI / ADMIN (Hanya Beranda & Laporan)
+      // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
       else if (isAdmin || isKepalaAdmin) {
           if(btmLaporan) btmLaporan.style.display = 'flex';
+          if(btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
       }
 
-      // === LAYOUT KONTROL: SIDEBAR HANYA UNTUK GUDANG ===
       var mainSidebar = document.getElementById('mainSidebar');
       var mainContent = document.getElementById('mainContent');
-
-      if (isGudang) {
-          if (mainSidebar) mainSidebar.style.display = 'flex';
-          if (mainContent) mainContent.classList.add('sm:ml-72');
-      } else {
-          if (mainSidebar) mainSidebar.style.display = 'none';
-          if (mainContent) mainContent.classList.remove('sm:ml-72');
-      }
+      if (mainSidebar) mainSidebar.style.display = 'none';
+      if (mainContent) mainContent.classList.remove('sm:ml-72');
 
       // HIDE/SHOW TOMBOL MASTER BARANG UNTUK KASIR
       var btnImport = document.getElementById('btnMasterImport');
       var btnTambah = document.getElementById('btnMasterTambah');
       var btnHapusSemua = document.getElementById('btnMasterHapusSemua');
-      
       if (btnImport && btnTambah && btnHapusSemua) {
-          if (isKasir && !isKepalaAdmin && !isAdmin) {
+          if ((isKasir || isWali) && !isKepalaAdmin && !isAdmin) {
               btnImport.style.display = 'none';
               btnTambah.style.display = 'none';
               btnHapusSemua.style.display = 'none';
@@ -2142,7 +2188,6 @@
       if (btnHeaderWa) {
           if (isGudang || isAdmin || isKepalaAdmin) {
               btnHeaderWa.style.display = 'flex';
-              // Muat data pengingat di latar belakang agar angka badge merah langsung muncul
               loadWaReminder(true);
           } else {
               btnHeaderWa.style.display = 'none';
@@ -2152,7 +2197,13 @@
       loadCriteriaAndBuildForms();
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
-      switchTab('dashboard');
+      
+      // Jika Wali Santri, langsung buka tab Belanja. Jika staf, buka Dashboard.
+      if (isWali) {
+        switchTab('order-create');
+      } else {
+        switchTab('dashboard');
+      }
     }
 
     function handleLogout() {
@@ -2878,34 +2929,8 @@
       var cat = document.getElementById('poCatFilter').value;
       var selectedIM = document.getElementById('orderIM').value;
       var sup = (document.getElementById('orderSupplier').value || '').trim().toLowerCase();
-      
-      window.filteredPoItems = cachedMasterBarang.filter(it => {
-        var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
-        
-        // Logika cerdas: hilangkan semua spasi & tanda baca sebelum dicocokkan
-        var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
-        var matchKat = (cat === 'ALL') || (itemKat === targetKat);
-        
-        var matchQ = !q || (it.nama||'').toLowerCase().includes(q) || (it.barcode||'').toLowerCase().includes(q);
-        var matchSup = !sup || (it.supplier||'').toLowerCase().includes(sup);
-        return matchIM && matchKat && matchQ && matchSup;
-      });
-      renderPoCatalogPage();
-    }
-
-    function changePoPage(delta) {
-      var maxPage = Math.ceil(window.filteredPoItems.length / window.poItemsPerPage), newPage = window.poCurrentPage + delta;
-      if (newPage >= 1 && newPage <= maxPage) { window.poCurrentPage = newPage; renderPoCatalogPage(); }
-    }
-
-    function renderPoCatalog(isChangePage) {
-      if (isChangePage !== true) window.poCurrentPage = 1; 
-      var q = (document.getElementById('poSearchInput').value || '').trim().toLowerCase();
-      var cat = document.getElementById('poCatFilter').value;
-      var selectedIM = document.getElementById('orderIM').value;
-      var sup = (document.getElementById('orderSupplier').value || '').trim().toLowerCase();
       var sortBy = document.getElementById('poSortFilter') ? document.getElementById('poSortFilter').value : 'nama_asc';
+      var isWali = isWaliSantri(currentUser);
       
       window.filteredPoItems = cachedMasterBarang.filter(it => {
         var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
@@ -2913,16 +2938,18 @@
         var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
         var matchKat = (cat === 'ALL') || (itemKat === targetKat);
         var matchQ = !q || (it.nama||'').toLowerCase().includes(q) || (it.barcode||'').toLowerCase().includes(q);
-        var matchSup = !sup || (it.supplier||'').toLowerCase().includes(sup);
+        // Jika Wali Santri yang mengetik nama anaknya di kolom #orderSupplier, jangan filter barang berdasarkan supplier
+        var matchSup = isWali ? true : (!sup || (it.supplier||'').toLowerCase().includes(sup));
         return matchIM && matchKat && matchQ && matchSup;
       });
 
-      // Fitur Sortir PO
       window.filteredPoItems.sort((a, b) => {
+         var priceA = isWali ? (a.harga_jual || a.hargaJual || 0) : (a.harga_beli || a.hargaBeli || 0);
+         var priceB = isWali ? (b.harga_jual || b.hargaJual || 0) : (b.harga_beli || b.hargaBeli || 0);
          if(sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
          if(sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
-         if(sortBy === 'harga_asc') return (a.harga_beli || a.hargaBeli || 0) - (b.harga_beli || b.hargaBeli || 0);
-         if(sortBy === 'harga_desc') return (b.harga_beli || b.hargaBeli || 0) - (a.harga_beli || a.hargaBeli || 0);
+         if(sortBy === 'harga_asc') return priceA - priceB;
+         if(sortBy === 'harga_desc') return priceB - priceA;
          return 0;
       });
       
@@ -2935,7 +2962,7 @@
       if (newPage >= 1 && newPage <= maxPage) { window.poCurrentPage = newPage; renderPoCatalogPage(); }
     }
 
-   function renderPoCatalogPage() {
+    function renderPoCatalogPage() {
       var container = document.getElementById('poCatalogContainer'); if (!container) return;
       var totalItems = window.filteredPoItems.length;
       if (totalItems === 0) { container.innerHTML = '<div class="p-10 flex flex-col items-center justify-center text-slate-400"><i class="fa-solid fa-box-open text-4xl mb-3 text-slate-300"></i><span class="text-xs font-bold">Tidak ada barang yang sesuai.</span></div>'; return; }
@@ -2943,6 +2970,7 @@
       var startIndex = (window.poCurrentPage - 1) * window.poItemsPerPage;
       var endIndex = startIndex + window.poItemsPerPage;
       var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
+      var isWali = isWaliSantri(currentUser);
 
       var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3">';
       
@@ -2961,6 +2989,10 @@
                 imgUrl = rawImg; 
             }
         }
+
+        // Gunakan Harga Jual untuk Wali Santri, Harga Beli untuk PO Staf
+        var displayPrice = isWali ? (it.harga_jual || it.hargaJual || 0) : (it.harga_beli || it.hargaBeli || 0);
+        var subInfo = isWali ? (it.kategori || 'Produk') : (it.supplier || '-');
         
         html += `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
@@ -2973,15 +3005,15 @@
             
             <div class="p-2.5 sm:p-3 flex flex-col flex-1">
               <h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1" title="${it.nama}">${it.nama}</h4>
-              <p class="text-[9px] text-slate-400 font-mono mb-2 truncate" title="${it.supplier||'-'}">${it.supplier || '-'}</p>
+              <p class="text-[9px] text-slate-400 font-mono mb-2 truncate" title="${subInfo}">${subInfo}</p>
               
               <div class="mt-auto pt-1">
                 <div class="flex items-center justify-between mb-2.5">
-                  <span class="font-black text-teal-600 text-xs sm:text-sm">Rp${Number(it.harga_beli||it.hargaBeli||0).toLocaleString('id-ID')}</span>
+                  <span class="font-black text-teal-600 text-xs sm:text-sm">Rp${Number(displayPrice).toLocaleString('id-ID')}</span>
                 </div>
                 
                 <button type="button" onclick='addItmToCart(${safeIt})' class="w-full py-2 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white border border-teal-200 hover:border-teal-600 rounded-xl font-bold text-[10px] sm:text-[11px] transition active:scale-95 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-cart-plus"></i> <span class="tracking-wide">TAMBAH</span>
+                  <i class="fa-solid fa-cart-plus"></i> <span class="tracking-wide">${isWali ? 'BELI' : 'TAMBAH'}</span>
                 </button>
               </div>
             </div>
@@ -2990,7 +3022,6 @@
       });
       html += '</div>';
 
-      // Paginasi Dropdown di Bawah Grid
       var totalPages = Math.ceil(totalItems / window.poItemsPerPage);
       if (totalPages > 1) {
         var pageOptions = '';
@@ -3010,7 +3041,6 @@
       container.innerHTML = html;
     }
 
-    // Fungsi Pelompat Halaman PO
     function goToPoPage(page) {
       var newPage = parseInt(page);
       var maxPage = Math.ceil(window.filteredPoItems.length / window.poItemsPerPage);
@@ -3018,6 +3048,24 @@
         window.poCurrentPage = newPage;
         renderPoCatalogPage();
       }
+    }
+
+    function addItmToCart(it) {
+      var tbody = document.getElementById('orderItemsTableBody');
+      var existingRow = tbody.querySelector('tr[data-id="'+it.id+'"]');
+      if (existingRow) {
+         var qtyInput = existingRow.querySelector('.item-qty'); qtyInput.value = Number(qtyInput.value) + 1; calcOrderTotals(); showToast(it.nama + ' ditambah', 'success'); return;
+      }
+      if(document.getElementById('poCartEmptyMsg')) document.getElementById('poCartEmptyMsg').style.display = 'none';
+
+      var isWali = isWaliSantri(currentUser);
+      var tr = document.createElement('tr'); tr.setAttribute('data-id', it.id); tr.className = 'hover:bg-slate-50 border-b border-slate-100';
+      var rowCount = tbody.querySelectorAll('tr[data-id]').length + 1;
+      var itemPrice = isWali ? (it.harga_jual || it.hargaJual || 0) : (it.harga_beli || it.hargaBeli || 0);
+      var lockPriceAttr = isWali ? 'readonly class="item-price w-20 p-1.5 bg-slate-100 border rounded-lg text-xs font-bold text-right cursor-not-allowed"' : 'oninput="calcOrderTotals()" class="item-price w-20 p-1.5 bg-slate-50 border rounded-lg text-xs font-semibold text-right"';
+
+      tr.innerHTML = '<td class="py-2 px-2 text-center"><input type="checkbox" checked onchange="calcOrderTotals()" class="item-order-checkbox w-4 h-4 text-teal-600"></td><td class="py-2 px-2 text-center font-bold text-slate-400 row-num">' + rowCount + '</td><td class="py-2 px-3"><input type="hidden" class="item-barcode" value="' + (it.barcode||'') + '"><input type="hidden" class="item-name" value="' + it.nama + '"><input type="hidden" class="item-supplier" value="' + (it.supplier||'') + '"><span class="font-bold text-slate-800 text-[11px]">' + it.nama + '</span><br><span class="text-[9px] text-slate-500 font-mono">' + (it.barcode||'-') + '</span></td><td class="py-2 px-2 text-center"><input type="number" min="1" value="1" oninput="calcOrderTotals()" class="item-qty w-14 p-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-center"></td><td class="py-2 px-2"><select onchange="calcOrderTotals()" class="item-unit w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-semibold"><option value="Pcs">Pcs</option><option value="Lusin (12 pcs)">Lusin (12 pcs)</option><option value="Renceng (10 pcs)">Renceng (10)</option><option value="Dus (24 pcs)">Dus (24)</option><option value="Pack">Pack</option></select></td><td class="py-2 px-2"><input type="number" min="0" step="any" value="' + itemPrice + '" ' + lockPriceAttr + '></td><td class="py-2 px-3 text-right font-bold text-slate-800 item-subtotal">Rp ' + Number(itemPrice).toLocaleString('id-ID') + '</td><td class="py-2 px-2 text-center"><button type="button" onclick="removePoCartItem(this)" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></td>';
+      tbody.appendChild(tr); calcOrderTotals(); showToast('Masuk keranjang!', 'success');
     }
 
     function addItmToCart(it) {
@@ -3055,18 +3103,15 @@
 
     async function submitPurchaseOrder(e) {
       e.preventDefault();
-      var items = [], totalQ = 0, totalE = 0;
-      document.querySelectorAll('#orderItemsTableBody tr[data-id]').forEach(r => {
-        var cb = r.querySelector('.item-order-checkbox'); if (cb && !cb.checked) return;
-        var q = Number(r.querySelector('.item-qty').value) || 0, u = r.querySelector('.item-unit').value, m = getUnitMultiplier(u), p = Number(r.querySelector('.item-price').value) || 0;
-        if (q > 0) { totalQ += q; totalE += (q*p*m); items.push({ barcode: r.querySelector('.item-barcode').value, nama: r.querySelector('.item-name').value, supplier: r.querySelector('.item-supplier').value, qty: q, satuan: u, multiplier: m, harga: p, subtotal: q*p*m }); }
-      });
-      if (items.length === 0) return showToast('Keranjang kosong!', 'error');
+      var isWali = isWaliSantri(currentUser);
+      var prefixKode = isWali ? 'SNT-' : 'PO-';
+      var supplierOrSantri = document.getElementById('orderSupplier').value.trim();
+      if (isWali && !supplierOrSantri) return showToast('Mohon isi Nama Santri & Kelas terlebih dahulu!', 'error');
 
       var payload = {
-        no_po: 'PO-' + Date.now().toString().slice(-6),
+        no_po: prefixKode + Date.now().toString().slice(-6),
         tanggal: document.getElementById('orderTanggal').value,
-        supplier: document.getElementById('orderSupplier').value.trim(),
+        supplier: isWali ? ('Santri: ' + supplierOrSantri) : supplierOrSantri,
         no_wa_supplier: document.getElementById('orderNoWaSupplier').value.trim(),
         im: document.getElementById('orderIM').value,
         catatan: document.getElementById('orderCatatan').value.trim(),
@@ -3086,17 +3131,20 @@
     async function loadOrdersTable(forceRefresh) {
       if (forceRefresh === false && window.isOrdersLoaded) return;
       var tbody = document.getElementById('ordersTableBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Mengambil orderan...</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Mengambil data pesanan...</td></tr>';
       
       var st = document.getElementById('filterOrderStatus').value, im = document.getElementById('filterOrderIM').value, m = document.getElementById('filterOrderMonth').value;
       try {
-        let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(50);
+        let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
         if (st !== 'ALL') query = query.eq('status', st);
         if (im !== 'ALL') query = query.eq('im', im);
         if (m) {
-          // Filter rentang tanggal khusus untuk Supabase
           var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
           query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
+        }
+        // JIKA WALI SANTRI: Hanya tampilkan pesanan miliknya sendiri
+        if (isWaliSantri(currentUser)) {
+          query = query.eq('username_pemohon', currentUser.username);
         }
 
         const { data, error } = await query;
@@ -3109,14 +3157,18 @@
     function renderOrdersTable(list) {
       cachedOrdersList = list || [];
       var tbody = document.getElementById('ordersTableBody'); if (!tbody) return;
-      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-400">Belum ada data PO.</td></tr>'; return; }
+      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-400">Belum ada data pesanan.</td></tr>'; return; }
 
-      var html = '', isAdmin = isUserAdmin(currentUser);
+      var html = '';
+      var isAdmin = isUserAdmin(currentUser);
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var canManageStatus = isAdmin || roleStr.includes('kasir') || roleStr.includes('gudang');
+
       list.forEach(o => {
         var bc = 'bg-slate-100 text-slate-700';
         if (o.status === 'Diajukan') bc = 'bg-amber-100 text-amber-800'; else if (o.status === 'Disetujui') bc = 'bg-teal-100 text-teal-800'; else if (o.status === 'Selesai') bc = 'bg-emerald-100 text-emerald-800'; else if (o.status === 'Ditolak') bc = 'bg-rose-100 text-rose-800';
         
-        var adS = isAdmin ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white"><option disabled selected>Ubah...</option><option value="Disetujui">✔ Disetujui</option><option value="Dikirim">🚚 Dikirim</option><option value="Selesai">🏁 Selesai</option><option value="Ditolak">✖ Ditolak</option></select>' : '';
+        var adS = canManageStatus ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white"><option disabled selected>Ubah...</option><option value="Disetujui">✔ Disiapkan</option><option value="Dikirim">🚚 Dikirim ke Pondok</option><option value="Selesai">🏁 Selesai Diterima</option><option value="Ditolak">✖ Ditolak</option></select>' : '';
         html += '<tr class="hover:bg-slate-50">' +
           '<td class="py-3 px-3">' + o.tanggal + '</td><td class="py-3 px-3 font-mono font-bold text-teal-700">' + o.no_po + '</td><td class="py-3 px-4 font-bold">' + o.supplier + '</td>' +
           '<td class="py-3 px-3">' + o.nama_pemohon + '</td><td class="py-3 px-2 text-center">' + o.im + '</td><td class="py-3 px-3 text-right font-black">Rp ' + Number(o.estimasi_total).toLocaleString('id-ID') + '</td>' +
