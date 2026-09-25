@@ -2668,6 +2668,7 @@
         if (descOrderEl) descOrderEl.innerText = 'Cari barang di bawah, klik tombol tambah, lalu kirim PO ke distributor.';
         if (lblSupplier) lblSupplier.innerText = 'Cari Distributor / Supplier';
         if (inpSupplier) { 
+          inpSupplier.value = ''; // <-- WAJIB: Kosongkan sisa nama santri
           inpSupplier.placeholder = 'Ketik nama supplier...'; 
           inpSupplier.setAttribute('list', 'supplierMasterDatalist'); 
           inpSupplier.required = false;
@@ -2675,7 +2676,10 @@
           inpSupplier.classList.remove('bg-slate-100', 'cursor-not-allowed');
         }
         if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Sales';
-        if (inpWaSupplier) inpWaSupplier.required = false;
+        if (inpWaSupplier) {
+          inpWaSupplier.value = ''; // <-- WAJIB: Kosongkan sisa WA wali santri
+          inpWaSupplier.required = false;
+        }
         if (lblCatatan) lblCatatan.innerText = 'Catatan Tambahan untuk Distributor';
         if (thHargaModal) thHargaModal.innerText = 'Modal (Rp)';
         if (document.getElementById('btnSubmitOrderText')) document.getElementById('btnSubmitOrderText').innerText = 'Simpan & Ajukan PO';
@@ -3021,6 +3025,11 @@
         if (document.getElementById('waliDashSantriInfo')) document.getElementById('waliDashSantriInfo').innerText = 'Santri: ' + (currentUser.info_santri || currentUser.nama_santri || '-') + ' • Unit IM ' + (currentUser.im || 'Banin');
         return;
       } else {
+        if (tabDash) {
+          Array.from(tabDash.children).forEach(el => {
+            if (el.id !== 'waliDashboardPanel' && el.id !== 'gudangDashboardPanel') el.style.display = '';
+          });
+        }
         if (waliPanel) waliPanel.style.display = 'none';
       }
 
