@@ -3017,6 +3017,12 @@
       try {
         var today = new Date();
         var todayStr = today.toISOString().split('T')[0];
+
+        // Otomatis bersihkan hanya foto bukti yang sudah lewat 90 hari (data nota tetap aman)
+        if (isUserAdmin(currentUser)) {
+          var batas90Hari = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          supaClient.from('orders').update({ bukti_foto: null }).not('bukti_foto', 'is', null).lt('tanggal', batas90Hari).then(() => {});
+        }
         
         // 1. Status pengisian form user
         const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
