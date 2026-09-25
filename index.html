@@ -3103,29 +3103,69 @@
 
     async function submitPurchaseOrder(e) {
       e.preventDefault();
-      var isWali = isWaliSantri(currentUser);
+      var items = [], totalQ = 0, totalE = 0;
+      
+      document.querySelectorAll('#orderItemsTableBody tr[data-id]').forEach(r => {
+        var cb = r.querySelector('.item-order-checkbox'); 
+        if (cb && !cb.checked) return;
+        var q = Number(r.querySelector('.item-qty').value) || 0;
+        var u = r.querySelector('.item-unit').value;
+        var m = getUnitMultiplier(u);
+        var p = Number(r.querySelector('.item-price').value) || 0;
+        
+        if (q > 0) { 
+          totalQ += q; 
+          totalE += (q * p * m); 
+          items.push({ 
+            barcode: r.querySelector('.item-barcode').value, 
+            nama: r.querySelector('.item-name').value, 
+            supplier: r.querySelector('.item-supplier').value, 
+            qty: q, 
+            satuan: u, 
+            multiplier: m, 
+            harga: p, 
+            subtotal: q * p * m 
+          }); 
+        }
+      });
+      
+      if (items.length === 0) return showToast('Keranjang masih kosong!', 'error');
+
+      var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
       var prefixKode = isWali ? 'SNT-' : 'PO-';
       var supplierOrSantri = document.getElementById('orderSupplier').value.trim();
-      if (isWali && !supplierOrSantri) return showToast('Mohon isi Nama Santri & Kelas terlebih dahulu!', 'error');
+      
+      if (isWali && !supplierOrSantri) {
+        return showToast('Mohon isi Nama Santri & Kelas terlebih dahulu!', 'error');
+      }
 
       var payload = {
         no_po: prefixKode + Date.now().toString().slice(-6),
         tanggal: document.getElementById('orderTanggal').value,
-        supplier: isWali ? ('Santri: ' + supplierOrSantri) : supplierOrSantri,
+        supplier: isWali ? ('Santri: ' + supplierOrSantri) : (supplierOrSantri || '-'),
         no_wa_supplier: document.getElementById('orderNoWaSupplier').value.trim(),
         im: document.getElementById('orderIM').value,
         catatan: document.getElementById('orderCatatan').value.trim(),
-        nama_pemohon: currentUser.nama, username_pemohon: currentUser.username,
-        status: 'Diajukan', estimasi_total: totalE, total_qty: totalQ, items: items
+        nama_pemohon: currentUser.nama, 
+        username_pemohon: currentUser.username,
+        status: 'Diajukan', 
+        estimasi_total: totalE, 
+        total_qty: totalQ, 
+        items: items
       };
 
-      showLoading('Mengajukan PO...');
+      showLoading(isWali ? 'Mengirim pesanan santri...' : 'Mengajukan PO...');
       try {
         const { error } = await supaClient.from('orders').insert([payload]);
         hideLoading();
         if (error) throw error;
-        showToast('PO Berhasil Diajukan!', 'success'); resetOrderForm(); switchTab('order-history');
-      } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
+        showToast(isWali ? 'Pesanan Santri Berhasil Dikirim!' : 'PO Berhasil Diajukan!', 'success'); 
+        resetOrderForm(); 
+        switchTab('order-history');
+      } catch (err) { 
+        hideLoading(); 
+        showToast('Gagal: ' + err.message, 'error'); 
+      }
     }
 
     async function loadOrdersTable(forceRefresh) {
