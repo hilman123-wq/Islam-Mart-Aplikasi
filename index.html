@@ -2503,6 +2503,16 @@
       document.getElementById('loginPage').style.setProperty('display', 'none', 'important');
       document.getElementById('mainApp').style.setProperty('display', 'flex', 'important');
 
+      var roleStr = String(currentUser.role || '').toLowerCase();
+      var unameStr = String(currentUser.username || '').toLowerCase();
+
+      // Deteksi otomatis jika role = Bazar ATAU username mengandung 'bzr' / 'bazar'
+      var isBazar = roleStr.includes('bazar') || unameStr.includes('bzr') || unameStr.includes('bazar');
+      var bazarUnit = (roleStr.includes('banat') || unameStr.includes('banat')) ? 'Banat' : ((roleStr.includes('banin') || unameStr.includes('banin')) ? 'Banin' : (currentUser.im || 'Banin'));
+      if (isBazar && !roleStr.includes('bazar')) {
+        currentUser.role = 'Bazar ' + bazarUnit;
+      }
+
       if (document.getElementById('userFullName')) document.getElementById('userFullName').innerText = currentUser.nama || 'User';
       if (document.getElementById('userInitial')) document.getElementById('userInitial').innerText = (currentUser.nama || 'U').charAt(0).toUpperCase();
       if (document.getElementById('userRoleBadge')) document.getElementById('userRoleBadge').innerText = currentUser.role || 'Staf';
@@ -2514,24 +2524,21 @@
       });
       if (document.getElementById('orderIM')) document.getElementById('orderIM').value = currentUser.im || 'Banin';
 
-      var roleStr = String(currentUser.role || '').toLowerCase();
       var isAdmin = isUserAdmin(currentUser);
       var isKasir = roleStr.includes('kasir');
       var isGudang = roleStr.includes('gudang');
       var isKeuangan = roleStr.includes('keuangan');
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
-      var isWali = isWaliSantri(currentUser);
-      var isBazar = roleStr.includes('bazar');
-      var bazarUnit = roleStr.includes('banat') ? 'Banat' : (roleStr.includes('banin') ? 'Banin' : (currentUser.im || 'Banin'));
+      var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser) && !isBazar;
 
       // Sesuaikan Label Form Order untuk Wali Santri vs Staf Toko
       var titleOrderEl = document.querySelector('#tab-order-create h2 span');
       var descOrderEl = document.querySelector('#tab-order-create p');
-      var lblSupplier = document.querySelector('#orderSupplier').closest('div').previousElementSibling;
+      var lblSupplier = document.querySelector('#orderSupplier') ? document.querySelector('#orderSupplier').closest('div').previousElementSibling : null;
       var inpSupplier = document.getElementById('orderSupplier');
-      var lblWaSupplier = document.querySelector('#orderNoWaSupplier').closest('div').previousElementSibling;
+      var lblWaSupplier = document.querySelector('#orderNoWaSupplier') ? document.querySelector('#orderNoWaSupplier').closest('div').previousElementSibling : null;
       var inpWaSupplier = document.getElementById('orderNoWaSupplier');
-      var lblCatatan = document.querySelector('#orderCatatan').previousElementSibling;
+      var lblCatatan = document.querySelector('#orderCatatan') ? document.querySelector('#orderCatatan').previousElementSibling : null;
       var thHargaModal = document.querySelector('#tab-order-create table thead tr th:nth-child(6)');
 
       if (isWali) {
@@ -2543,9 +2550,7 @@
           inpSupplier.readOnly = true;
           inpSupplier.classList.add('bg-slate-100', 'cursor-not-allowed');
         }
-        if (document.getElementById('orderIM')) {
-          document.getElementById('orderIM').value = currentUser.im || 'Banin';
-        }
+        if (document.getElementById('orderIM')) document.getElementById('orderIM').value = currentUser.im || 'Banin';
         if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Wali Santri *';
         if (inpWaSupplier) { inpWaSupplier.value = currentUser.nowa || ''; inpWaSupplier.required = true; }
         if (lblCatatan) lblCatatan.innerText = 'Pesan / Catatan Untuk Petugas Toko';
@@ -2555,36 +2560,18 @@
         if (titleOrderEl) titleOrderEl.innerText = 'Buat Orderan Barang (PO)';
         if (descOrderEl) descOrderEl.innerText = 'Cari barang di bawah, klik tombol tambah, lalu kirim PO ke distributor.';
         if (lblSupplier) lblSupplier.innerText = 'Cari Distributor / Supplier';
-        if (inpSupplier) { inpSupplier.placeholder = 'Ketik nama supplier...'; inpSupplier.setAttribute('list', 'supplierMasterDatalist'); inpSupplier.required = false; }
+        if (inpSupplier) { 
+          inpSupplier.placeholder = 'Ketik nama supplier...'; 
+          inpSupplier.setAttribute('list', 'supplierMasterDatalist'); 
+          inpSupplier.required = false;
+          inpSupplier.readOnly = false;
+          inpSupplier.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        }
         if (lblWaSupplier) lblWaSupplier.innerText = 'No. WA Sales';
         if (inpWaSupplier) inpWaSupplier.required = false;
         if (lblCatatan) lblCatatan.innerText = 'Catatan Tambahan untuk Distributor';
         if (thHargaModal) thHargaModal.innerText = 'Modal (Rp)';
         if (document.getElementById('btnSubmitOrderText')) document.getElementById('btnSubmitOrderText').innerText = 'Simpan & Ajukan PO';
-      }
-
-      if (document.getElementById('nav-clhk-form')) document.getElementById('nav-clhk-form').style.display = isKasir ? 'flex' : 'none';
-      if (document.getElementById('nav-clhg-form')) document.getElementById('nav-clhg-form').style.display = isGudang ? 'flex' : 'none';
-      if (document.getElementById('nav-clhka-form')) document.getElementById('nav-clhka-form').style.display = isKeuangan ? 'flex' : 'none';
-
-      var navLaporan = document.getElementById('nav-laporan-bulanan');
-      if (navLaporan) navLaporan.style.display = (isKasir || isWali) && !isKepalaAdmin ? 'none' : 'flex';
-
-      var navOrderCreate = document.getElementById('nav-order-create');
-      var navOrderHistory = document.getElementById('nav-order-history');
-      var navMasterBarang = document.getElementById('nav-master-barang');
-      var poHeader = navOrderCreate ? navOrderCreate.previousElementSibling : null; 
-
-      if (isKeuangan || isKepalaAdmin) {
-        if (navOrderCreate) navOrderCreate.style.display = 'none';
-        if (navOrderHistory) navOrderHistory.style.display = 'none';
-        if (navMasterBarang) navMasterBarang.style.display = 'none';
-        if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'none';
-      } else {
-        if (navOrderCreate) navOrderCreate.style.display = 'flex';
-        if (navOrderHistory) navOrderHistory.style.display = 'flex';
-        if (navMasterBarang) navMasterBarang.style.display = isWali ? 'none' : 'flex';
-        if (poHeader && poHeader.tagName === 'DIV') poHeader.style.display = 'flex';
       }
 
       // === PENGATURAN BOTTOM NAVIGASI (DINAMIS PER DIVISI) ===
@@ -2608,10 +2595,16 @@
       if(btmMenu) btmMenu.style.display = 'none';
       if(btmLapMingguan) btmLapMingguan.style.display = 'none';
       if(btmLapBulanan) btmLapBulanan.style.display = 'none';
-      if (btmBazar) btmBazar.style.display = 'none';
+      if(btmBazar) btmBazar.style.display = 'none';
 
-      // ATURAN KHUSUS WALI SANTRI (Hanya Belanja & Riwayat Pesanan)
-      if (isWali) {
+      // ATURAN KHUSUS BAZAR BANIN & BANAT
+      if (isBazar) {
+          if(btmBeranda) btmBeranda.style.display = 'none';
+          if(btmBazar) btmBazar.style.display = 'flex';
+          if(btmLaporan) btmLaporan.style.display = 'flex';
+      }
+      // ATURAN KHUSUS WALI SANTRI
+      else if (isWali) {
           if(btmBeranda) btmBeranda.style.display = 'none';
           if(btmPO) {
               btmPO.style.display = 'flex';
@@ -2640,6 +2633,7 @@
       } 
       // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
       else if (isAdmin || isKepalaAdmin) {
+          if(btmBazar) btmBazar.style.display = 'flex';
           if(btmLaporan) btmLaporan.style.display = 'flex';
           if(btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
       }
@@ -2649,7 +2643,6 @@
       if (mainSidebar) mainSidebar.style.display = 'none';
       if (mainContent) mainContent.classList.remove('sm:ml-72');
 
-      // HIDE/SHOW TOMBOL MASTER BARANG UNTUK KASIR
       var btnImport = document.getElementById('btnMasterImport');
       var btnTambah = document.getElementById('btnMasterTambah');
       var btnHapusSemua = document.getElementById('btnMasterHapusSemua');
@@ -2665,7 +2658,6 @@
           }
       }
 
-      // Tampilkan Tombol Pengingat WA di Header khusus untuk Gudang, Admin, & Kepala Admin
       var btnHeaderWa = document.getElementById('btnHeaderWaReminder');
       if (btnHeaderWa) {
           if (isGudang || isAdmin || isKepalaAdmin) {
@@ -2680,12 +2672,12 @@
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
       
-      // Jika Wali Santri, langsung buka tab Belanja. Jika staf, buka Dashboard.
-      if (isWali) {
-        switchTab('order-create');
-      } else if (isBazar) {
+      // Arahkan langsung sesuai Role
+      if (isBazar) {
         currentUser.im = bazarUnit;
         switchTab('bazar-management');
+      } else if (isWali) {
+        switchTab('order-create');
       } else {
         switchTab('dashboard');
       }
@@ -3003,7 +2995,7 @@
          '</div></div>';
          tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
       }
-      
+
     function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
     // ==========================================
