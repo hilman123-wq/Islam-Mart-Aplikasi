@@ -1890,6 +1890,60 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: UPLOAD FOTO BUKTI SERAH TERIMA PAKET SANTRI (KASIR / PETUGAS) -->
+  <!-- ========================================================================= -->
+  <div id="serahTerimaModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-camera"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-slate-800">Konfirmasi Paket Diterima Santri</h3>
+            <p id="serahTerimaSubtitle" class="text-[11px] text-slate-500">Fotokan santri bersama paket belanjaannya</p>
+          </div>
+        </div>
+        <button onclick="closeModal('serahTerimaModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="serahTerimaForm" onsubmit="submitBuktiSerahTerima(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="serahTerimaOrderId" value="">
+        <input type="hidden" id="serahTerimaFotoBase64" value="">
+
+        <!-- Area Ambil Foto Kamera / Galeri -->
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1.5">1. Ambil Foto Santri Menerima Paket *</label>
+          <div class="border-2 border-dashed border-emerald-400 bg-emerald-50/50 rounded-2xl p-4 text-center relative cursor-pointer hover:bg-emerald-50 transition">
+            <div id="serahTerimaPreviewWrap" style="display: none;" class="mb-3 rounded-xl overflow-hidden border border-emerald-200 bg-white max-h-56 flex items-center justify-center">
+              <img id="serahTerimaPreviewImg" src="" class="max-h-56 w-auto object-contain">
+            </div>
+            <div id="serahTerimaPlaceholder" class="py-4">
+              <i class="fa-solid fa-camera text-3xl text-emerald-600 mb-2"></i>
+              <p class="font-black text-emerald-900 text-xs">Ketuk untuk Buka Kamera / Pilih Foto</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Foto otomatis dikompres agar ringan & cepat</p>
+            </div>
+            <input type="file" id="serahTerimaFileInput" accept="image/*" capture="environment" onchange="handleSerahTerimaFoto(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">2. Keterangan Penerimaan (Opsional)</label>
+          <input type="text" id="serahTerimaKet" placeholder="Contoh: Diterima langsung oleh ananda di toko/asrama" class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('serahTerimaModal')" class="px-4 py-2.5 border rounded-xl font-bold text-slate-600">Batal</button>
+          <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-lg flex items-center gap-1.5">
+            <i class="fa-solid fa-check-double"></i>
+            <span>Simpan Bukti & Selesaikan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- MODAL: DETAIL & CETAK PURCHASE ORDER (PO) -->
   <!-- ========================================================================= -->
   <div id="orderDetailModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1967,6 +2021,20 @@
           <span class="font-bold text-slate-700">Catatan Tambahan:</span>
           <p id="poDetailCatatan" class="text-slate-600 italic mt-0.5">-</p>
         </div>
+
+        <!-- BUKTI FOTO SERAH TERIMA PAKET SANTRI (ALA GOFOOD) -->
+     <div id="poDetailBuktiContainer" style="display: none;" class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 space-y-2">
+       <div class="flex items-center justify-between">
+         <span class="font-black text-emerald-900 text-xs flex items-center gap-1.5">
+           <i class="fa-solid fa-camera-retro text-emerald-600"></i> Bukti Foto Paket Diterima Santri
+         </span>
+         <span id="poDetailWaktuDiterima" class="text-[10px] font-bold bg-emerald-200/70 text-emerald-900 px-2 py-0.5 rounded-full">-</span>
+       </div>
+       <div class="rounded-xl overflow-hidden border border-emerald-300 bg-white max-h-72 flex items-center justify-center">
+         <img id="poDetailBuktiImg" src="" alt="Bukti Serah Terima" class="w-full h-auto max-h-72 object-contain cursor-pointer" onclick="window.open(this.src, '_blank')">
+       </div>
+       <p id="poDetailPetugasSerah" class="text-[10px] text-emerald-700 font-semibold text-center"></p>
+     </div>
 
         <div class="pt-6 flex justify-around text-center text-xs">
           <div>
@@ -3912,27 +3980,185 @@
 
       list.forEach(o => {
         var bc = 'bg-slate-100 text-slate-700';
-        if (o.status === 'Diajukan') bc = 'bg-amber-100 text-amber-800'; else if (o.status === 'Disetujui') bc = 'bg-teal-100 text-teal-800'; else if (o.status === 'Selesai') bc = 'bg-emerald-100 text-emerald-800'; else if (o.status === 'Ditolak') bc = 'bg-rose-100 text-rose-800';
+        if (o.status === 'Diajukan') bc = 'bg-amber-100 text-amber-800'; 
+        else if (o.status === 'Disetujui') bc = 'bg-teal-100 text-teal-800'; 
+        else if (o.status === 'Dikirim') bc = 'bg-blue-100 text-blue-800';
+        else if (o.status === 'Selesai') bc = 'bg-emerald-100 text-emerald-800'; 
+        else if (o.status === 'Ditolak') bc = 'bg-rose-100 text-rose-800';
         
+        var safeO = JSON.stringify(o).replace(/'/g, "&apos;");
+
+        // Badge jika sudah ada foto bukti diterima santri
+        var badgeFoto = o.bukti_foto 
+          ? '<div class="mt-1"><span onclick=\'viewOrderDetail(' + safeO + ')\' class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black bg-emerald-600 text-white cursor-pointer shadow-xs hover:bg-emerald-700"><i class="fa-solid fa-camera"></i> Lihat Foto Bukti</span></div>' 
+          : '';
+
+        // Tombol Kamera khusus Kasir / Gudang / Admin untuk memfoto santri saat terima paket
+        var btnKameraKasir = canManageStatus 
+          ? '<button type="button" onclick=\'openSerahTerimaModal(' + safeO + ')\' title="Fotokan Santri Terima Paket" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs"><i class="fa-solid fa-camera"></i> ' + (o.bukti_foto ? 'Ubah Foto' : 'Foto Serah') + '</button>'
+          : '';
+
         var adS = canManageStatus ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white"><option disabled selected>Ubah...</option><option value="Disetujui">✔ Disiapkan</option><option value="Dikirim">🚚 Dikirim ke Pondok</option><option value="Selesai">🏁 Selesai Diterima</option><option value="Ditolak">✖ Ditolak</option></select>' : '';
+        
         html += '<tr class="hover:bg-slate-50">' +
-          '<td class="py-3 px-3">' + o.tanggal + '</td><td class="py-3 px-3 font-mono font-bold text-teal-700">' + o.no_po + '</td><td class="py-3 px-4 font-bold">' + o.supplier + '</td>' +
-          '<td class="py-3 px-3">' + o.nama_pemohon + '</td><td class="py-3 px-2 text-center">' + o.im + '</td><td class="py-3 px-3 text-right font-black">Rp ' + Number(o.estimasi_total).toLocaleString('id-ID') + '</td>' +
-          '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ' + bc + '">' + o.status + '</span></td>' +
-          '<td class="py-3 px-4 text-center"><div class="flex items-center gap-1 justify-center">' + adS + 
-          '<button type="button" onclick=\'viewOrderDetail(' + JSON.stringify(o).replace(/'/g, "&apos;") + ')\' class="p-1.5 text-slate-500 hover:text-teal-700"><i class="fa-solid fa-eye"></i></button>' +
-          (isAdmin ? '<button type="button" onclick="promptDeleteOrder(\'' + o.id + '\', \'' + o.no_po + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
+          '<td class="py-3 px-3">' + o.tanggal + '</td>' +
+          '<td class="py-3 px-3 font-mono font-bold text-teal-700">' + o.no_po + '</td>' +
+          '<td class="py-3 px-4 font-bold">' + o.supplier + '</td>' +
+          '<td class="py-3 px-3">' + o.nama_pemohon + '</td>' +
+          '<td class="py-3 px-2 text-center">' + o.im + '</td>' +
+          '<td class="py-3 px-3 text-right font-black">Rp ' + Number(o.estimasi_total).toLocaleString('id-ID') + '</td>' +
+          '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ' + bc + '">' + o.status + '</span>' + badgeFoto + '</td>' +
+          '<td class="py-3 px-4 text-center"><div class="flex flex-wrap items-center gap-1 justify-center">' + 
+            btnKameraKasir + adS + 
+            '<button type="button" onclick=\'viewOrderDetail(' + safeO + ')\' class="p-1.5 text-slate-500 hover:text-teal-700" title="Lihat Detail & Bukti Foto"><i class="fa-solid fa-eye"></i></button>' +
+            (isAdmin ? '<button type="button" onclick="promptDeleteOrder(\'' + o.id + '\', \'' + o.no_po + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
           '</div></td></tr>';
       });
       tbody.innerHTML = html;
     }
 
     async function changeOrderStatus(id, newStatus) {
+      // Jika Kasir memilih status "Selesai", tawarkan langsung buka kamera foto bukti
+      var ord = cachedOrdersList.find(x => x.id === id);
+      if (newStatus === 'Selesai' && ord && !ord.bukti_foto && String(ord.no_po || '').startsWith('SNT-')) {
+        if (confirm('Ingin sekalian mengambil FOTO BUKTI santri menerima paket agar terlihat oleh Wali Santri?')) {
+          openSerahTerimaModal(ord);
+          return;
+        }
+      }
       showLoading('Mengubah status...');
       try {
         const { error } = await supaClient.from('orders').update({ status: newStatus }).eq('id', id);
         hideLoading(); if (error) throw error; showToast('Status PO diperbarui!', 'success'); loadOrdersTable(true);
       } catch(e) { hideLoading(); showToast('Gagal: ' + e.message, 'error'); }
+    }
+
+    function viewOrderDetail(o) {
+      currentSelectedOrder = o;
+      document.getElementById('orderModalTitle').innerText = 'Detail Order - ' + o.no_po; 
+      document.getElementById('poDetailStoreTitle').innerText = 'ISLAM MART ' + o.im.toUpperCase();
+      document.getElementById('poDetailNoPo').innerText = 'No: ' + o.no_po; 
+      document.getElementById('poDetailTanggal').innerText = o.tanggal;
+      document.getElementById('poDetailIM').innerText = 'Islam Mart ' + o.im; 
+      document.getElementById('poDetailPemohon').innerText = o.nama_pemohon;
+      document.getElementById('poDetailSupplier').innerText = o.supplier; 
+      document.getElementById('poDetailNoWa').innerText = o.no_wa_supplier || '-';
+      document.getElementById('poDetailStatus').innerText = o.status; 
+      document.getElementById('poDetailCatatan').innerText = o.catatan || '-';
+      
+      // Tampilkan Foto Bukti Serah Terima jika sudah difoto oleh Kasir
+      var buktiBox = document.getElementById('poDetailBuktiContainer');
+      if (buktiBox) {
+        if (o.bukti_foto) {
+          buktiBox.style.display = 'block';
+          document.getElementById('poDetailBuktiImg').src = o.bukti_foto;
+          document.getElementById('poDetailWaktuDiterima').innerText = o.waktu_diterima || 'Sudah Diterima';
+          document.getElementById('poDetailPetugasSerah').innerText = 'Diserahkan oleh: ' + (o.petugas_serah || 'Petugas Kasir Islam Mart');
+        } else {
+          buktiBox.style.display = 'none';
+        }
+      }
+
+      var tb = document.getElementById('poDetailItemsBody'); tb.innerHTML = '';
+      (o.items || []).forEach((it, i) => {
+        tb.innerHTML += '<tr><td class="p-2 border text-center font-bold">' + (i+1) + '</td><td class="p-2 border font-mono">' + (it.barcode||'-') + '</td><td class="p-2 border font-bold">' + it.nama + '</td><td class="p-2 border text-center">' + it.qty + '</td><td class="p-2 border">' + it.satuan + '</td><td class="p-2 border text-right font-mono">Rp ' + Number(it.harga||0).toLocaleString('id-ID') + '</td><td class="p-2 border text-right font-bold font-mono">Rp ' + Number(it.subtotal||0).toLocaleString('id-ID') + '</td></tr>';
+      });
+      document.getElementById('poDetailTotalQty').innerText = o.total_qty || 0; 
+      document.getElementById('poDetailTotalEst').innerText = 'Rp ' + Number(o.estimasi_total||0).toLocaleString('id-ID');
+      openModal('orderDetailModal');
+    }
+
+    var currentSerahTerimaOrder = null;
+
+    function openSerahTerimaModal(o) {
+      currentSerahTerimaOrder = o;
+      document.getElementById('serahTerimaForm').reset();
+      document.getElementById('serahTerimaOrderId').value = o.id;
+      document.getElementById('serahTerimaFotoBase64').value = o.bukti_foto || '';
+      document.getElementById('serahTerimaSubtitle').innerText = o.no_po + ' • ' + o.supplier;
+
+      if (o.bukti_foto) {
+        document.getElementById('serahTerimaPreviewImg').src = o.bukti_foto;
+        document.getElementById('serahTerimaPreviewWrap').style.display = 'flex';
+        document.getElementById('serahTerimaPlaceholder').style.display = 'none';
+      } else {
+        document.getElementById('serahTerimaPreviewWrap').style.display = 'none';
+        document.getElementById('serahTerimaPlaceholder').style.display = 'block';
+      }
+      openModal('serahTerimaModal');
+    }
+
+    // Kompresi otomatis foto kamera HP agar hemat database & cepat dibuka Wali Santri
+    function handleSerahTerimaFoto(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var img = new Image();
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var maxW = 700;
+          var scale = (img.width > maxW) ? (maxW / img.width) : 1;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          var compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+          document.getElementById('serahTerimaFotoBase64').value = compressedBase64;
+          document.getElementById('serahTerimaPreviewImg').src = compressedBase64;
+          document.getElementById('serahTerimaPreviewWrap').style.display = 'flex';
+          document.getElementById('serahTerimaPlaceholder').style.display = 'none';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function submitBuktiSerahTerima(e) {
+      e.preventDefault();
+      var id = document.getElementById('serahTerimaOrderId').value;
+      var base64Foto = document.getElementById('serahTerimaFotoBase64').value;
+      var ket = document.getElementById('serahTerimaKet').value.trim();
+
+      if (!base64Foto) return showToast('Mohon ambil foto santri menerima paket terlebih dahulu!', 'error');
+
+      var nowStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      var petugasInfo = (currentUser ? currentUser.nama : 'Kasir') + (ket ? ' (' + ket + ')' : '');
+
+      showLoading('Menyimpan foto bukti & menyelesaikan pesanan...');
+      try {
+        const { error } = await supaClient.from('orders').update({
+          status: 'Selesai',
+          bukti_foto: base64Foto,
+          waktu_diterima: nowStr,
+          petugas_serah: petugasInfo
+        }).eq('id', id);
+
+        hideLoading();
+        if (error) throw error;
+
+        closeModal('serahTerimaModal');
+        showToast('Bukti foto tersimpan! Wali Santri kini dapat melihat foto di aplikasi.', 'success');
+        loadOrdersTable(true);
+
+        // Tawarkan kirim notifikasi WhatsApp otomatis ke Wali Santri
+        if (currentSerahTerimaOrder && currentSerahTerimaOrder.no_wa_supplier) {
+          if (confirm('Beritahu Wali Santri via WhatsApp bahwa paket sudah diterima ananda?')) {
+            var o = currentSerahTerimaOrder;
+            var waWali = String(o.no_wa_supplier).replace(/[^0-9]/g, '');
+            if (waWali.startsWith('0')) waWali = '62' + waWali.substring(1);
+            var msg = "*KONFIRMASI PAKET DITERIMA SANTRI - ISLAM MART*\n\n" +
+              "Alhamdulillah, pesanan *" + o.no_po + "* untuk *" + o.supplier + "* telah *SELESAI DISERAHKAN* pada *" + nowStr + "*.\n\n" +
+              "📸 *Foto bukti ananda menerima paket* sudah dapat dilihat langsung pada menu *Riwayat Pembelanjaan* di aplikasi Islam Mart.\n\n" +
+              "Jazakumullahu khairan.";
+            window.open("https://api.whatsapp.com/send?phone=" + waWali + "&text=" + encodeURIComponent(msg), '_blank');
+          }
+        }
+      } catch (err) {
+        hideLoading();
+        showToast('Gagal menyimpan foto: ' + err.message, 'error');
+      }
     }
 
     function viewOrderDetail(o) {
