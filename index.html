@@ -3321,8 +3321,18 @@
         if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'flex';
       }
       function hideLoading() { if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none'; }
-      function openModal(id) { if (document.getElementById(id)) document.getElementById(id).style.display = 'flex'; }
-      function closeModal(id) { if (document.getElementById(id)) document.getElementById(id).style.display = 'none'; }
+      function openModal(id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.style.display = 'flex';
+          if (!window.isHandlingPopState) {
+            history.pushState({ tab: activeTab, modal: id }, '', '#' + activeTab + '-' + id);
+          }
+        }
+      }
+      function closeModal(id) {
+        if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+      }
       function isUserAdmin(u) {
         if (!u) return false;
         var role = String(u.role || '').toLowerCase().trim();
@@ -3652,6 +3662,10 @@
           showToast('Menu Pengingat WA khusus untuk Kepala Toko dan Gudang!', 'error'); tabId = 'dashboard';
         }
 
+        // Catat perpindahan halaman ke riwayat tombol Back HP
+        if (!window.isHandlingPopState && activeTab !== tabId) {
+          history.pushState({ tab: tabId, modal: null }, '', '#' + tabId);
+        }
         activeTab = tabId; closeMobileSidebar();
         document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); b.classList.add('text-slate-300'); });
         var activeBtn = document.getElementById('nav-' + tabId);
@@ -6703,6 +6717,116 @@
           loadBazarData(true);
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
       }
+
+      // =========================================================================
+      // FITUR TOMBOL KEMBALI HP (HARDWARE BACK) & USAP GESER KANAN (SWIPE BACK)
+      // =========================================================================
+      window.isHandlingPopState = false;
+
+      // Daftar seluruh ID modal yang ada di sistem
+      var ALL_MODAL_IDS = [
+        'waliCheckoutModal', 'waliTransferModal', 'fotoBuktiViewerModal',
+        'orderDetailModal', 'serahTerimaModal', 'priceTagModal',
+        'importBarangModal', 'itemFormModal', 'criteriaModal',
+        'laporanModal', 'criteriaCatModal', 'criteriaDeleteModal',
+        'userFormModal', 'userDeleteConfirmModal', 'orderDeleteConfirmModal',
+        'itemDeleteConfirmModal', 'bazarItemModal', 'bazarTransModal',
+        'santriFormModal', 'importSantriModal', 'autoInstallModal'
+      ];
+
+      function closeAnyOpenModal() {
+        var closedAny = false;
+        ALL_MODAL_IDS.forEach(function (mId) {
+          var el = document.getElementById(mId);
+          if (el && el.style.display !== 'none' && el.style.display !== '') {
+            el.style.display = 'none';
+            closedAny = true;
+          }
+        });
+        // Tutup juga sidebar mobile jika sedang terbuka
+        var backdrop = document.getElementById('mobileSidebarBackdrop');
+        if (backdrop && backdrop.style.display !== 'none') {
+          closeMobileSidebar();
+          closedAny = true;
+        }
+        return closedAny;
+      }
+
+      function triggerMobileBackNavigation() {
+        if (!currentUser) return;
+
+        // 1. Prioritas Utama: Jika ada pop-up modal yang sedang terbuka, tutup modalnya dulu
+        if (closeAnyOpenModal()) return;
+
+        // 2. Prioritas Kedua: Jika berada di tab selain halaman utama role masing-masing, kembali ke halaman utama
+        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        var roleStr = String(currentUser.role || '').toLowerCase();
+        var unameStr = String(currentUser.username || '').toLowerCase();
+        var isBazar = roleStr.includes('bazar') || unameStr.includes('bzr') || unameStr.includes('bazar');
+
+        var homeTab = isBazar ? 'bazar-management' : (isWali ? 'order-create' : 'dashboard');
+
+        if (activeTab !== homeTab) {
+          window.isHandlingPopState = true;
+          switchTab(homeTab);
+          window.isHandlingPopState = false;
+          // Jaga agar state history tidak habis (mencegah keluar aplikasi tidak sengaja)
+          history.pushState({ tab: homeTab, modal: null }, '', '#' + homeTab);
+        } else {
+          // Jika sudah di halaman paling awal (Home), tahan sekali agar tidak langsung keluar aplikasi
+          history.pushState({ tab: homeTab, modal: null }, '', '#' + homeTab);
+          showToast('Anda sudah di halaman utama. Tekan tombol Keluar di pojok kanan atas untuk logout.', 'info');
+        }
+      }
+
+      // A. Listener saat Tombol Kembali (Back) HP diklik atau Gesture Back bawaan Android/iOS dipakai
+      window.addEventListener('popstate', function (evt) {
+        if (!currentUser) return;
+
+        window.isHandlingPopState = true;
+        // Jika ada modal terbuka, cukup tutup modalnya
+        if (closeAnyOpenModal()) {
+          window.isHandlingPopState = false;
+          return;
+        }
+
+        if (evt.state && evt.state.tab && evt.state.tab !== activeTab) {
+          switchTab(evt.state.tab);
+        } else {
+          triggerMobileBackNavigation();
+        }
+        window.isHandlingPopState = false;
+      });
+
+      // Pasang jangkar riwayat awal begitu halaman dimuat
+      window.addEventListener('load', function () {
+        history.replaceState({ tab: activeTab, modal: null }, '', '#' + activeTab);
+        history.pushState({ tab: activeTab, modal: null }, '', '#' + activeTab);
+      });
+
+      // B. Sensor Usap Geser ke Kanan dari Tepi Kiri Layar (Custom Swipe-Right Gesture di HP)
+      var touchStartX = 0;
+      var touchStartY = 0;
+
+      document.addEventListener('touchstart', function (e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      document.addEventListener('touchend', function (e) {
+        if (!e.changedTouches || e.changedTouches.length !== 1) return;
+        var touchEndX = e.changedTouches[0].clientX;
+        var touchEndY = e.changedTouches[0].clientY;
+
+        var diffX = touchEndX - touchStartX;
+        var diffY = Math.abs(touchEndY - touchStartY);
+
+        // Deteksi usapan dari sisi kiri layar (mulai dari <= 45px tepi kiri) digeser ke kanan minimal 85px
+        if (touchStartX <= 45 && diffX > 85 && diffY < 60) {
+          triggerMobileBackNavigation();
+        }
+      }, { passive: true });
 
     </script>
     <!-- Register Service Worker PWA -->
