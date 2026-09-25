@@ -305,20 +305,27 @@
           </div>
         </div>
 
-        <!-- Tombol Kanan (Profil & Keluar) -->
+        <!-- Tombol Kanan (Profil, Pengingat WA & Keluar) -->
         <div class="flex items-center gap-2 sm:gap-2.5">
           <button onclick="promptInstallPwa()" id="btnInstallPwa" style="display: none;" class="py-1.5 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-xs">
             <i class="fa-solid fa-download text-emerald-600"></i>
             <span class="hidden sm:inline">Pasang PWA</span>
           </button>
           
-          <button onclick="handleLogout()" title="Keluar dari Sistem" class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-rose-600 transition active:scale-95">
-            <i class="fa-solid fa-power-off text-sm sm:text-base"></i>
+          <!-- TOMBOL BARU: Pengingat WA (Khusus Gudang & Admin) -->
+          <button onclick="switchTab('wa-reminder')" id="btnHeaderWaReminder" style="display: none;" title="Pengingat WA Karyawan" class="relative flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-[11px] sm:text-xs font-bold text-emerald-800 transition active:scale-95 shadow-xs">
+            <i class="fa-solid fa-bell text-emerald-600 text-sm sm:text-base animate-bounce"></i>
+            <span class="hidden md:inline">Ingatkan Staf</span>
+            <span id="headerWaBadge" style="display: none;" class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white shadow-xs">0</span>
           </button>
-          
+
           <button onclick="openOwnProfileModal()" title="Profil & Kontak WA" class="flex items-center gap-2 py-1.5 px-2.5 sm:px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] sm:text-xs font-bold text-slate-700 transition active:scale-95">
             <i class="fa-brands fa-whatsapp text-emerald-600 text-sm sm:text-base"></i>
             <span class="hidden sm:inline">No. WA Saya</span>
+          </button>
+
+          <button onclick="handleLogout()" title="Keluar dari Sistem" class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-rose-600 transition active:scale-95">
+            <i class="fa-solid fa-power-off text-sm sm:text-base"></i>
           </button>
         </div>
 
@@ -2130,6 +2137,18 @@
           }
       }
 
+      // Tampilkan Tombol Pengingat WA di Header khusus untuk Gudang, Admin, & Kepala Admin
+      var btnHeaderWa = document.getElementById('btnHeaderWaReminder');
+      if (btnHeaderWa) {
+          if (isGudang || isAdmin || isKepalaAdmin) {
+              btnHeaderWa.style.display = 'flex';
+              // Muat data pengingat di latar belakang agar angka badge merah langsung muncul
+              loadWaReminder(true);
+          } else {
+              btnHeaderWa.style.display = 'none';
+          }
+      }
+
       loadCriteriaAndBuildForms();
       loadUsersForDropdowns();
       loadMasterBarangAutocompleteData();
@@ -3698,15 +3717,21 @@
       try { await supaClient.from('users').update(payload).eq('id', currentUser.id); hideLoading(); currentUser.nowa = nowa; if(pass) currentUser.password = pass; sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser)); showToast('Tersimpan!', 'success'); closeModal('ownProfileModal'); } catch(err) { hideLoading(); showToast('Gagal', 'error'); }
     }
 
-    async function loadWaReminder(forceRefresh) {
+   async function loadWaReminder(forceRefresh) {
       if (forceRefresh === false && window.isWaReminderLoaded) return;
-      var tb = document.getElementById('waReminderTableBody'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek data...</td></tr>';
+      var tb = document.getElementById('waReminderTableBody'); 
+      if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-emerald-500 font-bold">Mengecek data...</td></tr>';
+      
       try {
         var today = new Date().toISOString().split('T')[0];
         var curMonth = today.substring(0,7);
         var isAdmin = isUserAdmin(currentUser);
         var roleStr = String(currentUser.role || '').toLowerCase();
-        var myUnit = String(currentUser.im || 'Banin').toLowerCase(); 
+        // Deteksi unit gudang (Cek dari kolom 'im' atau dari nama 'role' seperti "Gudang Banin" / "Gudang Banat")
+        var myUnit = String(currentUser.im || '').toLowerCase();
+        if (roleStr.includes('banin')) myUnit = 'banin';
+        else if (roleStr.includes('banat')) myUnit = 'banat';
+
         var isKepalaAdmin = roleStr.includes('kepala administrasi');
 
         const { data: users, error: errUsers } = await supaClient.from('users').select('*').eq('status', 'Aktif');
@@ -3734,36 +3759,49 @@
             var filledUsernames = checks.map(c => c.username);
             unsubmittedStaffList = users.filter(u => {
                 if (filledUsernames.includes(u.username)) return false; 
+                if (u.username === currentUser.username) return false; // Jangan masukkan diri sendiri
+                
                 var uRole = String(u.role || '').toLowerCase();
                 var uUnit = String(u.im || '').toLowerCase();
 
                 if (isAdmin) {
-                    return uRole.includes('keuangan') || uRole.includes('gudang') || uRole.includes('driver purchasing');
+                    return uRole.includes('keuangan') || uRole.includes('gudang') || uRole.includes('driver purchasing') || uRole.includes('kasir');
                 } else if (roleStr.includes('gudang')) {
-                    if (myUnit === 'banin') return uRole.includes('kasir') && uUnit === 'banin';
-                    else if (myUnit === 'banat') return (uRole.includes('kasir') && uUnit === 'banat') || uRole.includes('permak');
+                    if (myUnit === 'banin') {
+                        // Gudang Banin: Hanya mengingatkan Kasir Banin
+                        return uRole.includes('kasir') && uUnit === 'banin';
+                    } else if (myUnit === 'banat') {
+                        // Gudang Banat: Mengingatkan karyawan unit Banat (Kasir Banat, Permak, dll di Banat)
+                        return (uUnit === 'banat' && !uRole.includes('gudang') && !uRole.includes('kepala')) || uRole.includes('permak');
+                    }
                 }
                 return false; 
             });
         }
         
         window.isWaReminderLoaded = true;
-        renderWaReminder(today);
-      } catch(e) { if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">Gagal memuat.</td></tr>'; }
+        renderWaReminder(today, myUnit);
+      } catch(e) { 
+        if(tb) tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500">Gagal memuat.</td></tr>'; 
+      }
     }
 
-    function renderWaReminder(todayStr) {
-      document.getElementById('waReminderDateDisplay').innerText = todayStr;
+    function renderWaReminder(todayStr, detectedUnit) {
+      if(document.getElementById('waReminderDateDisplay')) document.getElementById('waReminderDateDisplay').innerText = todayStr;
       var isAdmin = isUserAdmin(currentUser);
       var roleStr = String(currentUser.role || '').toLowerCase();
       var isKepalaAdmin = roleStr.includes('kepala administrasi');
-      var myUnit = String(currentUser.im || '').toLowerCase();
+      var myUnit = detectedUnit || String(currentUser.im || '').toLowerCase();
 
       var countEl = document.getElementById('waReminderUnfilledCount'); 
-      if(countEl) countEl.innerText = unsubmittedStaffList.length + (isKepalaAdmin ? ' Divisi' : ' Petugas');
+      if(countEl) countEl.innerText = unsubmittedStaffList.length + (isKepalaAdmin ? ' Divisi' : ' Karyawan');
       
+      // Update badge di sidebar & di pojok kanan atas Header
       var badge = document.getElementById('sidebarWaBadge'); 
       if(badge) { badge.innerText = unsubmittedStaffList.length; badge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
+      
+      var headerBadge = document.getElementById('headerWaBadge');
+      if(headerBadge) { headerBadge.innerText = unsubmittedStaffList.length; headerBadge.style.display = unsubmittedStaffList.length > 0 ? 'inline-block' : 'none'; }
       
       var titleEl = document.querySelector('#tab-wa-reminder h2');
       var descEl = document.querySelector('#tab-wa-reminder p');
@@ -3772,23 +3810,23 @@
               titleEl.innerText = "Pengingat Laporan Bulanan";
               descEl.innerText = "Tegur Divisi/Petugas yang belum mengunggah file Laporan Bulanan bulan ini.";
           } else if (isAdmin) {
-              titleEl.innerText = "Pengingat WA (Admin)";
-              descEl.innerText = "Tegur Staf Gudang, Keuangan, dan Driver Purchasing yang belum mengisi form harian.";
+              titleEl.innerText = "Pengingat WA (Administrator)";
+              descEl.innerText = "Tegur Staf Operasional yang belum mengisi form harian.";
           } else if (myUnit === 'banat') {
-              titleEl.innerText = "Pusat Pengingat WA (Banat)";
-              descEl.innerText = "Tegur staf Kasir Banat dan Permak yang belum mengisi form harian.";
+              titleEl.innerText = "Pengingat WA Karyawan (IM Banat)";
+              descEl.innerText = "Daftar karyawan IM Banat yang belum mengisi form ceklis hari ini.";
           } else {
-              titleEl.innerText = "Pusat Pengingat WA (Banin)";
-              descEl.innerText = "Tegur staf Kasir Banin yang belum mengisi form harian.";
+              titleEl.innerText = "Pengingat WA Kasir (IM Banin)";
+              descEl.innerText = "Daftar kasir IM Banin yang belum mengisi form ceklis hari ini.";
           }
       }
 
       var tb = document.getElementById('waReminderTableBody'); if(!tb) return; tb.innerHTML = '';
-      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400">Semua target petugas/divisi aman!</td></tr>'; return; }
+      if(!unsubmittedStaffList.length) { tb.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1.5"></i>Alhamdulillah, semua karyawan sudah mengisi form hari ini!</td></tr>'; return; }
       
       unsubmittedStaffList.forEach(s => {
         var statusBadge = isKepalaAdmin ? "Belum Upload" : "Belum Isi";
-        tb.innerHTML += '<tr class="hover:bg-slate-800/40"><td class="py-3 px-4 font-bold text-white">' + s.nama + '</td><td class="py-3 px-3">' + s.role + '</td><td class="py-3 px-3">' + s.im + '</td><td class="py-3 px-4 font-mono text-emerald-400">' + (s.nowa||'-') + '</td><td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300">' + statusBadge + '</span></td><td class="py-3 px-4 text-center"><button onclick="sendWaReminderSingle(\''+s.nama+'\',\''+(s.nowa||'')+'\',\''+s.role+'\',\''+s.im+'\')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold mx-auto"><i class="fa-brands fa-whatsapp"></i> Ingatkan WA</button></td></tr>';
+        tb.innerHTML += '<tr class="hover:bg-slate-800/40"><td class="py-3 px-4 font-bold text-white">' + s.nama + '</td><td class="py-3 px-3">' + s.role + '</td><td class="py-3 px-3">' + s.im + '</td><td class="py-3 px-4 font-mono text-emerald-400">' + (s.nowa||'-') + '</td><td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300">' + statusBadge + '</span></td><td class="py-3 px-4 text-center"><button onclick="sendWaReminderSingle(\''+s.nama+'\',\''+(s.nowa||'')+'\',\''+s.role+'\',\''+s.im+'\')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[11px] font-bold mx-auto flex items-center gap-1.5"><i class="fa-brands fa-whatsapp"></i> Ingatkan WA</button></td></tr>';
       });
     }
 
