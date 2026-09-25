@@ -143,7 +143,7 @@
       </div>
     </div>
   </div>
-
+  
   <!-- ========================================================================= -->
   <!-- APLIKASI UTAMA (MAIN APP SHELL) -->
   <!-- ========================================================================= -->
@@ -3208,21 +3208,17 @@
             }
         }
 
-       // Gunakan Harga Jual untuk Wali Santri, Harga Beli untuk PO Staf
+        // Gunakan Harga Jual untuk Wali Santri, Harga Beli untuk PO Staf
         var displayPrice = isWali ? (it.harga_jual || it.hargaJual || 0) : (it.harga_beli || it.hargaBeli || 0);
         var subInfo = isWali ? (it.kategori || 'Produk') : (it.supplier || '-');
-        
-        // Hanya sembunyikan badge Sisa Stok jika yang login adalah Wali Santri
-        var stokBadgeHtml = isWali ? '' : `
-              <div class="absolute top-2 left-2 flex flex-col gap-1">
-                <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
-              </div>`;
         
         html += `
           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col hover:shadow-lg hover:border-teal-300 transition duration-300 group">
             <div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
               <img src="${imgUrl}" onerror="this.src='${errorImg}'" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" alt="Produk">
-              ${stokBadgeHtml}
+              <div class="absolute top-2 left-2 flex flex-col gap-1">
+                <span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ${it.qty || 0}</span>
+              </div>
             </div>
             
             <div class="p-2.5 sm:p-3 flex flex-col flex-1">
