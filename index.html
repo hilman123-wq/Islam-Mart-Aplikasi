@@ -3912,6 +3912,28 @@
         if (document.getElementById('statKinerjaBanin')) document.getElementById('statKinerjaBanin').innerText = res.stats.avgBanin + '%';
         if (document.getElementById('statKinerjaBanat')) document.getElementById('statKinerjaBanat').innerText = res.stats.avgBanat + '%';
 
+        // Sembunyikan Kartu Total PO, Pengeluaran PO, & Grafik PO khusus untuk User Kasir
+        var isKasirUser = roleStr.includes('kasir') && !isAdmin && !isKepalaAdmin;
+        var cardTotalPO = document.getElementById('statTotalPO') ? document.getElementById('statTotalPO').parentElement : null;
+        var cardTotalRp = document.getElementById('statTotalRp') ? document.getElementById('statTotalRp').parentElement : null;
+        var cardChartPO = document.getElementById('poChartCanvas') ? document.getElementById('poChartCanvas').closest('.bg-white') : null;
+
+        if (cardTotalPO) cardTotalPO.style.display = isKasirUser ? 'none' : '';
+        if (cardTotalRp) cardTotalRp.style.display = isKasirUser ? 'none' : '';
+        if (cardChartPO) cardChartPO.style.display = isKasirUser ? 'none' : '';
+
+        // Rapikan lebar grid otomatis agar kartu & grafik Disiplin Ceklis membentang rapi saat Kasir login
+        if (cardTotalPO && cardTotalPO.parentElement) {
+          cardTotalPO.parentElement.className = isKasirUser
+            ? 'grid grid-cols-2 gap-3 sm:gap-4'
+            : 'grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4';
+        }
+        if (cardChartPO && cardChartPO.parentElement) {
+          cardChartPO.parentElement.className = isKasirUser
+            ? 'grid grid-cols-1 gap-4 sm:gap-6'
+            : 'grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6';
+        }
+
         var elRp = document.getElementById('statTotalRp');
         if (elRp) {
           if (res.stats.totalRp >= 1000000) elRp.innerText = 'Rp ' + (res.stats.totalRp / 1000000).toFixed(1) + ' Jt';
