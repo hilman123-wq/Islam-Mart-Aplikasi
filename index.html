@@ -4775,11 +4775,23 @@
         listEl.innerHTML = html;
       }
 
+      function getItemSpecialStamp(it) {
+        var gabungTeks = (String(it.nama || '') + ' ' + String(it.kategori || '') + ' ' + String(it.supplier || '') + ' ' + String(it.status || '') + ' ' + String(it.keterangan || '')).toLowerCase();
+        if (gabungTeks.includes('banned') || gabungTeks.includes('boikot') || gabungTeks.includes('dilarang')) return 'BANNED';
+        if (gabungTeks.includes('discontinue') || gabungTeks.includes('diskontinu') || gabungTeks.includes('stop produksi') || gabungTeks.includes('nonaktif')) return 'DISCONTINUE';
+        return '';
+      }
+
       function renderPoCatalogPage() {
         toggleWaliShopeeLayout();
         var container = document.getElementById('poCatalogContainer');
         if (!container) return;
-        var totalItems = window.filteredPoItems.length;
+
+        var isWali = isWaliSantri(currentUser);
+        // Untuk Wali Santri, sembunyikan barang yang Banned/Discontinue agar tidak dibeli
+        var sourceList = isWali ? window.filteredPoItems.filter(it => !getItemSpecialStamp(it)) : window.filteredPoItems;
+
+        var totalItems = sourceList.length;
         if (totalItems === 0) {
           container.innerHTML = '<div class="p-10 flex flex-col items-center justify-center text-slate-400 bg-white rounded-2xl border border-slate-100"><i class="fa-solid fa-box-open text-4xl mb-3 text-slate-300"></i><span class="text-xs font-bold">Barang tidak ditemukan.</span></div>';
           return;
@@ -4787,8 +4799,7 @@
 
         var startIndex = (window.poCurrentPage - 1) * window.poItemsPerPage;
         var endIndex = startIndex + window.poItemsPerPage;
-        var itemsToRender = window.filteredPoItems.slice(startIndex, endIndex);
-        var isWali = isWaliSantri(currentUser);
+        var itemsToRender = sourceList.slice(startIndex, endIndex);
 
         var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 p-0">';
 
@@ -4810,12 +4821,37 @@
 
           var displayPrice = isWali ? (it.harga_jual || it.hargaJual || 0) : (it.harga_beli || it.hargaBeli || 0);
           var subInfo = isWali ? (it.kategori || 'Produk') : (it.supplier || it.kategori || '-');
-          var stokBadge = isWali ? '' : '<div class="absolute top-2 left-2 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ' + (it.qty || 0) + '</span></div>';
+          var stokBadge = isWali ? '' : '<div class="absolute top-2 left-2 z-10 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ' + (it.qty || 0) + '</span></div>';
+
+          // Deteksi Cap BANNED atau DISCONTINUE
+          var stampType = getItemSpecialStamp(it);
+          var stampOverlayHtml = '';
+          if (stampType === 'BANNED') {
+            stampOverlayHtml = '<div class="absolute inset-0 bg-rose-950/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none">' +
+              '<div class="border-4 border-rose-600 bg-white/95 text-rose-600 font-black text-xs sm:text-sm px-3 py-1 rounded-xl uppercase tracking-widest -rotate-12 shadow-xl flex items-center gap-1">' +
+                '<i class="fa-solid fa-ban"></i><span>BANNED</span>' +
+              '</div>' +
+            '</div>';
+          } else if (stampType === 'DISCONTINUE') {
+            stampOverlayHtml = '<div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none">' +
+              '<div class="border-4 border-amber-500 bg-slate-900/95 text-amber-400 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl uppercase tracking-wider -rotate-12 shadow-xl flex items-center gap-1">' +
+                '<i class="fa-solid fa-circle-pause"></i><span>DISCONTINUE</span>' +
+              '</div>' +
+            '</div>';
+          }
 
           var qtyInCart = getCartQtyByItemId(it.id);
           var actionButtonHtml = '';
 
-          if (qtyInCart > 0) {
+          if (stampType === 'BANNED') {
+            actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
+              '<i class="fa-solid fa-ban"></i> <span>PRODUK BANNED</span>' +
+            '</button>';
+          } else if (stampType === 'DISCONTINUE') {
+            actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
+              '<i class="fa-solid fa-triangle-exclamation"></i> <span>DISCONTINUE</span>' +
+            '</button>';
+          } else if (qtyInCart > 0) {
             actionButtonHtml = '<div class="flex items-center justify-between bg-emerald-50 border-2 border-emerald-500 rounded-xl p-1">' +
               '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-emerald-800 font-black shadow-2xs active:scale-90">-</button>' +
               '<span class="font-black text-xs text-emerald-900">' + qtyInCart + '</span>' +
@@ -4828,10 +4864,11 @@
               '</button>';
           }
 
-          html += '<div class="bg-white rounded-2xl shadow-xs border border-slate-200/80 overflow-hidden flex flex-col hover:shadow-md hover:border-emerald-400 transition duration-300 group">' +
+          html += '<div class="bg-white rounded-2xl shadow-xs border ' + (stampType ? 'border-rose-300 opacity-90' : 'border-slate-200/80') + ' overflow-hidden flex flex-col hover:shadow-md hover:border-emerald-400 transition duration-300 group">' +
             '<div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">' +
-            '<img src="' + imgUrl + '" onerror="this.src=\'' + errorImg + '\'" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy" alt="Produk">' +
+            '<img src="' + imgUrl + '" onerror="this.src=\'' + errorImg + '\'" class="w-full h-full object-cover ' + (stampType ? 'grayscale-[40%]' : 'group-hover:scale-105') + ' transition duration-500" loading="lazy" alt="Produk">' +
             stokBadge +
+            stampOverlayHtml +
             '</div>' +
             '<div class="p-2.5 sm:p-3 flex flex-col flex-1">' +
             '<span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded w-fit mb-1 truncate max-w-full">' + subInfo + '</span>' +
