@@ -4048,14 +4048,54 @@
       function handleItemSelection(cb) { if (cb.checked) { if (!window.selectedMasterItemIds.includes(cb.value)) window.selectedMasterItemIds.push(cb.value); } else { var idx = window.selectedMasterItemIds.indexOf(cb.value); if (idx !== -1) window.selectedMasterItemIds.splice(idx, 1); } }
       function toggleSelectAllItems(masterCb) { document.querySelectorAll('.item-select-checkbox').forEach(cb => { cb.checked = masterCb.checked; handleItemSelection(cb); }); }
 
+      // Fungsi pendeteksi kunci unit otomatis untuk Kasir, Gudang, Keuangan, & Wali Santri
+      function getUserLockedUnit(u) {
+        if (!u) return null;
+        var roleStr = String(u.role || '').toLowerCase();
+        var unameStr = String(u.username || '').toLowerCase();
+        var isKepalaAdmin = roleStr.includes('kepala administrasi');
+        // Kepala Toko, Kepala Administrasi, Admin, dan Driver Purchasing bebas melihat Semua Unit
+        if (isUserAdmin(u) || isKepalaAdmin || roleStr.includes('driver')) return null;
+
+        if (roleStr.includes('banat') || unameStr.includes('banat')) return 'Banat';
+        if (roleStr.includes('banin') || unameStr.includes('banin')) return 'Banin';
+        return u.im || 'Banin';
+      }
+
       function filterAndRenderMasterBarang() {
         var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase();
-        var imFilter = document.getElementById('filterItemIM').value;
+        var selIM = document.getElementById('filterItemIM');
         var kat = document.getElementById('filterItemCategory').value;
         var sortBy = document.getElementById('filterItemSort') ? document.getElementById('filterItemSort').value : 'nama_asc';
 
+        // Rapikan susunan bar filter Master Barang jika masih menumpuk di dalam 1 div
+        var catEl = document.getElementById('filterItemCategory');
+        var sortEl = document.getElementById('filterItemSort');
+        if (selIM && catEl && sortEl && selIM.parentElement.parentElement === sortEl.parentElement) {
+          var gridWrap = selIM.closest('.grid');
+          if (gridWrap) {
+            gridWrap.appendChild(selIM.parentElement);
+            gridWrap.appendChild(catEl.parentElement);
+            gridWrap.appendChild(sortEl);
+          }
+        }
+
+        // Kunci otomatis Unit Barang untuk Kasir & Gudang (Banin / Banat)
+        var lockedUnit = getUserLockedUnit(currentUser);
+        if (lockedUnit && selIM) {
+          selIM.value = lockedUnit;
+          selIM.disabled = true;
+          if (selIM.parentElement) selIM.parentElement.style.display = 'none'; // Sembunyikan dropdown "Semua Toko"
+        } else if (selIM) {
+          selIM.disabled = false;
+          if (selIM.parentElement) selIM.parentElement.style.display = '';
+        }
+
+        var imFilter = lockedUnit ? lockedUnit : (selIM ? selIM.value : 'ALL');
+
         window.filteredMasterItems = cachedMasterBarang.filter(it => {
-          var matchIM = (imFilter === 'ALL') || (it.im === imFilter);
+          var itemIM = String(it.im || 'Banin').trim().toLowerCase();
+          var matchIM = (imFilter === 'ALL') || (itemIM === imFilter.toLowerCase());
           var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
           var matchKat = (kat === 'ALL') || (itemKat === targetKat);
@@ -4064,7 +4104,6 @@
           return matchIM && matchKat && matchQ;
         });
 
-        // Fitur Sortir Baru
         window.filteredMasterItems.sort((a, b) => {
           if (sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
           if (sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
@@ -5062,12 +5101,23 @@
 
       async function loadOrdersTable(forceRefresh) {
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        var lockedUnit = typeof getUserLockedUnit === 'function' ? getUserLockedUnit(currentUser) : null;
+
         var switcher = document.getElementById('orderHistoryTabSwitcher');
         var stafFilters = document.getElementById('stafOrderHistoryFilters');
         var waliCalBtn = document.getElementById('waliCalendarIconWrap');
         var thPemohon = document.getElementById('thOrderPemohon');
         var thUnit = document.getElementById('thOrderUnit');
         var tblEl = document.getElementById('ordersHistoryMainTable');
+        var selOrderIM = document.getElementById('filterOrderIM');
+
+        // Kunci dropdown Unit di Riwayat Pesanan jika yang login adalah Kasir / Gudang (Banin atau Banat)
+        if (lockedUnit && selOrderIM) {
+          selOrderIM.value = lockedUnit;
+          selOrderIM.style.display = 'none';
+        } else if (selOrderIM) {
+          selOrderIM.style.display = '';
+        }
 
         if (isWali) {
           window.activeOrderHistoryType = 'SNT';
@@ -5078,9 +5128,8 @@
           if (thUnit) thUnit.style.display = 'none';
           if (tblEl) tblEl.className = 'w-full text-left text-xs min-w-[520px]';
 
-          // Reset filter status & unit agar semua pesanan santri tampil
           if (document.getElementById('filterOrderStatus')) document.getElementById('filterOrderStatus').value = 'ALL';
-          if (document.getElementById('filterOrderIM')) document.getElementById('filterOrderIM').value = 'ALL';
+          if (selOrderIM) selOrderIM.value = 'ALL';
           if (document.getElementById('waliMonthPickerInput') && document.getElementById('filterOrderMonth')) {
             document.getElementById('waliMonthPickerInput').value = document.getElementById('filterOrderMonth').value;
           }
@@ -5107,7 +5156,10 @@
         var tbody = document.getElementById('ordersTableBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Mengambil data pesanan...</td></tr>';
 
-        var st = document.getElementById('filterOrderStatus').value, im = document.getElementById('filterOrderIM').value, m = document.getElementById('filterOrderMonth').value;
+        var st = document.getElementById('filterOrderStatus').value;
+        var im = lockedUnit ? lockedUnit : (selOrderIM ? selOrderIM.value : 'ALL');
+        var m = document.getElementById('filterOrderMonth').value;
+
         try {
           let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(200);
           if (!isWali && st !== 'ALL') query = query.eq('status', st);
@@ -5197,12 +5249,18 @@
         modal.style.display = 'flex';
       }
 
-      function renderOrdersTable(list) {
+     function renderOrdersTable(list) {
         cachedOrdersList = list || [];
         var tbody = document.getElementById('ordersTableBody'); if (!tbody) return;
 
-        var listSNT = cachedOrdersList.filter(o => String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:'));
-        var listPO = cachedOrdersList.filter(o => !(String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:')));
+        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        var lockedUnit = (!isWali && typeof getUserLockedUnit === 'function') ? getUserLockedUnit(currentUser) : null;
+        var unitFilteredList = lockedUnit
+          ? cachedOrdersList.filter(o => String(o.im || '').toLowerCase() === lockedUnit.toLowerCase())
+          : cachedOrdersList;
+
+        var listSNT = unitFilteredList.filter(o => String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:'));
+        var listPO = unitFilteredList.filter(o => !(String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:')));
 
         if (document.getElementById('badgeCountHistPO')) document.getElementById('badgeCountHistPO').innerText = listPO.length;
         if (document.getElementById('badgeCountHistSNT')) document.getElementById('badgeCountHistSNT').innerText = listSNT.length;
