@@ -4126,8 +4126,34 @@
 
       function renderMasterBarangPage() {
         var tbody = document.getElementById('masterBarangTableBody'); if (!tbody) return;
+
+        // Deteksi apakah yang login adalah Kasir
+        var isRoleKasir = currentUser && String(currentUser.role || '').toLowerCase().includes('kasir') && !isUserAdmin(currentUser);
+        var colCount = isRoleKasir ? 7 : 11;
+
+        // Sembunyikan otomatis judul kolom (Header): Unit (ke-6), Stok (ke-7), Supplier (ke-8), & Hrg Beli (ke-9) khusus Kasir
+        var tableEl = tbody.closest('table');
+        if (tableEl) {
+          tableEl.className = isRoleKasir ? 'w-full text-left text-[11px] sm:text-xs min-w-[550px]' : 'w-full text-left text-[11px] sm:text-xs min-w-[850px]';
+          var ths = tableEl.querySelectorAll('thead tr th');
+          if (ths.length === 11) {
+            [5, 6, 7, 8].forEach(idx => {
+              ths[idx].style.display = isRoleKasir ? 'none' : '';
+            });
+          }
+        }
+
+        // Sesuaikan placeholder pencarian untuk Kasir (tanpa kata supplier)
+        var searchInp = document.getElementById('filterItemSearch');
+        if (searchInp) {
+          searchInp.placeholder = isRoleKasir ? 'Cari nama barang atau barcode...' : 'Cari nama barang, barcode, supplier...';
+        }
+
         var totalItems = window.filteredMasterItems.length;
-        if (totalItems === 0) { tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-400">Tidak ada data barang.</td></tr>'; return; }
+        if (totalItems === 0) { 
+          tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="py-8 text-center text-slate-400">Tidak ada data barang.</td></tr>'; 
+          return; 
+        }
 
         var startIndex = (window.masterCurrentPage - 1) * window.masterItemsPerPage;
         var endIndex = startIndex + window.masterItemsPerPage;
@@ -4140,13 +4166,18 @@
           var actualIndex = startIndex + i + 1;
           var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
 
-          // Deteksi apakah yang login adalah Kasir
-          var isRoleKasir = currentUser && String(currentUser.role || '').toLowerCase().includes('kasir');
-
           // Pisahkan tombol-tombol berdasarkan Hak Akses
           var btnCetak = '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700" title="Cetak Label"><i class="fa-solid fa-tag"></i></button>';
           var btnEdit = (!isRoleKasir) ? '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit Barang"><i class="fa-solid fa-pen-to-square"></i></button>' : '';
           var btnHapus = (!isRoleKasir) ? '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + String(it.nama).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>' : '';
+
+          // Kolom Unit, Stok, Supplier, dan Harga Beli hanya dirender jika BUKAN Kasir
+          var extraColsNonKasir = isRoleKasir ? '' : (
+            '<td class="py-3 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (it.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + (it.im || 'Banin') + '</span></td>' +
+            '<td class="py-3 px-3 text-center font-black ' + (it.qty <= 5 ? 'text-rose-600' : 'text-slate-800') + '">' + it.qty + '</td>' +
+            '<td class="py-3 px-4 text-slate-600">' + (it.supplier || '-') + '</td>' +
+            '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + Number(it.harga_beli || it.hargaBeli || 0).toLocaleString('id-ID') + '</td>'
+          );
 
           html += '<tr class="hover:bg-slate-50">' +
             '<td class="py-3 px-3 text-center"><input type="checkbox" value="' + it.id + '" onchange="handleItemSelection(this)" class="item-select-checkbox w-4 h-4 rounded text-emerald-600" ' + isChecked + '></td>' +
@@ -4154,10 +4185,7 @@
             '<td class="py-3 px-3 font-mono font-semibold text-slate-600">' + (it.barcode || '-') + '</td>' +
             '<td class="py-3 px-4 font-bold text-slate-800">' + it.nama + '</td>' +
             '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">' + it.kategori + '</span></td>' +
-            '<td class="py-3 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (it.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + (it.im || 'Banin') + '</span></td>' +
-            '<td class="py-3 px-3 text-center font-black ' + (it.qty <= 5 ? 'text-rose-600' : 'text-slate-800') + '">' + it.qty + '</td>' +
-            '<td class="py-3 px-4 text-slate-600">' + (it.supplier || '-') + '</td>' +
-            '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + Number(it.harga_beli || it.hargaBeli || 0).toLocaleString('id-ID') + '</td>' +
+            extraColsNonKasir +
             '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</td>' +
             '<td class="py-3 px-3 text-center"><div class="flex items-center justify-center gap-1.5">' +
             btnCetak + btnEdit + btnHapus +
@@ -4166,13 +4194,12 @@
 
         var totalPages = Math.ceil(totalItems / window.masterItemsPerPage);
         if (totalPages > 1) {
-          // Generate opsi dropdown halaman
           var pageOptions = '';
           for (var p = 1; p <= totalPages; p++) {
             pageOptions += '<option value="' + p + '" ' + (p === window.masterCurrentPage ? 'selected' : '') + '>Hal ' + p + '</option>';
           }
 
-          html += '<tr><td colspan="11" class="py-3 bg-white sticky left-0 border-t"><div class="flex items-center justify-between px-4">' +
+          html += '<tr><td colspan="' + colCount + '" class="py-3 bg-white sticky left-0 border-t"><div class="flex items-center justify-between px-4">' +
             '<span class="text-[11px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + ' dari total ' + totalItems + '</span>' +
             '<div class="flex items-center gap-2">' +
             '<button type="button" onclick="changeMasterPage(-1)" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.masterCurrentPage === 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left mr-1"></i> Prev</button>' +
