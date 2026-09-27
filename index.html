@@ -3929,7 +3929,7 @@
           var batas30Hari = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
           supaClient.from('orders').update({ bukti_foto: null }).not('bukti_foto', 'is', null).lt('tanggal', batas30Hari).then(() => { });
 
-          // 1. Status pengisian form user
+          // 1. Status pengisian form user hari ini
           const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
           var hasFilled = clToday && clToday.length > 0;
 
@@ -3943,9 +3943,18 @@
 
           const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').gte('tanggal', startDate).lte('tanggal', endDate);
           const { data: checksRaw } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir, predikat, checklist_detail').gte('tanggal', startDate).lte('tanggal', endDate);
-          // Saring hanya hari kerja aktif (abaikan hari Off, Tugas Belanja, Libur Pondok, & Izin dari pembagi grafik)
-          const checks = (checksRaw || []).filter(c => !isExcusedChecklist(c));
 
+          // Saring hanya hari kerja aktif (abaikan hari Off, Tugas Belanja, Libur Pondok, & Izin dari pembagi grafik)
+          const checks = (checksRaw || []).filter(c => typeof isExcusedChecklist === 'function' ? !isExcusedChecklist(c) : true);
+
+          // 3. Kalkulasi Statistik Kartu Orderan PO (Bulan Ini)
+          var totalPO = 0, totalRp = 0;
+          if (orders) {
+            totalPO = orders.length;
+            totalRp = orders.reduce((sum, o) => sum + Number(o.estimasi_total || 0), 0);
+          }
+
+          // 4. Kalkulasi Statistik Disiplin Ceklis Banin & Banat (Bulan Ini)
           var sumBanin = 0, countBanin = 0, sumBanat = 0, countBanat = 0;
           if (checks) {
             checks.forEach(c => {
@@ -3956,7 +3965,7 @@
           var avgBanin = countBanin > 0 ? (sumBanin / countBanin).toFixed(1) : 0;
           var avgBanat = countBanat > 0 ? (sumBanat / countBanat).toFixed(1) : 0;
 
-          // Kalkulasi Data Grafik (7 Hari Terakhir)
+          // 5. Kalkulasi Data Grafik (7 Hari Terakhir)
           var chartLabels = [];
           var poData = [];
           var checkBaninData = [];
@@ -3983,13 +3992,15 @@
             checkBanatData.push(dAvgBanat.toFixed(1));
           }
 
-          // Tampilkan ke layar
+          // 6. Tampilkan ke layar Dashboard
           renderDashboard({
             hasFilledToday: hasFilled,
             stats: { totalPO, totalRp, avgBanin, avgBanat },
             charts: { labels: chartLabels, po: poData, checkBanin: checkBaninData, checkBanat: checkBanatData }
           });
-        } catch (err) { console.error(err); }
+        } catch (err) {
+          console.error('Error loadDashboard:', err);
+        }
       }
 
       function renderDashboard(res) {
