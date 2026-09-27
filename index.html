@@ -409,13 +409,31 @@
           </div>
         </div>
 
-        <!-- Penyangga kosong saat Logo disembunyikan agar tombol tetap di pojok kanan -->
-        <div id="waliHeaderSpacer" style="display: none;">
-          <button type="button" id="btnWaliBackToShop" onclick="switchTab('order-create')" style="display: none;"
-            class="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs active:scale-95 transition">
+        <!-- PROFIL SANTRI DI POJOK KIRI ATAS (Khusus Wali Santri) -->
+        <div id="waliHeaderSpacer" style="display: none;" class="flex items-center gap-2.5 min-w-0">
+          <!-- Tombol Kembali saat membuka Riwayat -->
+          <button type="button" id="btnWaliBackToShop" onclick="switchTab('order-create')" style="display: none;" class="py-1.5 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs active:scale-95 transition shrink-0">
             <i class="fa-solid fa-arrow-left"></i>
-            <span>Kembali Belanja</span>
+            <span class="hidden sm:inline">Kembali</span>
           </button>
+
+          <!-- Kartu Foto, Nama, & Kelas Santri (Klik foto untuk ganti foto) -->
+          <div onclick="triggerWaliUploadFotoSantri()" title="Ketuk untuk mengubah foto profil santri" class="flex items-center gap-2.5 cursor-pointer group min-w-0 py-0.5 pr-2 rounded-2xl hover:bg-slate-50 transition">
+            <div class="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-black text-sm flex items-center justify-center overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0">
+              <img id="waliHeaderSantriImg" src="" alt="Foto Santri" style="display: none;" class="w-full h-full object-cover">
+              <span id="waliHeaderSantriInitial">S</span>
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                <i class="fa-solid fa-camera text-[10px] text-white"></i>
+              </div>
+            </div>
+            <div class="min-w-0 leading-tight">
+              <h2 id="waliHeaderSantriName" class="text-xs sm:text-sm font-black text-slate-800 truncate">Nama Santri</h2>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span id="waliHeaderSantriClass" class="text-[10px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.2 rounded-full truncate">Kelas -</span>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="waliSantriFotoInput" accept="image/*" onchange="handleUploadFotoProfilSantri(event)" class="hidden">
         </div>
 
         <!-- Tombol Kanan (Riwayat Wali, Profil, Pengingat WA & Keluar) -->
@@ -3483,13 +3501,15 @@
             var s = santriList[0];
             if (s.status && s.status.toLowerCase() !== 'aktif') return showToast('Status santri sedang nonaktif!', 'error');
 
-            // Bentuk sesi otomatis sebagai Wali Santri
             var infoLengkapSantri = s.nama_santri + (s.kelas ? ' - Kelas ' + s.kelas : '') + (s.asrama ? ' (' + s.asrama + ')' : '');
             currentUser = {
               id: s.id,
               username: s.nis || s.nama_santri,
               nama: 'Wali: ' + s.nama_santri,
               nama_santri: s.nama_santri,
+              kelas: s.kelas || '',
+              asrama: s.asrama || '',
+              foto: s.foto || '',
               info_santri: infoLengkapSantri,
               role: 'Wali Santri',
               im: s.im || 'Banin',
@@ -3677,7 +3697,8 @@
         if (isWali) {
           if (bottomNavBarEl) bottomNavBarEl.style.setProperty('display', 'none', 'important');
           if (headerBrandEl) headerBrandEl.style.display = 'none';
-          if (waliSpacerEl) waliSpacerEl.style.display = 'block';
+          if (waliSpacerEl) waliSpacerEl.style.display = 'flex';
+          renderWaliHeaderSantriProfile();
           if (btnWaliHistHeader) btnWaliHistHeader.style.display = 'flex';
           if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-4 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none';
         } else {
@@ -7204,6 +7225,99 @@
           triggerMobileBackNavigation();
         }
       }, { passive: true });
+
+      // =========================================================================
+      // PROFIL SANTRI DI POJOK KIRI ATAS (FOTO, NAMA, & KELAS)
+      // =========================================================================
+      function formatSantriPhotoUrl(rawUrl) {
+        if (!rawUrl) return '';
+        var gdriveMatch = String(rawUrl).match(/(?:file\/d\/|id=)([a-zA-Z0-9_-]+)/);
+        if (gdriveMatch && gdriveMatch[1]) {
+          return 'https://drive.google.com/thumbnail?id=' + gdriveMatch[1] + '&sz=w300';
+        }
+        return rawUrl;
+      }
+
+      function renderWaliHeaderSantriProfile() {
+        if (!currentUser || !isWaliSantri(currentUser)) return;
+        var nameEl = document.getElementById('waliHeaderSantriName');
+        var classEl = document.getElementById('waliHeaderSantriClass');
+        var imgEl = document.getElementById('waliHeaderSantriImg');
+        var initEl = document.getElementById('waliHeaderSantriInitial');
+
+        var namaSantri = currentUser.nama_santri || String(currentUser.nama || '').replace('Wali: ', '') || 'Santri';
+        var kelasInfo = '';
+        if (currentUser.kelas) {
+          kelasInfo = 'Kelas ' + currentUser.kelas + (currentUser.asrama ? ' • ' + currentUser.asrama : '');
+        } else if (currentUser.info_santri && currentUser.info_santri.includes(' - ')) {
+          kelasInfo = currentUser.info_santri.split(' - ').slice(1).join(' - ');
+        } else {
+          kelasInfo = 'Santri IM ' + (currentUser.im || 'Banin');
+        }
+
+        if (nameEl) nameEl.innerText = namaSantri;
+        if (classEl) classEl.innerText = kelasInfo;
+        if (initEl) initEl.innerText = namaSantri.charAt(0).toUpperCase();
+
+        var fotoUrl = formatSantriPhotoUrl(currentUser.foto);
+        if (fotoUrl && imgEl) {
+          imgEl.src = fotoUrl;
+          imgEl.style.display = 'block';
+          if (initEl) initEl.style.display = 'none';
+          imgEl.onerror = function() {
+            imgEl.style.display = 'none';
+            if (initEl) initEl.style.display = 'block';
+          };
+        } else {
+          if (imgEl) imgEl.style.display = 'none';
+          if (initEl) initEl.style.display = 'block';
+        }
+      }
+
+      function triggerWaliUploadFotoSantri() {
+        var inp = document.getElementById('waliSantriFotoInput');
+        if (inp) inp.click();
+      }
+
+      function handleUploadFotoProfilSantri(e) {
+        var file = e.target.files[0];
+        if (!file || !currentUser) return;
+
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          var img = new Image();
+          img.onload = async function() {
+            // Kompresi foto profil ukuran 250x250px (Hanya ~12 KB agar sangat hemat database & Egress)
+            var canvas = document.createElement('canvas');
+            var size = 250;
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+
+            var minSide = Math.min(img.width, img.height);
+            var sx = (img.width - minSide) / 2;
+            var sy = (img.height - minSide) / 2;
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+            var base64Foto = canvas.toDataURL('image/jpeg', 0.7);
+            showLoading('Menyimpan foto profil santri...');
+            try {
+              const { error } = await supaClient.from('master_santri').update({ foto: base64Foto }).eq('id', currentUser.id);
+              hideLoading();
+              if (error) throw error;
+              currentUser.foto = base64Foto;
+              sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser));
+              renderWaliHeaderSantriProfile();
+              showToast('Foto profil santri berhasil diperbarui!', 'success');
+            } catch (err) {
+              hideLoading();
+              showToast('Gagal menyimpan foto: ' + err.message, 'error');
+            }
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
 
     </script>
     <!-- Register Service Worker PWA -->
