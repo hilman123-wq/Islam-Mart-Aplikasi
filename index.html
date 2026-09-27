@@ -3701,6 +3701,8 @@
         // ATURAN 3: KEUANGAN
         else if (isKeuangan) {
           if (btmForm) btmForm.style.display = 'flex';
+          if (btmLapMingguan) btmLapMingguan.style.display = 'flex';
+          if (btmLapBulanan) btmLapBulanan.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
         // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
@@ -6064,7 +6066,7 @@
         if (!container || !divCriteria) return;
         container.innerHTML = '';
         var pfx = divisi.toLowerCase();
-        var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
+        var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('kasir') || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
 
         // 1. Kotak Pilihan Status Kehadiran / Tugas / Libur
         var statusCard = document.createElement('div');
@@ -6349,11 +6351,17 @@
         }
 
         list.forEach(item => {
-          var btnHapus = isUserAdmin(currentUser) ? '<button type="button" onclick="deleteHistoryItem(\'' + type + '\', \'' + item.id + '\')" class="p-1 text-red-600 hover:text-red-800 transition" title="Hapus Data"><i class="fa-solid fa-trash"></i></button>' : '-';
+          // Izinkan staf menghapus riwayat miliknya sendiri (dan Gudang/Admin bisa menghapus data di tabelnya)
+          var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
+          var canDelete = isUserAdmin(currentUser) || roleStr.includes('kepala') || roleStr.includes('gudang') || (currentUser && item.username === currentUser.username);
+
+          var btnHapus = canDelete
+            ? '<button type="button" onclick="deleteHistoryItem(\'' + type + '\', \'' + item.id + '\', \'' + item.tanggal + '\')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 active:scale-95 transition" title="Hapus Riwayat Ceklis"><i class="fa-solid fa-trash-can"></i> Hapus</button>'
+            : '-';
 
           var nilaiColHtml = '';
           var gradeColHtml = '';
-          if (isExcusedChecklist(item)) {
+          if (typeof isExcusedChecklist === 'function' && isExcusedChecklist(item)) {
             var code = getExcusedCode(item);
             var info = EXCUSED_STATUS_MAP[code] || { label: code, badge: 'bg-slate-100 text-slate-700', icon: 'fa-calendar-xmark' };
             nilaiColHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black ' + info.badge + '"><i class="fa-solid ' + info.icon + ' mr-1"></i>' + info.label + '</span>';
@@ -6371,6 +6379,24 @@
             '<td class="py-3 px-3 text-center">' + gradeColHtml + '</td>' +
             '<td class="py-3 px-4 text-center">' + btnHapus + '</td></tr>';
         });
+      }
+
+      async function deleteHistoryItem(type, id, tgl) {
+        if (!confirm('Yakin ingin menghapus data riwayat ceklis tanggal ' + (tgl || '') + ' ini?')) return;
+        showLoading('Menghapus riwayat ceklis...');
+        try {
+          const { error } = await supaClient.from('checklists').delete().eq('id', id);
+          hideLoading();
+          if (error) throw error;
+          window.isHistoryLoaded = false;
+          window.isWeeklyLoaded = false;
+          window.isRaportLoaded = false;
+          showToast('Riwayat ceklis berhasil dihapus!', 'success');
+          loadHistoryTable(true);
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menghapus: ' + err.message, 'error');
+        }
       }
 
       async function loadLaporanTable() {
