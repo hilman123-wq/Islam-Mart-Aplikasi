@@ -4947,8 +4947,10 @@
         if (!container) return;
 
         var isWali = isWaliSantri(currentUser);
-        // Untuk Wali Santri, sembunyikan barang yang Banned/Discontinue agar tidak dibeli
-        var sourceList = isWali ? window.filteredPoItems.filter(it => !getItemSpecialStamp(it)) : window.filteredPoItems;
+        // Untuk Wali Santri, sembunyikan hanya barang BANNED, sedangkan barang DISCONTINUE tetap tampil dengan capnya
+        var sourceList = isWali
+          ? window.filteredPoItems.filter(it => getItemSpecialStamp(it) !== 'BANNED')
+          : window.filteredPoItems;
 
         var totalItems = sourceList.length;
         if (totalItems === 0) {
@@ -4978,11 +4980,13 @@
             }
           }
 
+          var stokNum = Number(it.qty || 0);
+          var isHabisWali = isWali && (stokNum <= 0);
           var displayPrice = isWali ? (it.harga_jual || it.hargaJual || 0) : (it.harga_beli || it.hargaBeli || 0);
           var subInfo = isWali ? (it.kategori || 'Produk') : (it.supplier || it.kategori || '-');
-          var stokBadge = isWali ? '' : '<div class="absolute top-2 left-2 z-10 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ' + (it.qty || 0) + '</span></div>';
+          var stokBadge = isWali ? '' : '<div class="absolute top-2 left-2 z-10 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ' + stokNum + '</span></div>';
 
-          // Deteksi Cap BANNED atau DISCONTINUE
+          // Deteksi Cap BANNED atau DISCONTINUE (Tampil di Kasir maupun Wali Santri)
           var stampType = getItemSpecialStamp(it);
           var stampOverlayHtml = '';
           if (stampType === 'BANNED') {
@@ -5001,14 +5005,28 @@
 
           var qtyInCart = getCartQtyByItemId(it.id);
           var actionButtonHtml = '';
+          var infoTidakTersediaHtml = '';
 
           if (stampType === 'BANNED') {
             actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
               '<i class="fa-solid fa-ban"></i> <span>PRODUK BANNED</span>' +
             '</button>';
           } else if (stampType === 'DISCONTINUE') {
-            actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
-              '<i class="fa-solid fa-triangle-exclamation"></i> <span>DISCONTINUE</span>' +
+            if (isWali) {
+              infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sudah discontinue / tidak tersedia</p>';
+              actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center">' +
+                '<span>Tidak Tersedia</span>' +
+              '</button>';
+            } else {
+              actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
+                '<i class="fa-solid fa-triangle-exclamation"></i> <span>DISCONTINUE</span>' +
+              '</button>';
+            }
+          } else if (isHabisWali) {
+            // Tampilan khusus Wali Santri jika Stok Barang = 0 (Persis contoh gambar)
+            infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sedang habis / tidak tersedia di toko</p>';
+            actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center shadow-2xs">' +
+              '<span>Tidak Tersedia</span>' +
             '</button>';
           } else if (qtyInCart > 0) {
             actionButtonHtml = '<div class="flex items-center justify-between bg-emerald-50 border-2 border-emerald-500 rounded-xl p-1">' +
@@ -5023,19 +5041,24 @@
               '</button>';
           }
 
-          html += '<div class="bg-white rounded-2xl shadow-xs border ' + (stampType ? 'border-rose-300 opacity-90' : 'border-slate-200/80') + ' overflow-hidden flex flex-col hover:shadow-md hover:border-emerald-400 transition duration-300 group">' +
+          var priceHtml = (isWali && (isHabisWali || stampType === 'DISCONTINUE'))
+            ? '<span class="font-bold text-slate-400 text-xs line-through">Rp' + Number(displayPrice).toLocaleString('id-ID') + '</span>'
+            : '<span class="font-black text-rose-600 text-xs sm:text-sm">Rp' + Number(displayPrice).toLocaleString('id-ID') + '</span>';
+
+          html += '<div class="bg-white rounded-2xl shadow-xs border ' + (stampType ? 'border-amber-300' : 'border-slate-200/80') + ' overflow-hidden flex flex-col hover:shadow-md transition duration-300 group">' +
             '<div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">' +
-            '<img src="' + imgUrl + '" onerror="this.src=\'' + errorImg + '\'" class="w-full h-full object-cover ' + (stampType ? 'grayscale-[40%]' : 'group-hover:scale-105') + ' transition duration-500" loading="lazy" alt="Produk">' +
+            '<img src="' + imgUrl + '" onerror="this.src=\'' + errorImg + '\'" class="w-full h-full object-cover ' + (stampType ? 'grayscale-[35%]' : 'group-hover:scale-105') + ' transition duration-500" loading="lazy" alt="Produk">' +
             stokBadge +
             stampOverlayHtml +
             '</div>' +
             '<div class="p-2.5 sm:p-3 flex flex-col flex-1">' +
             '<span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded w-fit mb-1 truncate max-w-full">' + subInfo + '</span>' +
-            '<h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-2">' + it.nama + '</h4>' +
+            '<h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1.5">' + it.nama + '</h4>' +
             '<div class="mt-auto pt-1">' +
-            '<div class="flex items-center justify-between mb-2">' +
-            '<span class="font-black text-rose-600 text-xs sm:text-sm">Rp' + Number(displayPrice).toLocaleString('id-ID') + '</span>' +
+            '<div class="flex items-center justify-between mb-1.5">' +
+            priceHtml +
             '</div>' +
+            infoTidakTersediaHtml +
             actionButtonHtml +
             '</div>' +
             '</div>' +
