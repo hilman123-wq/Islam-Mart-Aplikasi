@@ -3882,11 +3882,9 @@
           var today = new Date();
           var todayStr = today.toISOString().split('T')[0];
 
-          // Otomatis bersihkan hanya foto bukti yang sudah lewat 90 hari (data nota tetap aman)
-          if (isUserAdmin(currentUser)) {
-            var batas90Hari = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            supaClient.from('orders').update({ bukti_foto: null }).not('bukti_foto', 'is', null).lt('tanggal', batas90Hari).then(() => { });
-          }
+          // Otomatis bersihkan hanya foto bukti yang sudah lewat 30 hari (data nota tetap aman)
+          var batas30Hari = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          supaClient.from('orders').update({ bukti_foto: null }).not('bukti_foto', 'is', null).lt('tanggal', batas30Hari).then(() => { });
 
           // 1. Status pengisian form user
           const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
@@ -5501,12 +5499,19 @@
           else if (o.status === 'Selesai') bc = 'bg-emerald-100 text-emerald-800';
           else if (o.status === 'Ditolak') bc = 'bg-rose-100 text-rose-800';
 
-          // Deteksi apakah pesanan ini punya foto bukti dari penanda waktu_diterima / petugas_serah (tanpa perlu download fotonya dulu)
+          // Cek apakah usia pesanan sudah lewat 30 hari
+          var batas30Hari = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          var isLewat30Hari = o.tanggal && (o.tanggal < batas30Hari);
           var hasFotoBukti = Boolean(o.bukti_foto || o.waktu_diterima || o.petugas_serah);
 
-          var badgeFoto = (isSantriOrder && hasFotoBukti)
-            ? '<div class="mt-1"><button type="button" onclick="viewFotoBuktiById(\'' + o.id + '\')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-600 text-white cursor-pointer shadow hover:bg-emerald-700 active:scale-95 transition"><i class="fa-solid fa-camera"></i> Lihat Foto Bukti</button></div>'
-            : '';
+          var badgeFoto = '';
+          if (isSantriOrder && hasFotoBukti) {
+            if (isLewat30Hari) {
+              badgeFoto = '<div class="mt-1"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-500" title="Foto bukti otomatis dihapus sistem setelah 30 hari"><i class="fa-solid fa-check-double text-emerald-600"></i> Diterima (' + (o.waktu_diterima || 'Selesai') + ')</span></div>';
+            } else {
+              badgeFoto = '<div class="mt-1"><button type="button" onclick="viewFotoBuktiById(\'' + o.id + '\')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-600 text-white cursor-pointer shadow hover:bg-emerald-700 active:scale-95 transition"><i class="fa-solid fa-camera"></i> Lihat Foto Bukti</button></div>';
+            }
+          }
 
           var btnKameraKasir = (canManageStatus && isSantriOrder)
             ? '<button type="button" onclick="openSerahTerimaById(\'' + o.id + '\')" title="Fotokan Santri Terima Paket" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs"><i class="fa-solid fa-camera"></i> ' + (hasFotoBukti ? 'Ubah Foto' : 'Foto Serah') + '</button>'
@@ -5527,7 +5532,7 @@
             colPemohonUnit +
             '<td class="py-3 px-3 text-right font-black whitespace-nowrap">Rp ' + Number(o.estimasi_total).toLocaleString('id-ID') + '</td>' +
             '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ' + bc + '">' + o.status + '</span>' + badgeFoto + '</td>' +
-            '<td class="py-3 px-4 text-center"><div class="flex flex-wrap items-center gap-1 justify-center">' +
+            '<td class="py-3 px-4 text-center"><div class="flexvar batas90Hari flex-wrap items-center gap-1 justify-center">' +
             btnKameraKasir + adS +
             '<button type="button" onclick="openOrderById(\'' + o.id + '\')" class="p-1.5 text-slate-500 hover:text-teal-700" title="Lihat Nota Rincian Barang"><i class="fa-solid fa-eye"></i></button>' +
             (isAdmin ? '<button type="button" onclick="promptDeleteOrder(\'' + o.id + '\', \'' + o.no_po + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
