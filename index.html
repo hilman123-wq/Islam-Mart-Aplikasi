@@ -3942,14 +3942,9 @@
           var endDate = curMonth + '-' + lastDay;
 
           const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').gte('tanggal', startDate).lte('tanggal', endDate);
-          const { data: checks } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir').gte('tanggal', startDate).lte('tanggal', endDate);
-
-          // Kalkulasi Statistik Kartu (Bulan Ini)
-          var totalPO = 0, totalRp = 0;
-          if (orders) {
-            totalPO = orders.length;
-            totalRp = orders.reduce((sum, o) => sum + Number(o.estimasi_total || 0), 0);
-          }
+          const { data: checksRaw } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir, predikat, checklist_detail').gte('tanggal', startDate).lte('tanggal', endDate);
+          // Saring hanya hari kerja aktif (abaikan hari Off, Tugas Belanja, Libur Pondok, & Izin dari pembagi grafik)
+          const checks = (checksRaw || []).filter(c => !isExcusedChecklist(c));
 
           var sumBanin = 0, countBanin = 0, sumBanat = 0, countBanat = 0;
           if (checks) {
@@ -5190,7 +5185,7 @@
           qris_statis: '00020101021126580013ID.CO.BRI.WWW01189360000200407365350208407365350303UMI51440014ID.CO.QRIS.WWW0215ID10232911548710303UMI5204549953033605802ID5916ISLAM MART PUTRA6007CIREBON61054517262070703A01630468B5'
         },
         Banat: {
-          bank: 'BRI (Bank Rakyat Indonesia)',
+          bank: 'BRI (Bank function buildChecklistForm(divisi, divCriteria) {Rakyat Indonesia)',
           norek: '010701001453567',
           atas_nama: 'BARSONO',
           qris_statis: '00020101021126580013ID.CO.BRI.WWW01189360000200407365320208407365320303UMI51440014ID.CO.QRIS.WWW0215ID10232911548550303UMI5204549953033605802ID5916ISLAM MART PUTRI6007CIREBON61054517262070703A01630449C5'
@@ -6039,28 +6034,126 @@
         } catch (err) { }
       }
 
+      // Daftar Kode Status Kehadiran yang Dikecualikan dari Pembagi Nilai
+      var EXCUSED_STATUS_MAP = {
+        'OFF': { label: 'Libur Mingguan (Off)', badge: 'bg-sky-100 text-sky-800', icon: 'fa-umbrella-beach' },
+        'TUGAS': { label: 'Tugas Belanja / Purchasing', badge: 'bg-teal-100 text-teal-800', icon: 'fa-truck-fast' },
+        'LIBUR': { label: 'Libur Pondok / Semester / Raya', badge: 'bg-purple-100 text-purple-800', icon: 'fa-mosque' },
+        'IZIN': { label: 'Izin / Sakit / Cuti', badge: 'bg-amber-100 text-amber-800', icon: 'fa-envelope-open-text' }
+      };
+
+      function isExcusedChecklist(row) {
+        if (!row) return false;
+        var p = String(row.predikat || '').toUpperCase().trim();
+        var st = (row.checklist_detail && row.checklist_detail.status_kehadiran) ? String(row.checklist_detail.status_kehadiran).toUpperCase().trim() : '';
+        return Boolean(EXCUSED_STATUS_MAP[p] || EXCUSED_STATUS_MAP[st]);
+      }
+
+      function getExcusedCode(row) {
+        if (!row) return '';
+        var p = String(row.predikat || '').toUpperCase().trim();
+        if (EXCUSED_STATUS_MAP[p]) return p;
+        var st = (row.checklist_detail && row.checklist_detail.status_kehadiran) ? String(row.checklist_detail.status_kehadiran).toUpperCase().trim() : '';
+        return EXCUSED_STATUS_MAP[st] ? st : '';
+      }
+
+      function onChecklistAttendanceChange(divisi) {
+        var pfx = divisi.toLowerCase();
+        var sel = document.getElementById(pfx + 'StatusKehadiran');
+        var statusVal = sel ? sel.value : 'HADIR';
+        var itemsWrap = document.getElementById(pfx + 'ChecklistItemsWrap');
+        var excusedBox = document.getElementById(pfx + 'ExcusedInfoBox');
+        var endDateWrap = document.getElementById(pfx + 'EndDateWrap');
+        var startDateVal = document.getElementById(pfx + 'Tanggal') ? document.getElementById(pfx + 'Tanggal').value : '';
+        var endDateInp = document.getElementById(pfx + 'TanggalSelesai');
+
+        if (statusVal === 'HADIR') {
+          if (itemsWrap) itemsWrap.style.display = 'block';
+          if (excusedBox) excusedBox.style.display = 'none';
+          calculateLiveScore(divisi);
+        } else {
+          if (itemsWrap) itemsWrap.style.display = 'none';
+          if (excusedBox) excusedBox.style.display = 'block';
+          // Tampilkan rentang tanggal selesai khusus jika Libur Pondok / Semester / Raya atau Izin/Cuti
+          if (endDateWrap) {
+            endDateWrap.style.display = (statusVal === 'LIBUR' || statusVal === 'IZIN') ? 'block' : 'none';
+            if (endDateInp && !endDateInp.value) endDateInp.value = startDateVal;
+          }
+          if (document.getElementById(pfx + 'LiveScore')) document.getElementById(pfx + 'LiveScore').innerText = '100*';
+          if (document.getElementById(pfx + 'LiveGrade')) document.getElementById(pfx + 'LiveGrade').innerText = statusVal;
+        }
+      }
+
       function buildChecklistForm(divisi, divCriteria) {
-        var container = document.getElementById(divisi.toLowerCase() + 'CategoriesContainer'); if (!container || !divCriteria) return; container.innerHTML = '';
+        var container = document.getElementById(divisi.toLowerCase() + 'CategoriesContainer');
+        if (!container || !divCriteria) return;
+        container.innerHTML = '';
+        var pfx = divisi.toLowerCase();
         var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
 
+        // 1. Kotak Pilihan Status Kehadiran / Tugas / Libur
+        var statusCard = document.createElement('div');
+        statusCard.className = 'bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-4 space-y-3';
+        statusCard.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <label class="block text-xs font-black text-emerald-950 uppercase tracking-wide">
+                <i class="fa-solid fa-user-check text-emerald-600 mr-1.5"></i>Status Kehadiran / Tugas Hari Ini *
+              </label>
+              <p class="text-[11px] text-slate-600 mt-0.5">Pilih status jika sedang Off mingguan, ikut belanja purchasing, libur pondok, atau izin.</p>
+            </div>
+            <select id="${pfx}StatusKehadiran" onchange="onChecklistAttendanceChange('${divisi}')"
+              class="p-2.5 bg-white border-2 border-emerald-500 rounded-xl text-xs font-black text-slate-800 outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer sm:w-80 shadow-2xs">
+              <option value="HADIR">✅ Hadir Kerja Normal (Isi Ceklis)</option>
+              <option value="OFF">🏖️ Libur Mingguan (Jatah Off 1 Hari)</option>
+              <option value="TUGAS">🚚 Tugas Luar / Ikut Belanja Driver Purchasing</option>
+              <option value="LIBUR">🕌 Libur Pondok (Semester 1 & 2 / Idul Fitri / Raya)</option>
+              <option value="IZIN">🏥 Izin / Sakit / Cuti Resmi</option>
+            </select>
+          </div>
+
+          <div id="${pfx}ExcusedInfoBox" style="display: none;" class="bg-white p-3.5 rounded-xl border border-emerald-200 space-y-3 text-xs">
+            <div class="flex items-start gap-2.5 text-emerald-800">
+              <i class="fa-solid fa-circle-info text-emerald-600 text-base mt-0.5"></i>
+              <div>
+                <p class="font-black">Poin Persentase Dikecualikan (Tidak Mengurangi Nilai!)</p>
+                <p class="text-[11px] text-slate-600 mt-0.5">Karena Anda sedang berhalangan/bertugas luar/libur, hari ini <b>tidak akan dihitung sebagai pembagi nilai</b> pada Laporan Mingguan, Raport Bulanan, maupun Grafik Disiplin.</p>
+              </div>
+            </div>
+            <div id="${pfx}EndDateWrap" style="display: none;" class="pt-2 border-t border-slate-100">
+              <label class="block font-bold text-slate-700 uppercase text-[10px] mb-1">Sampai Tanggal Berapa? (Khusus Libur Semester / Idul Fitri / Cuti beberapa hari)</label>
+              <input type="date" id="${pfx}TanggalSelesai" class="w-full sm:w-60 p-2 bg-slate-50 border rounded-xl font-bold text-slate-800">
+              <p class="text-[10px] text-slate-400 mt-1 italic">Biarkan sama dengan Tanggal Tugas jika hanya 1 hari.</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(statusCard);
+
+        // 2. Pembungkus Kategori Indikator Ceklis
+        var itemsWrap = document.createElement('div');
+        itemsWrap.id = pfx + 'ChecklistItemsWrap';
+        itemsWrap.className = 'space-y-4';
+
         for (var catKey in divCriteria) {
-          var cat = divCriteria[catKey], catCard = document.createElement('div'); catCard.className = 'bg-slate-50 border rounded-2xl p-4 space-y-3';
+          var cat = divCriteria[catKey], catCard = document.createElement('div');
+          catCard.className = 'bg-slate-50 border rounded-2xl p-4 space-y-3';
           var hHtml = '<div class="flex items-center justify-between border-b pb-2"><div class="flex items-center gap-2"><h4 class="text-xs font-black">' + cat.name + '</h4>' + (canEdit ? '<button type="button" onclick="openEditCatModal(\'' + divisi + '\',\'' + catKey + '\',\'' + cat.name + '\')" class="text-emerald-600"><i class="fa-solid fa-pen"></i></button>' : '') + '</div><div class="flex items-center gap-2"><span id="badgeCatScore-' + divisi + '-' + catKey + '" class="px-2 py-0.5 rounded text-[11px] font-black bg-slate-200">0%</span>' + (canEdit ? '<button type="button" onclick="openAddCriteriaModal(\'' + divisi + '\',\'' + catKey + '\')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-plus"></i></button><button type="button" onclick="deleteCategoryPrompt(\'' + divisi + '\',\'' + catKey + '\')" class="px-2 py-1 bg-red-100 text-red-800 rounded-lg text-[10px] font-bold ml-1" title="Hapus Kategori"><i class="fa-solid fa-trash"></i></button>' : '') + '</div></div>';
           var iHtml = '<div class="space-y-2 text-xs">';
           (cat.items || []).forEach((it, i) => {
             iHtml += '<div class="flex items-start gap-3 p-2 bg-white rounded-xl border group"><label class="flex items-start gap-2 flex-1 cursor-pointer"><input type="checkbox" name="chk_' + divisi + '_' + catKey + '" onchange="calculateLiveScore(\'' + divisi + '\')" class="mt-0.5 w-4 h-4 text-emerald-600 rounded"><span class="text-slate-700 font-medium">' + it + '</span></label>' + (canEdit ? '<div class="flex opacity-80 hover:opacity-100"><button type="button" onclick="openEditCriteriaModal(\'' + divisi + '\',\'' + catKey + '\',' + i + ',\'' + it.replace(/'/g, "\\'") + '\')" class="p-1 text-emerald-600"><i class="fa-solid fa-pen-to-square"></i></button><button type="button" onclick="promptDeleteCriteriaItem(\'' + divisi + '\',\'' + catKey + '\',' + i + ',\'' + it.replace(/'/g, "\\'") + '\')" class="p-1 text-red-600"><i class="fa-solid fa-trash"></i></button></div>' : '') + '</div>';
           });
-          catCard.innerHTML = hHtml + iHtml + '</div>'; container.appendChild(catCard);
+          catCard.innerHTML = hHtml + iHtml + '</div>';
+          itemsWrap.appendChild(catCard);
         }
 
-        // Tambahan Tombol "+ Tambah Kategori Baru"
         if (canEdit) {
           var btnAdd = document.createElement('div');
           btnAdd.className = 'flex justify-center pt-2 pb-2';
           btnAdd.innerHTML = '<button type="button" onclick="addNewCategory(\'' + divisi + '\')" class="px-4 py-2 border-2 border-dashed border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold rounded-xl text-xs flex items-center gap-2 transition"><i class="fa-solid fa-plus"></i> Tambah Kategori Baru</button>';
-          container.appendChild(btnAdd);
+          itemsWrap.appendChild(btnAdd);
         }
 
+        container.appendChild(itemsWrap);
         calculateLiveScore(divisi);
       }
 
@@ -6069,7 +6162,6 @@
         if (!newName || newName.trim() === '') return;
         if (!cachedCriteria[divisi]) cachedCriteria[divisi] = {};
 
-        // Cari urutan kategori selanjutnya (misal: cat5)
         var nextNum = 1;
         Object.keys(cachedCriteria[divisi]).forEach(k => {
           var num = parseInt(k.replace('cat', ''));
@@ -6100,6 +6192,13 @@
       }
 
       function calculateLiveScore(divisi) {
+        var pfx = divisi.toLowerCase();
+        var selStatus = document.getElementById(pfx + 'StatusKehadiran');
+        if (selStatus && selStatus.value !== 'HADIR') {
+          if (document.getElementById(pfx + 'LiveScore')) document.getElementById(pfx + 'LiveScore').innerText = '100*';
+          if (document.getElementById(pfx + 'LiveGrade')) document.getElementById(pfx + 'LiveGrade').innerText = selStatus.value;
+          return;
+        }
         if (!cachedCriteria || !cachedCriteria[divisi]) return;
         var divCrit = cachedCriteria[divisi], catScores = [];
         for (var catKey in divCrit) {
@@ -6111,26 +6210,95 @@
         }
         var avg = catScores.length > 0 ? (catScores.reduce((a, b) => a + b, 0) / catScores.length) : 0, finalScore = Number(avg.toFixed(1));
         var grade = 'E'; if (finalScore >= 85) grade = 'A'; else if (finalScore >= 75) grade = 'B'; else if (finalScore >= 65) grade = 'C'; else if (finalScore >= 50) grade = 'D';
-        var pfx = divisi.toLowerCase();
         if (document.getElementById(pfx + 'LiveScore')) document.getElementById(pfx + 'LiveScore').innerText = finalScore.toFixed(1);
         if (document.getElementById(pfx + 'LiveGrade')) document.getElementById(pfx + 'LiveGrade').innerText = grade;
       }
 
       async function submitChecklist(divisi) {
-        var pfx = divisi.toLowerCase(), tgl = document.getElementById(pfx + 'Tanggal').value, catatan = document.getElementById(pfx + 'Catatan').value;
-        if (!tgl) return showToast('Pilih tanggal!', 'error');
+        var pfx = divisi.toLowerCase();
+        var tglMulai = document.getElementById(pfx + 'Tanggal').value;
+        var catatanUser = document.getElementById(pfx + 'Catatan').value.trim();
+        var statusKehadiran = document.getElementById(pfx + 'StatusKehadiran') ? document.getElementById(pfx + 'StatusKehadiran').value : 'HADIR';
+        if (!tglMulai) return showToast('Pilih tanggal terlebih dahulu!', 'error');
+
+        // 1. JIKA STAF SEDANG OFF / TUGAS BELANJA PURCHASING / LIBUR PONDOK / IZIN
+        if (statusKehadiran !== 'HADIR') {
+          var infoLabel = EXCUSED_STATUS_MAP[statusKehadiran] ? EXCUSED_STATUS_MAP[statusKehadiran].label : statusKehadiran;
+          var tglSelesai = (statusKehadiran === 'LIBUR' || statusKehadiran === 'IZIN') && document.getElementById(pfx + 'TanggalSelesai') && document.getElementById(pfx + 'TanggalSelesai').value
+            ? document.getElementById(pfx + 'TanggalSelesai').value
+            : tglMulai;
+
+          if (tglSelesai < tglMulai) tglSelesai = tglMulai;
+
+          // Buat daftar tanggal (mendukung 1 hari maupun rentang libur semester/Idul Fitri)
+          var dateList = [];
+          var currDate = new Date(tglMulai + 'T00:00:00');
+          var lastDate = new Date(tglSelesai + 'T00:00:00');
+          var maxLoop = 45; // Batas aman maksimal 45 hari sekaligus
+          while (currDate <= lastDate && dateList.length < maxLoop) {
+            var yyyy = currDate.getFullYear();
+            var mm = String(currDate.getMonth() + 1).padStart(2, '0');
+            var dd = String(currDate.getDate()).padStart(2, '0');
+            dateList.push(yyyy + '-' + mm + '-' + dd);
+            currDate.setDate(currDate.getDate() + 1);
+          }
+
+          var rowsToInsert = dateList.map(dStr => ({
+            tanggal: dStr,
+            divisi: divisi,
+            username: currentUser.username,
+            nama: currentUser.nama,
+            im: currentUser.im || 'Banin',
+            catatan: '[' + infoLabel + '] ' + (catatanUser || 'Dikecualikan dari perhitungan poin'),
+            nilai_akhir: 0,
+            predikat: statusKehadiran,
+            scores: [],
+            checklist_detail: { status_kehadiran: statusKehadiran, keterangan_status: infoLabel }
+          }));
+
+          showLoading('Menyimpan status ' + infoLabel + '...');
+          try {
+            const { error } = await supaClient.from('checklists').insert(rowsToInsert);
+            hideLoading();
+            if (error) throw error;
+            window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
+            showToast('Status "' + infoLabel + '" berhasil dicatat (' + rowsToInsert.length + ' hari) & tidak mengurangi poin!', 'success');
+            switchTab('data-history');
+          } catch (err) {
+            hideLoading();
+            showToast('Gagal: ' + err.message, 'error');
+          }
+          return;
+        }
+
+        // 2. JIKA STAF HADIR KERJA NORMAL
         var divCrit = cachedCriteria[divisi], scores = [], chkListDetail = {};
         for (var catKey in divCrit) {
           var cbs = document.querySelectorAll('input[name="chk_' + divisi + '_' + catKey + '"]'), checked = 0, arrDetail = [];
           cbs.forEach(cb => { arrDetail.push(cb.checked); if (cb.checked) checked++; });
           chkListDetail[catKey] = arrDetail; scores.push(cbs.length > 0 ? Number(((checked / cbs.length) * 100).toFixed(1)) : 100);
         }
-        var payload = { tanggal: tgl, divisi: divisi, username: currentUser.username, nama: currentUser.nama, im: currentUser.im || 'Banin', catatan: catatan, nilai_akhir: Number(document.getElementById(pfx + 'LiveScore').innerText), predikat: document.getElementById(pfx + 'LiveGrade').innerText, scores: scores, checklist_detail: chkListDetail };
+        var payload = {
+          tanggal: tglMulai,
+          divisi: divisi,
+          username: currentUser.username,
+          nama: currentUser.nama,
+          im: currentUser.im || 'Banin',
+          catatan: catatanUser,
+          nilai_akhir: Number(document.getElementById(pfx + 'LiveScore').innerText) || 0,
+          predikat: document.getElementById(pfx + 'LiveGrade').innerText,
+          scores: scores,
+          checklist_detail: chkListDetail
+        };
 
         showLoading('Menyimpan ceklis...');
         try {
           const { error } = await supaClient.from('checklists').insert([payload]);
-          hideLoading(); if (error) throw error; showToast('Ceklis disimpan!', 'success'); switchTab('data-history');
+          hideLoading();
+          if (error) throw error;
+          window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
+          showToast('Ceklis disimpan!', 'success');
+          switchTab('data-history');
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
       }
 
@@ -6147,7 +6315,6 @@
           let query = supaClient.from('checklists').select('*').eq('divisi', type).order('tanggal', { ascending: false });
           if (im !== 'ALL') query = query.eq('im', im);
           if (m) {
-            // Filter rentang tanggal khusus untuk membaca bulan di Supabase
             var year = m.split('-')[0];
             var month = m.split('-')[1];
             var lastDay = new Date(year, month, 0).getDate();
@@ -6160,7 +6327,6 @@
           window.isHistoryLoaded = true;
           renderHistoryTable(type, data || []);
         } catch (err) {
-          // Jika masih gagal, akan muncul pesan error spesifik berwarna merah
           if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>';
         }
       }
@@ -6178,12 +6344,24 @@
         list.forEach(item => {
           var btnHapus = isUserAdmin(currentUser) ? '<button type="button" onclick="deleteHistoryItem(\'' + type + '\', \'' + item.id + '\')" class="p-1 text-red-600 hover:text-red-800 transition" title="Hapus Data"><i class="fa-solid fa-trash"></i></button>' : '-';
 
+          var nilaiColHtml = '';
+          var gradeColHtml = '';
+          if (isExcusedChecklist(item)) {
+            var code = getExcusedCode(item);
+            var info = EXCUSED_STATUS_MAP[code] || { label: code, badge: 'bg-slate-100 text-slate-700', icon: 'fa-calendar-xmark' };
+            nilaiColHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black ' + info.badge + '"><i class="fa-solid ' + info.icon + ' mr-1"></i>' + info.label + '</span>';
+            gradeColHtml = '<span class="text-[10px] font-bold text-slate-400 italic">Dikecualikan</span>';
+          } else {
+            nilaiColHtml = '<span class="font-black">' + (item.nilai_akhir || 0) + '</span>';
+            gradeColHtml = '<span class="font-black ' + (item.predikat === 'A' ? 'text-emerald-700' : 'text-slate-800') + '">' + (item.predikat || '-') + '</span>';
+          }
+
           tbody.innerHTML += '<tr class="hover:bg-slate-50">' +
             '<td class="py-3 px-3 font-semibold text-slate-600">' + item.tanggal + '</td>' +
-            '<td class="py-3 px-4 font-bold text-slate-800">' + item.nama + '</td>' +
+            '<td class="py-3 px-4 font-bold text-slate-800">' + item.nama + (item.catatan ? '<p class="text-[10px] text-slate-400 font-normal mt-0.5">' + item.catatan + '</p>' : '') + '</td>' +
             '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (item.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + item.im + '</span></td>' +
-            '<td class="py-3 px-3 text-center font-black">' + (item.nilai_akhir || 0) + '</td>' +
-            '<td class="py-3 px-3 text-center font-black ' + (item.predikat === 'A' ? 'text-emerald-700' : 'text-slate-800') + '">' + (item.predikat || '-') + '</td>' +
+            '<td class="py-3 px-3 text-center">' + nilaiColHtml + '</td>' +
+            '<td class="py-3 px-3 text-center">' + gradeColHtml + '</td>' +
             '<td class="py-3 px-4 text-center">' + btnHapus + '</td></tr>';
         });
       }
@@ -6326,12 +6504,17 @@
           if (im !== 'ALL') query = query.eq('im', im);
           if (m) {
             var ld = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
-            query = query.gte('tanggal', m + '-01').lte('tanggal', m + '-' + ld);
+            var startDay = '01', endDay = String(ld).padStart(2, '0');
+            if (w === '1') { startDay = '01'; endDay = '07'; }
+            else if (w === '2') { startDay = '08'; endDay = '14'; }
+            else if (w === '3') { startDay = '15'; endDay = '21'; }
+            else if (w === '4') { startDay = '22'; endDay = '28'; }
+            else if (w === '5') { startDay = '29'; endDay = String(ld).padStart(2, '0'); }
+            query = query.gte('tanggal', m + '-' + startDay).lte('tanggal', m + '-' + endDay);
           }
           const { data, error } = await query; if (error) throw error;
           window.isWeeklyLoaded = true;
 
-          // Tarik nama kategori secara dinamis
           var catNames = [];
           if (cachedCriteria && cachedCriteria[type]) {
             for (let k in cachedCriteria[type]) catNames.push(cachedCriteria[type][k].name);
@@ -6342,8 +6525,15 @@
           var userMap = {};
 
           data.forEach(d => {
-            if (!userMap[d.username]) userMap[d.username] = { nama: d.nama, im: d.im, count: 0, sum: 0, catSums: new Array(catCount).fill(0), catDivisors: new Array(catCount).fill(0) };
-            userMap[d.username].count++;
+            if (!userMap[d.username]) {
+              userMap[d.username] = { nama: d.nama, im: d.im, hadirCount: 0, izinCount: 0, sum: 0, catSums: new Array(catCount).fill(0), catDivisors: new Array(catCount).fill(0) };
+            }
+            // Jika statusnya Off / Tugas Belanja / Libur Pondok / Izin, jangan masukkan ke pembagi nilai!
+            if (isExcusedChecklist(d)) {
+              userMap[d.username].izinCount++;
+              return;
+            }
+            userMap[d.username].hadirCount++;
             userMap[d.username].sum += Number(d.nilai_akhir || 0);
 
             var sArr = d.scores || [];
@@ -6357,9 +6547,10 @@
 
           var i = 1;
           for (let u in userMap) {
-            var count = userMap[u].count;
-            var avg = (userMap[u].sum / count).toFixed(1);
-            var pred = avg >= 85 ? 'A' : (avg >= 75 ? 'B' : (avg >= 65 ? 'C' : 'D'));
+            var hadir = userMap[u].hadirCount;
+            var izin = userMap[u].izinCount;
+            var avg = hadir > 0 ? (userMap[u].sum / hadir).toFixed(1) : '-';
+            var pred = hadir === 0 ? 'OFF/IZIN' : (avg >= 85 ? 'A' : (avg >= 75 ? 'B' : (avg >= 65 ? 'C' : 'D')));
 
             var catAverages = [];
             for (let c = 0; c < catCount; c++) {
@@ -6370,8 +6561,9 @@
               }
             }
 
+            var hariLabel = hadir + ' hr' + (izin > 0 ? ' (+' + izin + ' Off/Izin)' : '');
             res.data.push({
-              no: i++, nama: userMap[u].nama, im: userMap[u].im, count: count,
+              no: i++, nama: userMap[u].nama, im: userMap[u].im, count: hariLabel,
               catAverages: catAverages,
               rataRata: avg, predikat: pred
             });
@@ -6384,13 +6576,12 @@
         document.getElementById('weeklyPrintTitle').innerText = 'LAPORAN MINGGUAN ' + res.meta.type;
         document.getElementById('weeklyMetaMonth').innerText = res.meta.month;
 
-        // REKONSTRUKSI KOLOM TABEL HEADER SECARA OTOMATIS
         var theadTr = document.querySelector('#tab-weekly-report table thead');
         if (theadTr) {
           var headHtml = '<tr><th class="py-2.5 px-2 border border-slate-300 w-10">No</th>' +
             '<th class="py-2.5 px-3 border border-slate-300 text-left">Nama Pegawai</th>' +
             '<th class="py-2.5 px-2 border border-slate-300 w-16">Unit</th>' +
-            '<th class="py-2.5 px-2 border border-slate-300 w-16">Total Hari</th>';
+            '<th class="py-2.5 px-2 border border-slate-300 w-24">Hari Kerja Aktif</th>';
           res.meta.categoryNames.forEach(function (cName) {
             headHtml += '<th class="py-2.5 px-2 border border-slate-300 uppercase">' + cName + '</th>';
           });
@@ -6404,7 +6595,7 @@
         if (!res.data || res.data.length === 0) { tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-slate-400">Tidak ada data.</td></tr>'; return; }
 
         res.data.forEach(r => {
-          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border">' + r.no + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border">' + r.count + ' hr</td>';
+          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border">' + r.no + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border font-semibold text-slate-700">' + r.count + '</td>';
           r.catAverages.forEach(function (score) {
             rowHtml += '<td class="border text-emerald-700 font-bold">' + score + '</td>';
           });
@@ -6413,9 +6604,6 @@
         });
       }
 
-      // ==========================================
-      // AGREGASI LAPORAN BULANAN (DINAMIS MENGIKUTI KATEGORI)
-      // ==========================================
       async function loadMonthlyRaport(forceRefresh) {
         if (forceRefresh === false && window.isRaportLoaded) return;
         var type = document.getElementById('raportType').value, im = document.getElementById('raportIM').value, m = document.getElementById('raportMonth').value;
@@ -6441,8 +6629,15 @@
           var userMap = {};
 
           data.forEach(d => {
-            if (!userMap[d.username]) userMap[d.username] = { nama: d.nama, im: d.im, count: 0, sum: 0, catSums: new Array(catCount).fill(0), catDivisors: new Array(catCount).fill(0) };
-            userMap[d.username].count++;
+            if (!userMap[d.username]) {
+              userMap[d.username] = { nama: d.nama, im: d.im, hadirCount: 0, izinCount: 0, sum: 0, catSums: new Array(catCount).fill(0), catDivisors: new Array(catCount).fill(0) };
+            }
+            // Abaikan hari Off / Tugas Belanja / Libur Pondok / Izin dari pembagi rata-rata bulanan
+            if (isExcusedChecklist(d)) {
+              userMap[d.username].izinCount++;
+              return;
+            }
+            userMap[d.username].hadirCount++;
             userMap[d.username].sum += Number(d.nilai_akhir || 0);
 
             var sArr = d.scores || [];
@@ -6455,9 +6650,10 @@
           });
 
           for (let u in userMap) {
-            var count = userMap[u].count;
-            var avg = (userMap[u].sum / count).toFixed(1);
-            var pred = avg >= 85 ? 'A' : (avg >= 75 ? 'B' : (avg >= 65 ? 'C' : 'D'));
+            var hadir = userMap[u].hadirCount;
+            var izin = userMap[u].izinCount;
+            var avgNum = hadir > 0 ? Number((userMap[u].sum / hadir).toFixed(1)) : 0;
+            var pred = hadir === 0 ? 'IZIN' : (avgNum >= 85 ? 'A' : (avgNum >= 75 ? 'B' : (avgNum >= 65 ? 'C' : 'D')));
 
             var catAverages = [];
             for (let c = 0; c < catCount; c++) {
@@ -6468,10 +6664,11 @@
               }
             }
 
+            var hariLabel = hadir + ' hr' + (izin > 0 ? ' (+' + izin + ' Off/Izin)' : '');
             res.data.push({
-              nama: userMap[u].nama, im: userMap[u].im, count: count,
+              nama: userMap[u].nama, im: userMap[u].im, count: hariLabel,
               catAverages: catAverages,
-              rataRata: Number(avg), predikat: pred
+              rataRata: avgNum, predikat: pred
             });
           }
 
@@ -6486,13 +6683,12 @@
         document.getElementById('raportPrintTitle').innerText = 'RAPORT BULANAN ' + res.meta.type;
         document.getElementById('raportMetaMonth').innerText = res.meta.month;
 
-        // REKONSTRUKSI KOLOM TABEL HEADER SECARA OTOMATIS
         var theadTr = document.querySelector('#tab-monthly-raport table thead');
         if (theadTr) {
           var headHtml = '<tr><th class="py-2.5 px-2 border border-slate-300 w-12 bg-amber-100 text-amber-900">Rank</th>' +
             '<th class="py-2.5 px-3 border border-slate-300 text-left">Nama Pegawai</th>' +
             '<th class="py-2.5 px-2 border border-slate-300 w-16">Unit</th>' +
-            '<th class="py-2.5 px-2 border border-slate-300 w-16">Total Hari</th>';
+            '<th class="py-2.5 px-2 border border-slate-300 w-24">Hari Kerja Aktif</th>';
           res.meta.categoryNames.forEach(function (cName) {
             headHtml += '<th class="py-2.5 px-2 border border-slate-300 uppercase">' + cName + '</th>';
           });
@@ -6506,7 +6702,7 @@
         if (!res.data || res.data.length === 0) { tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-slate-400">Tidak ada data.</td></tr>'; return; }
 
         res.data.forEach(r => {
-          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border font-black bg-slate-100">#' + r.rank + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border">' + r.count + ' hr</td>';
+          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border font-black bg-slate-100">#' + r.rank + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border font-semibold text-slate-700">' + r.count + '</td>';
           r.catAverages.forEach(function (score) {
             rowHtml += '<td class="border text-emerald-700 font-bold">' + score + '</td>';
           });
