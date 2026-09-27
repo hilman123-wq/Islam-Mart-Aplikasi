@@ -4139,7 +4139,12 @@
 
       async function loadMasterBarangAutocompleteData() {
         try {
+          if (window.isMasterLoaded && cachedMasterBarang.length > 0) {
+            onOrderStoreChange();
+            return;
+          }
           cachedMasterBarang = await fetchAllMasterBarang();
+          window.isMasterLoaded = true; // Kunci agar tidak download 2x
           onOrderStoreChange();
         } catch (err) { console.error(err); }
       }
@@ -5352,7 +5357,8 @@
         var m = document.getElementById('filterOrderMonth').value;
 
         try {
-          let query = supaClient.from('orders').select('*').order('created_at', { ascending: false }).limit(200);
+          // HEMAT EGRESS: Ambil data teks saja tanpa kolom bukti_foto
+          let query = supaClient.from('orders').select('id, created_at, no_po, tanggal, supplier, no_wa_supplier, im, catatan, nama_pemohon, username_pemohon, status, estimasi_total, total_qty, items, waktu_diterima, petugas_serah').order('created_at', { ascending: false }).limit(100);
           if (!isWali && st !== 'ALL') query = query.eq('status', st);
           if (!isWali && im !== 'ALL') query = query.eq('im', im);
           if (m) {
@@ -5381,10 +5387,26 @@
         if (o) openSerahTerimaModal(o);
       }
 
-      // Pop-up khusus melihat Foto Bukti Serah Terima (Ala GoFood)
-      function viewFotoBuktiById(id) {
+      // Pop-up khusus melihat Foto Bukti Serah Terima (Unduh Foto On-Demand / Hemat Egress)
+      async function viewFotoBuktiById(id) {
         var o = cachedOrdersList.find(x => String(x.id) === String(id));
-        if (!o || !o.bukti_foto) return showToast('Foto bukti belum tersedia.', 'info');
+        if (!o) return;
+
+        // Jika foto belum ada di memori HP/Browser, unduh 1 foto ini saja dari Supabase
+        if (!o.bukti_foto) {
+          showLoading('Mengambil foto bukti...');
+          try {
+            const { data, error } = await supaClient.from('orders').select('bukti_foto').eq('id', id).single();
+            hideLoading();
+            if (error || !data || !data.bukti_foto) {
+              return showToast('Foto bukti belum tersedia untuk pesanan ini.', 'info');
+            }
+            o.bukti_foto = data.bukti_foto; // Simpan di memori agar klik kedua tidak pakai kuota lagi
+          } catch (err) {
+            hideLoading();
+            return showToast('Gagal memuat foto: ' + err.message, 'error');
+          }
+        }
 
         var modal = document.getElementById('fotoBuktiViewerModal');
         if (!modal) {
@@ -5437,10 +5459,10 @@
           </div>
         </div>
       `;
-        modal.style.display = 'flex';
+        openModal('fotoBuktiViewerModal');
       }
 
-     function renderOrdersTable(list) {
+      function renderOrdersTable(list) {
         cachedOrdersList = list || [];
         var tbody = document.getElementById('ordersTableBody'); if (!tbody) return;
 
@@ -5456,7 +5478,6 @@
         if (document.getElementById('badgeCountHistPO')) document.getElementById('badgeCountHistPO').innerText = listPO.length;
         if (document.getElementById('badgeCountHistSNT')) document.getElementById('badgeCountHistSNT').innerText = listSNT.length;
 
-        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
         var activeList = (isWali || window.activeOrderHistoryType === 'SNT') ? listSNT : listPO;
         var colCount = isWali ? 6 : 8;
 
@@ -5480,12 +5501,15 @@
           else if (o.status === 'Selesai') bc = 'bg-emerald-100 text-emerald-800';
           else if (o.status === 'Ditolak') bc = 'bg-rose-100 text-rose-800';
 
-          var badgeFoto = (isSantriOrder && o.bukti_foto)
+          // Deteksi apakah pesanan ini punya foto bukti dari penanda waktu_diterima / petugas_serah (tanpa perlu download fotonya dulu)
+          var hasFotoBukti = Boolean(o.bukti_foto || o.waktu_diterima || o.petugas_serah);
+
+          var badgeFoto = (isSantriOrder && hasFotoBukti)
             ? '<div class="mt-1"><button type="button" onclick="viewFotoBuktiById(\'' + o.id + '\')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-600 text-white cursor-pointer shadow hover:bg-emerald-700 active:scale-95 transition"><i class="fa-solid fa-camera"></i> Lihat Foto Bukti</button></div>'
             : '';
 
           var btnKameraKasir = (canManageStatus && isSantriOrder)
-            ? '<button type="button" onclick="openSerahTerimaById(\'' + o.id + '\')" title="Fotokan Santri Terima Paket" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs"><i class="fa-solid fa-camera"></i> ' + (o.bukti_foto ? 'Ubah Foto' : 'Foto Serah') + '</button>'
+            ? '<button type="button" onclick="openSerahTerimaById(\'' + o.id + '\')" title="Fotokan Santri Terima Paket" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs"><i class="fa-solid fa-camera"></i> ' + (hasFotoBukti ? 'Ubah Foto' : 'Foto Serah') + '</button>'
             : '';
 
           var statusOptions = isSantriOrder
@@ -5494,7 +5518,6 @@
 
           var adS = canManageStatus ? '<select onchange="changeOrderStatus(\'' + o.id + '\', this.value)" class="text-[11px] font-bold py-1 px-1 rounded-lg border bg-white">' + statusOptions + '</select>' : '';
 
-          // Sembunyikan kolom Wali Pemesan & Unit khusus untuk tampilan Wali Santri
           var colPemohonUnit = isWali ? '' : ('<td class="py-3 px-3">' + o.nama_pemohon + '</td><td class="py-3 px-2 text-center">' + o.im + '</td>');
 
           html += '<tr class="hover:bg-slate-50">' +
