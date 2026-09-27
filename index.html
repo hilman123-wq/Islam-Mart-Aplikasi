@@ -5699,6 +5699,15 @@
         });
         document.getElementById('poDetailTotalQty').innerText = o.total_qty || 0;
         document.getElementById('poDetailTotalEst').innerText = 'Rp ' + Number(o.estimasi_total || 0).toLocaleString('id-ID');
+
+        // Sesuaikan teks tombol WhatsApp otomatis sesuai Unit Toko (IM Banin / IM Banat)
+        var btnWaModal = document.getElementById('btnSendPoWa');
+        if (btnWaModal) {
+          var isSantriOrd = String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:');
+          var unitName = (String(o.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
+          btnWaModal.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i><span>' + (isSantriOrd ? ('Kirim ke WA IM ' + unitName) : ('Kirim PO via WA (IM ' + unitName + ')')) + '</span>';
+        }
+
         openModal('orderDetailModal');
       }
 
@@ -5834,11 +5843,39 @@
         var rows = o.items.map((it, i) => ({ "No": i + 1, "Barang": it.nama, "Qty": it.qty, "Harga": it.harga, "Subtotal": it.subtotal }));
         var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "PO"); XLSX.writeFile(wb, o.no_po + ".xlsx");
       }
-      function sendPoToSupplierWhatsapp() { if (currentSelectedOrder) sendPoViaWaDirect(currentSelectedOrder); }
+      function sendPoToSupplierWhatsapp() { 
+        if (currentSelectedOrder) sendPoViaWaDirect(currentSelectedOrder); 
+      }
+
       function sendPoViaWaDirect(o) {
-        var msg = "Surat Pemesanan Barang (PO)\nNo: " + o.no_po + "\nTanggal: " + o.tanggal + "\n\nBarang:\n";
-        (o.items || []).forEach((it, i) => { msg += (i + 1) + ". " + it.nama + " (" + it.qty + " " + it.satuan + ")\n"; });
-        var phone = (o.no_wa_supplier || '').replace(/[^0-9]/g, ''); if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+        var isSantriOrder = String(o.no_po || '').toUpperCase().startsWith('SNT-') || String(o.supplier || '').toLowerCase().startsWith('santri:');
+        var unitToko = (String(o.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
+
+        // 1. Jika ini adalah Pesanan Santri (SNT-), arahkan langsung ke Nomor WA Toko (IM Banin / IM Banat)
+        if (isSantriOrder && typeof sendWaliPaymentConfirmationWA === 'function') {
+          sendWaliPaymentConfirmationWA(o, null, null, o.estimasi_total, null);
+          return;
+        }
+
+        // 2. Jika ini adalah Order PO Toko, gunakan nomor WA Sales jika diisi, atau otomatis ke Nomor WA Toko (IM Banin / IM Banat)
+        var storeWa = (typeof getStoreWaNumber === 'function') ? getStoreWaNumber(unitToko) : (WA_ADMIN_KONFIRMASI ? WA_ADMIN_KONFIRMASI[unitToko] : '');
+        var rawPhone = (!isSantriOrder && o.no_wa_supplier) ? o.no_wa_supplier : storeWa;
+
+        var phone = String(rawPhone || '').replace(/[^0-9]/g, '');
+        if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+
+        var msg = "*SURAT PEMESANAN BARANG (PO) - IM " + unitToko.toUpperCase() + "*\n" +
+          "No: *" + o.no_po + "*\n" +
+          "Tanggal: " + o.tanggal + "\n" +
+          "Unit: Islam Mart " + unitToko + "\n" +
+          "Tujuan/Penerima: " + (o.supplier || '-') + "\n\n" +
+          "*Daftar Barang:*\n";
+
+        (o.items || []).forEach((it, i) => {
+          msg += (i + 1) + ". " + it.nama + " (" + it.qty + " " + (it.satuan || 'Pcs') + ")\n";
+        });
+        msg += "\n*Total Nominal: Rp " + Number(o.estimasi_total || 0).toLocaleString('id-ID') + "*";
+
         window.open("https://api.whatsapp.com/send?" + (phone ? "phone=" + phone + "&" : "") + "text=" + encodeURIComponent(msg), '_blank');
       }
 
