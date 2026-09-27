@@ -260,11 +260,12 @@
             </div>
           </div>
         </div>
-        <button onclick="openOwnProfileModal()"
-          class="w-full py-1.5 px-2 bg-slate-700/50 hover:bg-emerald-600/30 text-slate-300 hover:text-emerald-300 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition">
-          <i class="fa-brands fa-whatsapp text-emerald-400"></i>
-          <span>Isi / Ubah No. WA Saya</span>
-        </button>
+        <!-- TOMBOL GANTI PASSWORD & NO WA (Tampil untuk Semua Staf & Wali Santri) -->
+          <button type="button" onclick="openOwnProfileModal()" title="Ganti Password & No. WA"
+            class="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-[11px] sm:text-xs font-black text-amber-800 transition active:scale-95 shadow-2xs">
+            <i class="fa-solid fa-key text-amber-600 text-sm"></i>
+            <span class="hidden sm:inline">Password</span>
+          </button>
       </div>
 
       <!-- Menu Navigasi Lengkap -->
@@ -3577,7 +3578,7 @@
         var btnExportCart = document.querySelector('button[onclick="exportCurrentPoToExcel()"]');
 
         if (isWali) {
-          if (btnWaProfile) btnWaProfile.style.display = 'none';
+          if (btnWaProfile) btnWaProfile.style.display = 'flex';
           if (btnExportCart) btnExportCart.style.display = 'none';
 
           if (titleOrderEl) titleOrderEl.innerText = 'Pesan Barang Kebutuhan Santri';
@@ -6295,12 +6296,146 @@
         try { await supaClient.from('users').delete().eq('id', pendingDeleteUserId); hideLoading(); closeModal('userDeleteConfirmModal'); showToast('Dihapus!', 'success'); loadUsersTable(true); } catch (err) { }
       }
 
-      function openOwnProfileModal() { if (!currentUser) return; document.getElementById('ownProfileNameDisplay').value = currentUser.nama; document.getElementById('ownProfileNoWA').value = currentUser.nowa || ''; document.getElementById('ownProfilePassword').value = ''; openModal('ownProfileModal'); }
+      function ensureOwnProfileModalExists() {
+        if (document.getElementById('ownProfileModal')) return;
+        var modal = document.createElement('div');
+        modal.id = 'ownProfileModal';
+        modal.style.display = 'none';
+        modal.style.zIndex = '9999';
+        modal.className = 'fixed inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4';
+        modal.innerHTML = `
+          <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-key"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm sm:text-base font-black text-slate-800">Ganti Password & Kontak</h3>
+                  <p id="ownProfileRoleSub" class="text-[11px] text-slate-500">Perbarui kata sandi akun Anda</p>
+                </div>
+              </div>
+              <button type="button" onclick="closeModal('ownProfileModal')" class="text-slate-400 hover:text-slate-600 p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+
+            <form onsubmit="submitOwnProfile(event)" class="space-y-3.5 text-xs">
+              <div>
+                <label class="block font-bold text-slate-500 uppercase text-[10px] mb-1">Nama Akun / Pengguna</label>
+                <input type="text" id="ownProfileNameDisplay" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 cursor-not-allowed">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 uppercase text-[10px] mb-1">Nomor WhatsApp Aktif</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600">
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                  </span>
+                  <input type="text" id="ownProfileNoWA" placeholder="0812xxxxxxxx" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 uppercase text-[10px] mb-1">Password Baru *</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                    <i class="fa-solid fa-lock text-sm"></i>
+                  </span>
+                  <input type="password" id="ownProfilePassword" placeholder="Ketik password baru..." class="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-amber-500">
+                  <button type="button" onclick="toggleOwnNewPassVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                    <i id="ownPassEyeIcon" class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 italic">Kosongkan kolom password jika hanya ingin mengubah nomor WA.</p>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('ownProfileModal')" class="px-4 py-2.5 border rounded-xl font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-md active:scale-95 transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-check"></i>
+                  <span>Simpan Perubahan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        if (typeof ALL_MODAL_IDS !== 'undefined' && !ALL_MODAL_IDS.includes('ownProfileModal')) {
+          ALL_MODAL_IDS.push('ownProfileModal');
+        }
+      }
+
+      function toggleOwnNewPassVisibility() {
+        var inp = document.getElementById('ownProfilePassword');
+        var ic = document.getElementById('ownPassEyeIcon');
+        if (!inp || !ic) return;
+        if (inp.type === 'password') {
+          inp.type = 'text';
+          ic.className = 'fa-solid fa-eye-slash';
+        } else {
+          inp.type = 'password';
+          ic.className = 'fa-solid fa-eye';
+        }
+      }
+
+      function openOwnProfileModal() {
+        if (!currentUser) return;
+        ensureOwnProfileModalExists();
+        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        document.getElementById('ownProfileNameDisplay').value = isWali ? (currentUser.nama_santri || currentUser.nama) : currentUser.nama;
+        document.getElementById('ownProfileNoWA').value = currentUser.nowa || '';
+        document.getElementById('ownProfilePassword').value = '';
+        if (document.getElementById('ownProfileRoleSub')) {
+          document.getElementById('ownProfileRoleSub').innerText = isWali ? 'Akun Belanja Wali Santri' : ('Akun Staf: ' + (currentUser.role || ''));
+        }
+        openModal('ownProfileModal');
+      }
+
       async function submitOwnProfile(e) {
-        e.preventDefault(); var nowa = document.getElementById('ownProfileNoWA').value.trim(), pass = document.getElementById('ownProfilePassword').value.trim();
-        var payload = { nowa: nowa }; if (pass) payload.password = pass;
-        showLoading('Menyimpan...');
-        try { await supaClient.from('users').update(payload).eq('id', currentUser.id); hideLoading(); currentUser.nowa = nowa; if (pass) currentUser.password = pass; sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser)); showToast('Tersimpan!', 'success'); closeModal('ownProfileModal'); } catch (err) { hideLoading(); showToast('Gagal', 'error'); }
+        e.preventDefault();
+        if (!currentUser) return;
+        var nowa = document.getElementById('ownProfileNoWA').value.trim();
+        var pass = document.getElementById('ownProfilePassword').value.trim();
+
+        if (!pass && nowa === (currentUser.nowa || '')) {
+          return showToast('Masukkan password baru atau ubah nomor WA terlebih dahulu.', 'info');
+        }
+
+        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        showLoading('Menyimpan password & kontak...');
+
+        try {
+          if (isWali) {
+            // Simpan ke tabel master_santri untuk Wali Santri
+            var payloadSantri = { no_wa_wali: nowa };
+            if (pass) payloadSantri.password = pass;
+            const { error } = await supaClient.from('master_santri').update(payloadSantri).eq('id', currentUser.id);
+            if (error) throw error;
+          } else {
+            // Simpan ke tabel users untuk semua Staf / Karyawan
+            var payloadStaf = { nowa: nowa };
+            if (pass) payloadStaf.password = pass;
+            const { error } = await supaClient.from('users').update(payloadStaf).eq('id', currentUser.id);
+            if (error) throw error;
+          }
+
+          hideLoading();
+          currentUser.nowa = nowa;
+          if (pass) currentUser.password = pass;
+          sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser));
+
+          // Jika Wali Santri sedang di form belanja, ikut perbarui nomor WA otomatis
+          if (isWali && document.getElementById('orderNoWaSupplier')) {
+            document.getElementById('orderNoWaSupplier').value = nowa;
+          }
+
+          showToast(pass ? 'Password berhasil diperbarui!' : 'Nomor WA berhasil diperbarui!', 'success');
+          closeModal('ownProfileModal');
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menyimpan: ' + err.message, 'error');
+        }
       }
 
       async function loadWaReminder(forceRefresh) {
