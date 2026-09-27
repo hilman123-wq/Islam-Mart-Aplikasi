@@ -6277,17 +6277,49 @@
       }
 
       async function loadHistoryTable(forceRefresh) {
-        if (forceRefresh === false && window.isHistoryLoaded) return;
-        var type = document.getElementById('historyType').value;
-        var im = document.getElementById('historyIM').value;
-        var m = document.getElementById('historyMonth').value;
+        if (!currentUser) return;
+
+        var roleStr = String(currentUser.role || '').toLowerCase();
+        var isAdmin = isUserAdmin(currentUser) || roleStr.includes('kepala administrasi');
+        var isOnlyOwnHistory = (roleStr.includes('kasir') || roleStr.includes('keuangan')) && !isAdmin;
+
+        var selType = document.getElementById('historyType');
+        var selIM = document.getElementById('historyIM');
+
+        // Jika yang login adalah Kasir atau Keuangan (Banin/Banat):
+        // Kunci otomatis ke divisinya sendiri & sembunyikan dropdown Divisi/Unit
+        if (isOnlyOwnHistory) {
+          var myDivisi = roleStr.includes('keuangan') ? 'CLHKA' : 'CLHK';
+          if (selType) {
+            selType.value = myDivisi;
+            selType.style.display = 'none';
+          }
+          if (selIM) {
+            selIM.value = currentUser.im || 'Banin';
+            selIM.style.display = 'none';
+          }
+        } else {
+          if (selType) selType.style.display = '';
+          if (selIM) selIM.style.display = '';
+        }
+
+        var type = selType ? selType.value : 'CLHK';
+        var im = selIM ? selIM.value : 'ALL';
+        var m = document.getElementById('historyMonth') ? document.getElementById('historyMonth').value : '';
         var tbody = document.getElementById('historyTableBody');
 
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-indigo-500 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Menarik data ceklis...</td></tr>';
 
         try {
           let query = supaClient.from('checklists').select('*').eq('divisi', type).order('tanggal', { ascending: false });
-          if (im !== 'ALL') query = query.eq('im', im);
+
+          // KHUSUS KASIR & KEUANGAN: Hanya tampilkan riwayat milik user yang sedang login saja
+          if (isOnlyOwnHistory) {
+            query = query.eq('username', currentUser.username);
+          } else if (im !== 'ALL') {
+            query = query.eq('im', im);
+          }
+
           if (m) {
             var year = m.split('-')[0];
             var month = m.split('-')[1];
