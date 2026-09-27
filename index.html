@@ -2557,49 +2557,17 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODAL: INSTRUKSI TRANSFER & KODE UNIK (KHUSUS SELESAI BELANJA WALI SANTRI) -->
+    <!-- MODAL: INSTRUKSI TRANSFER & QRIS OTOMATIS (WALI SANTRI) -->
     <!-- ========================================================================= -->
     <div id="waliTransferModal" style="display: none; z-index: 9999;"
       class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div
         class="bg-white rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-3.5 text-center">
-        <div
-          class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto shadow-inner">
-          <i class="fa-solid fa-money-bill-transfer"></i>
-        </div>
         <div>
           <span id="tfModalNoPo"
-            class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-slate-100 text-slate-700">SNT-000000</span>
-          <h3 class="text-base sm:text-lg font-black text-slate-800 mt-1">Instruksi Pembayaran Transfer</h3>
-          <p class="text-[11px] text-slate-500">Mohon transfer <b>tepat hingga 3 digit terakhir (kode unik)</b> agar
-            pesanan otomatis terverifikasi.</p>
-        </div>
-
-        <!-- Informasi Rekening & Nomor WA Toko Tujuan -->
-        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase text-slate-400">Bank Tujuan</span>
-            <span id="tfBankName" class="text-xs font-black text-slate-800">BSI (Bank Syariah Indonesia)</span>
-          </div>
-          <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200">
-            <div>
-              <span class="text-[10px] text-slate-400 block">Nomor Rekening</span>
-              <span id="tfRekeningNum"
-                class="text-sm sm:text-base font-mono font-black text-emerald-700 tracking-wider">7123456789</span>
-              <span id="tfRekeningName" class="text-[10px] font-bold text-slate-600 block">a.n. Islam Mart
-                Pesantren</span>
-            </div>
-            <button type="button"
-              onclick="copyTextToClipboard(document.getElementById('tfRekeningNum').innerText, 'Nomor Rekening')"
-              class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-200">
-              <i class="fa-regular fa-copy mr-1"></i>Salin
-            </button>
-          </div>
-          <!-- Info Nomor WA Konfirmasi Toko (Otomatis Banin / Banat) -->
-          <div class="flex items-center justify-between pt-1 px-1 text-[11px]">
-            <span id="tfWaStoreLabel" class="font-bold text-slate-500"><i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i>WA Kasir IM Banin:</span>
-            <span id="tfWaStoreNumber" class="font-mono font-black text-emerald-700">08xxxxxxxxxx</span>
-          </div>
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-100 text-emerald-800">SNT-000000</span>
+          <h3 class="text-base sm:text-lg font-black text-slate-800 mt-1">Pembayaran Pesanan Santri</h3>
+          <p class="text-[11px] text-slate-500">Scan QRIS di bawah ini atau transfer tepat hingga <b>3 digit kode unik</b>.</p>
         </div>
 
         <!-- Rincian Nominal + Kode Unik -->
@@ -2609,17 +2577,57 @@
             <span id="tfSubTotal" class="font-mono font-bold">Rp 0</span>
           </div>
           <div class="flex justify-between text-amber-700 font-bold">
-            <span>Kode Unik Transfer:</span>
+            <span>Kode Unik Verifikasi:</span>
             <span id="tfKodeUnik" class="font-mono">+ Rp 0</span>
           </div>
           <div class="border-t border-emerald-200 pt-1.5 flex items-center justify-between">
-            <span class="font-black text-slate-800 uppercase text-[11px]">Total Harus Ditransfer:</span>
+            <span class="font-black text-slate-800 uppercase text-[11px]">Total Harus Dibayar:</span>
             <button type="button" onclick="copyTextToClipboard(window.lastUniqueTransferAmount, 'Nominal Transfer')"
               class="text-xs text-emerald-700 underline font-bold">Salin Nominal</button>
           </div>
           <div id="tfTotalBayar"
             class="text-2xl font-mono font-black text-emerald-800 tracking-tight bg-white py-2 rounded-xl border border-emerald-200">
             Rp 0
+          </div>
+        </div>
+
+        <!-- KOTAK QRIS OTOMATIS (MUNCUL JIKA KODE QRIS TOKO DIISI) -->
+        <div id="tfQrisBox" class="bg-white p-3.5 rounded-2xl border-2 border-slate-200 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between border-b pb-2">
+            <span class="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-qrcode text-emerald-600"></i>
+              <span id="tfQrisStoreTitle">QRIS OTOMATIS IM BANIN</span>
+            </span>
+            <span id="tfQrisBadgeMode" class="text-[9px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">NOMINAL OTOMATIS</span>
+          </div>
+          <div class="flex flex-col items-center justify-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <img id="tfQrisImg" src="" alt="QRIS Pembayaran" class="w-48 h-48 object-contain rounded-lg bg-white p-2 border shadow-xs">
+            <p id="tfQrisHint" class="text-[10px] text-slate-500 mt-2 font-medium">Buka BRImo / BSI / BCA / Dana / GoPay, pilih <b>Scan QRIS</b>. Nominal otomatis terisi!</p>
+          </div>
+        </div>
+
+        <!-- Informasi Rekening Manual & Nomor WA Toko Tujuan -->
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase text-slate-400">Transfer Manual Bank</span>
+            <span id="tfBankName" class="text-xs font-black text-slate-800">BRI (Bank Rakyat Indonesia)</span>
+          </div>
+          <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200">
+            <div>
+              <span class="text-[10px] text-slate-400 block">Nomor Rekening</span>
+              <span id="tfRekeningNum"
+                class="text-sm sm:text-base font-mono font-black text-emerald-700 tracking-wider">010701001454563</span>
+              <span id="tfRekeningName" class="text-[10px] font-bold text-slate-600 block">a.n. Islam Mart</span>
+            </div>
+            <button type="button"
+              onclick="copyTextToClipboard(document.getElementById('tfRekeningNum').innerText, 'Nomor Rekening')"
+              class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-200">
+              <i class="fa-regular fa-copy mr-1"></i>Salin
+            </button>
+          </div>
+          <div class="flex items-center justify-between pt-1 px-1 text-[11px]">
+            <span id="tfWaStoreLabel" class="font-bold text-slate-500"><i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i>WA Kasir IM Banin:</span>
+            <span id="tfWaStoreNumber" class="font-mono font-black text-emerald-700">08xxxxxxxxxx</span>
           </div>
         </div>
 
@@ -5172,22 +5180,67 @@
       }
 
       // =========================================================================
-      // KONFIGURASI REKENING & NOMOR WA HP MASING-MASING TOKO (BANIN & BANAT)
+      // KONFIGURASI REKENING, QRIS & NOMOR WA HP MASING-MASING TOKO (BANIN & BANAT)
       // =========================================================================
       var REKENING_TOKO = {
-        Banin: { bank: 'BRI (Bank Rakyat Indonesia)', norek: '010701001454563', atas_nama: 'BARSONO' },
-        Banat: { bank: 'BRI (Bank Rakyat Indonesia)', norek: '010701001453567', atas_nama: 'BARSONO' }
+        Banin: {
+          bank: 'BRI (Bank Rakyat Indonesia)',
+          norek: '010701001454563',
+          atas_nama: 'BARSONO',
+          // Jika punya stiker/gambar QRIS IM Banin, tempel kode teksnya (diawali 000201...) di sini:
+          qris_statis: ''
+        },
+        Banat: {
+          bank: 'BRI (Bank Rakyat Indonesia)',
+          norek: '010701001453567',
+          atas_nama: 'BARSONO',
+          // Jika punya stiker/gambar QRIS IM Banat, tempel kode teksnya (diawali 000201...) di sini:
+          qris_statis: ''
+        }
       };
 
-      // SILAKAN ISI NOMOR WA HP IM BANIN DAN IM BANAT DI BAWAH INI:
+      // NOMOR WA HP IM BANIN DAN IM BANAT:
       var WA_ADMIN_KONFIRMASI = {
-        Banin: '081399128497', // <-- Nomor WA HP Toko IM Banin
-        Banat: '082214011329'  // <-- Ganti dengan Nomor WA HP Toko IM Banat
+        Banin: '081399128497', // Nomor WA HP Toko IM Banin
+        Banat: '082214011329'  // Nomor WA HP Toko IM Banat
       };
 
       function getStoreWaNumber(unitIM) {
         var cleanUnit = (String(unitIM || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
         return WA_ADMIN_KONFIRMASI[cleanUnit] || WA_ADMIN_KONFIRMASI.Banin;
+      }
+
+      // Rumus Standar QRIS Bank Indonesia (EMVCo CRC16-CCITT) untuk Nominal Otomatis
+      function hitungCRC16QRIS(str) {
+        var crc = 0xFFFF;
+        for (var c = 0; c < str.length; c++) {
+          crc ^= str.charCodeAt(c) << 8;
+          for (var i = 0; i < 8; i++) {
+            if (crc & 0x8000) crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+            else crc = (crc << 1) & 0xFFFF;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+      }
+
+      function buatQrisDinamisNominal(qrisStatis, nominalBulat) {
+        var raw = String(qrisStatis || '').trim();
+        if (!raw.startsWith('000201')) return '';
+
+        var idx6304 = raw.lastIndexOf('6304');
+        if (idx6304 === -1) return '';
+        var body = raw.substring(0, idx6304);
+
+        body = body.replace('010211', '010212');
+
+        var amtStr = String(Math.round(Number(nominalBulat) || 0));
+        var tag54 = '54' + String(amtStr.length).padStart(2, '0') + amtStr;
+
+        var splitParts = body.split('5802ID');
+        if (splitParts.length < 2) return '';
+        var payloadBaru = splitParts[0] + tag54 + '5802ID' + splitParts.slice(1).join('5802ID') + '6304';
+
+        return payloadBaru + hitungCRC16QRIS(payloadBaru);
       }
 
       async function submitPurchaseOrder(e) {
@@ -5304,6 +5357,41 @@
         }
         if (document.getElementById('tfBtnWaText')) {
           document.getElementById('tfBtnWaText').innerText = 'Kirim Bukti TF ke WA IM ' + unitToko;
+        }
+
+        // GENERATE QR OTOMATIS SESUAI NOMINAL & UNIT TOKO (BANIN / BANAT)
+        var qrisImgEl = document.getElementById('tfQrisImg');
+        var qrisTitleEl = document.getElementById('tfQrisStoreTitle');
+        var qrisBadgeEl = document.getElementById('tfQrisBadgeMode');
+        var qrisHintEl = document.getElementById('tfQrisHint');
+
+        if (qrisTitleEl) qrisTitleEl.innerText = 'QR PEMBAYARAN IM ' + unitToko.toUpperCase();
+
+        var kodeQrisDinamis = rekInfo.qris_statis ? buatQrisDinamisNominal(rekInfo.qris_statis, totalTf) : '';
+        var qrDataString = '';
+
+        if (kodeQrisDinamis) {
+          qrDataString = kodeQrisDinamis;
+          if (qrisBadgeEl) {
+            qrisBadgeEl.innerText = 'QRIS NOMINAL OTOMATIS';
+            qrisBadgeEl.className = 'text-[9px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full';
+          }
+          if (qrisHintEl) {
+            qrisHintEl.innerHTML = 'Scan dengan <b>BRImo / BSI / BCA / Livin / Dana / GoPay</b>.<br>Tujuan <b>IM ' + unitToko + '</b> & nominal <b>Rp ' + Number(totalTf).toLocaleString('id-ID') + '</b> langsung terisi otomatis!';
+          }
+        } else {
+          qrDataString = 'TRANSFER ' + rekInfo.bank + ' | No.Rek: ' + rekInfo.norek + ' (a.n. ' + rekInfo.atas_nama + ') | Nominal: Rp ' + Number(totalTf).toLocaleString('id-ID') + ' | Order: ' + orderData.no_po;
+          if (qrisBadgeEl) {
+            qrisBadgeEl.innerText = 'QR RINCIAN TRANSFER';
+            qrisBadgeEl.className = 'text-[9px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full';
+          }
+          if (qrisHintEl) {
+            qrisHintEl.innerHTML = 'Transfer senilai <b>Rp ' + Number(totalTf).toLocaleString('id-ID') + '</b> ke rekening <b>' + rekInfo.bank + ' ' + rekInfo.norek + '</b> (a.n. ' + rekInfo.atas_nama + ').';
+          }
+        }
+
+        if (qrisImgEl) {
+          qrisImgEl.src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=' + encodeURIComponent(qrDataString);
         }
 
         openModal('waliTransferModal');
