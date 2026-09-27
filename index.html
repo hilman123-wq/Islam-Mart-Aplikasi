@@ -2559,8 +2559,8 @@
     <!-- ========================================================================= -->
     <!-- MODAL: INSTRUKSI TRANSFER & KODE UNIK (KHUSUS SELESAI BELANJA WALI SANTRI) -->
     <!-- ========================================================================= -->
-    <div id="waliTransferModal" style="display: none;"
-      class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="waliTransferModal" style="display: none; z-index: 9999;"
+      class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div
         class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
         <div
@@ -2575,7 +2575,7 @@
             pesanan otomatis terverifikasi.</p>
         </div>
 
-        <!-- Informasi Rekening Tujuan -->
+        <!-- Informasi Rekening & Nomor WA Toko Tujuan -->
         <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-slate-400">Bank Tujuan</span>
@@ -2594,6 +2594,11 @@
               class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold border border-emerald-200">
               <i class="fa-regular fa-copy mr-1"></i>Salin
             </button>
+          </div>
+          <!-- Info Nomor WA Konfirmasi Toko (Otomatis Banin / Banat) -->
+          <div class="flex items-center justify-between pt-1 px-1 text-[11px]">
+            <span id="tfWaStoreLabel" class="font-bold text-slate-500"><i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i>WA Konfirmasi IM Banin:</span>
+            <span id="tfWaStoreNumber" class="font-mono font-black text-emerald-700">08xxxxxxxxxx</span>
           </div>
         </div>
 
@@ -2620,9 +2625,9 @@
 
         <div class="flex flex-col gap-2 pt-2">
           <button type="button" onclick="confirmTransferViaWA()"
-            class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
-            <i class="fa-brands fa-whatsapp text-sm"></i>
-            <span>Kirim Konfirmasi & Bukti TF via WA</span>
+            class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-95 transition">
+            <i class="fa-brands fa-whatsapp text-base"></i>
+            <span id="tfBtnWaText">Kirim Bukti TF ke WA IM Banin</span>
           </button>
           <button type="button" onclick="closeModal('waliTransferModal'); switchTab('order-history');"
             class="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold">
@@ -5135,15 +5140,24 @@
         if (document.getElementById('waliCheckoutModalTotalRp')) document.getElementById('waliCheckoutModalTotalRp').innerText = 'Rp ' + totalEst.toLocaleString('id-ID');
       }
 
-      // KONFIGURASI NOMOR REKENING TRANSFER TOKO (SILAKAN SESUAIKAN)
+      // =========================================================================
+      // KONFIGURASI REKENING & NOMOR WA HP MASING-MASING TOKO (BANIN & BANAT)
+      // =========================================================================
       var REKENING_TOKO = {
-        Banin: { bank: 'BSI (Bank Syariah Indonesia)', norek: '7112233445', atas_nama: 'Islam Mart Banin' },
-        Banat: { bank: 'BSI (Bank Syariah Indonesia)', norek: '7556677889', atas_nama: 'Islam Mart Banat' }
+        Banin: { bank: 'BRI (Bank Rakyat Indonesia)', norek: '010701001454563', atas_nama: 'BARSONO' },
+        Banat: { bank: 'BRI (Bank Rakyat Indonesia)', norek: '010701001453567', atas_nama: 'BARSONO' }
       };
+
+      // SILAKAN ISI NOMOR WA HP IM BANIN DAN IM BANAT DI BAWAH INI:
       var WA_ADMIN_KONFIRMASI = {
-        Banin: '085724400013',
-        Banat: '085724400013'
+        Banin: '081399128497', // <-- Nomor WA HP Toko IM Banin
+        Banat: '082214011329'  // <-- Ganti dengan Nomor WA HP Toko IM Banat
       };
+
+      function getStoreWaNumber(unitIM) {
+        var cleanUnit = (String(unitIM || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
+        return WA_ADMIN_KONFIRMASI[cleanUnit] || WA_ADMIN_KONFIRMASI.Banin;
+      }
 
       async function submitPurchaseOrder(e) {
         e.preventDefault();
@@ -5178,10 +5192,14 @@
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
         var prefixKode = isWali ? 'SNT-' : 'PO-';
         var supplierOrSantri = document.getElementById('orderSupplier').value.trim();
-        var unitIM = document.getElementById('orderIM').value || 'Banin';
+
+        // Kunci otomatis Unit Toko sesuai unit santri (Banin / Banat) jika Wali Santri yang belanja
+        var unitIM = isWali
+          ? (currentUser.im || 'Banin')
+          : (document.getElementById('orderIM').value || 'Banin');
 
         if (isWali && !supplierOrSantri) {
-          return showToast('Mohon isi Identitas Santri terlebih dahulu!', 'error');
+          supplierOrSantri = currentUser.info_santri || currentUser.nama_santri || '';
         }
 
         // Generate Kode Unik 3 Digit (101 - 999) khusus untuk Belanja Wali Santri
@@ -5232,7 +5250,10 @@
       }
 
       function showWaliTransferModal(orderData, subTotal, kodeUnik, totalTf, rekInfo) {
-        window.lastWaliOrderData = { order: orderData, subTotal: subTotal, kodeUnik: kodeUnik, totalTf: totalTf, rekInfo: rekInfo };
+        var unitToko = (String(orderData.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
+        var noWaToko = getStoreWaNumber(unitToko);
+
+        window.lastWaliOrderData = { order: orderData, subTotal: subTotal, kodeUnik: kodeUnik, totalTf: totalTf, rekInfo: rekInfo, noWaToko: noWaToko };
         window.lastUniqueTransferAmount = totalTf;
 
         if (document.getElementById('tfModalNoPo')) document.getElementById('tfModalNoPo').innerText = orderData.no_po;
@@ -5243,6 +5264,17 @@
         if (document.getElementById('tfKodeUnik')) document.getElementById('tfKodeUnik').innerText = '+ Rp ' + kodeUnik;
         if (document.getElementById('tfTotalBayar')) document.getElementById('tfTotalBayar').innerText = 'Rp ' + Number(totalTf).toLocaleString('id-ID');
 
+        // Tampilkan Nomor WA IM Banin / IM Banat sesuai unit santri
+        if (document.getElementById('tfWaStoreLabel')) {
+          document.getElementById('tfWaStoreLabel').innerHTML = '<i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i>WA Kasir IM ' + unitToko + ':';
+        }
+        if (document.getElementById('tfWaStoreNumber')) {
+          document.getElementById('tfWaStoreNumber').innerText = noWaToko;
+        }
+        if (document.getElementById('tfBtnWaText')) {
+          document.getElementById('tfBtnWaText').innerText = 'Kirim Bukti TF ke WA IM ' + unitToko;
+        }
+
         openModal('waliTransferModal');
       }
 
@@ -5252,6 +5284,45 @@
         }).catch(() => {
           showToast('Gagal menyalin teks', 'error');
         });
+      }
+
+      function confirmTransferViaWA() {
+        var d = window.lastWaliOrderData;
+        if (!d) return;
+        sendWaliPaymentConfirmationWA(d.order, d.subTotal, d.kodeUnik, d.totalTf, d.rekInfo);
+      }
+
+      function sendWaliPaymentConfirmationWA(o, subTotal, kodeUnik, totalTf, rekInfo) {
+        var unitToko = (String(o.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
+        var rek = rekInfo || REKENING_TOKO[unitToko] || REKENING_TOKO.Banin;
+        var rincianBarang = '';
+        (o.items || []).forEach((it, idx) => {
+          rincianBarang += (idx + 1) + '. ' + it.nama + ' (' + it.qty + ' ' + (it.satuan || 'Pcs') + ')\n';
+        });
+
+        var msg = "*KONFIRMASI TRANSFER BELANJA SANTRI - IM " + unitToko.toUpperCase() + "*\n" +
+          "No. Pesanan: *" + o.no_po + "*\n" +
+          "Tanggal: " + o.tanggal + "\n" +
+          "Penerima: *" + o.supplier + "*\n" +
+          "Unit Toko: *Islam Mart " + unitToko + "*\n\n" +
+          (rincianBarang ? "*Daftar Pesanan:*\n" + rincianBarang + "\n" : "") +
+          "*Rincian Pembayaran:*\n" +
+          (subTotal ? "Total Belanja: Rp " + Number(subTotal).toLocaleString('id-ID') + "\n" : "") +
+          (kodeUnik ? "Kode Unik: *" + kodeUnik + "*\n" : "") +
+          "*TOTAL TRANSFER: Rp " + Number(totalTf || o.estimasi_total || 0).toLocaleString('id-ID') + "*\n" +
+          "Tujuan: " + rek.bank + " (" + rek.norek + ")\n\n" +
+          "Berikut saya lampirkan bukti transfernya. Mohon diproses untuk ananda, terima kasih.";
+
+        var storePhone = getStoreWaNumber(unitToko).replace(/[^0-9]/g, '');
+        if (storePhone.startsWith('0')) storePhone = '62' + storePhone.substring(1);
+        window.open("https://api.whatsapp.com/send?phone=" + storePhone + "&text=" + encodeURIComponent(msg), '_blank');
+      }
+
+      // Fungsi kirim bukti TF dari tabel Riwayat Pembelanjaan Wali Santri
+      function sendWaliOrderWaById(orderId) {
+        var o = cachedOrdersList.find(x => String(x.id) === String(orderId));
+        if (!o) return;
+        sendWaliPaymentConfirmationWA(o, null, null, o.estimasi_total, null);
       }
 
       function confirmTransferViaWA() {
@@ -5556,6 +5627,7 @@
             '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ' + bc + '">' + o.status + '</span>' + badgeFoto + '</td>' +
             '<td class="py-3 px-4 text-center"><div class="flexvar batas90Hari flex-wrap items-center gap-1 justify-center">' +
             btnKameraKasir + adS +
+            (isWali && o.status === 'Diajukan' ? '<button type="button" onclick="sendWaliOrderWaById(\'' + o.id + '\')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black flex items-center gap-1 shadow-xs active:scale-95 transition" title="Kirim Bukti Transfer ke WA IM ' + o.im + '"><i class="fa-brands fa-whatsapp text-xs"></i> Kirim Bukti TF</button>' : '') +
             '<button type="button" onclick="openOrderById(\'' + o.id + '\')" class="p-1.5 text-slate-500 hover:text-teal-700" title="Lihat Nota Rincian Barang"><i class="fa-solid fa-eye"></i></button>' +
             (isAdmin ? '<button type="button" onclick="promptDeleteOrder(\'' + o.id + '\', \'' + o.no_po + '\')" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>' : '') +
             '</div></td></tr>';
