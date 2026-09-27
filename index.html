@@ -6508,7 +6508,7 @@
         var tb = document.getElementById('santriTableBody');
         if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-10 text-center text-teal-600 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat database santri...</td></tr>';
         try {
-          const { data, error } = await supaClient.from('master_santri').select('*').order('nama_santri', { ascending: true });
+          const { data, error } = await supaClient.from('master_santri').select('id, nis, nama_santri, kelas, asrama, im, no_wa_wali, password, status').order('nama_santri', { ascending: true });
           if (error) throw error;
           cachedSantriList = data || [];
           window.isSantriLoaded = true;
