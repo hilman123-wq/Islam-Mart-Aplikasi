@@ -6168,6 +6168,128 @@
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
       }
 
+      // =========================================================================
+      // FUNGSI TAMBAH, EDIT, & HAPUS INDIKATOR SERTA NAMA KATEGORI CEKLIS
+      // =========================================================================
+      function openEditCatModal(divisi, catKey, currentName) {
+        document.getElementById('catDivisi').value = divisi;
+        document.getElementById('catKey').value = catKey;
+        document.getElementById('catNameText').value = currentName || '';
+        openModal('criteriaCatModal');
+      }
+
+      async function submitCategoryName(e) {
+        e.preventDefault();
+        var divisi = document.getElementById('catDivisi').value;
+        var catKey = document.getElementById('catKey').value;
+        var newName = document.getElementById('catNameText').value.trim();
+        if (!newName || !cachedCriteria || !cachedCriteria[divisi] || !cachedCriteria[divisi][catKey]) return;
+
+        cachedCriteria[divisi][catKey].name = newName;
+        showLoading('Menyimpan nama kategori...');
+        try {
+          const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria');
+          hideLoading();
+          if (error) throw error;
+          closeModal('criteriaCatModal');
+          showToast('Nama kategori berhasil diubah!', 'success');
+          buildChecklistForm(divisi, cachedCriteria[divisi]);
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menyimpan: ' + err.message, 'error');
+        }
+      }
+
+      function openAddCriteriaModal(divisi, catKey) {
+        document.getElementById('critDivisi').value = divisi;
+        document.getElementById('critCatKey').value = catKey;
+        document.getElementById('critItemIdx').value = '';
+        document.getElementById('critItemText').value = '';
+        if (document.getElementById('criteriaModalTitle')) {
+          document.getElementById('criteriaModalTitle').innerText = 'Tambah Indikator Ceklis';
+        }
+        openModal('criteriaModal');
+      }
+
+      function openEditCriteriaModal(divisi, catKey, itemIdx, currentText) {
+        document.getElementById('critDivisi').value = divisi;
+        document.getElementById('critCatKey').value = catKey;
+        document.getElementById('critItemIdx').value = itemIdx;
+        document.getElementById('critItemText').value = currentText || '';
+        if (document.getElementById('criteriaModalTitle')) {
+          document.getElementById('criteriaModalTitle').innerText = 'Edit Indikator Ceklis';
+        }
+        openModal('criteriaModal');
+      }
+
+      async function submitCriteriaItem(e) {
+        e.preventDefault();
+        var divisi = document.getElementById('critDivisi').value;
+        var catKey = document.getElementById('critCatKey').value;
+        var idxStr = document.getElementById('critItemIdx').value;
+        var text = document.getElementById('critItemText').value.trim();
+        if (!text || !cachedCriteria || !cachedCriteria[divisi] || !cachedCriteria[divisi][catKey]) return;
+
+        if (!Array.isArray(cachedCriteria[divisi][catKey].items)) {
+          cachedCriteria[divisi][catKey].items = [];
+        }
+
+        if (idxStr === '' || idxStr === null) {
+          // Tambah indikator baru
+          cachedCriteria[divisi][catKey].items.push(text);
+        } else {
+          // Edit indikator yang sudah ada
+          var idx = parseInt(idxStr, 10);
+          cachedCriteria[divisi][catKey].items[idx] = text;
+        }
+
+        showLoading('Menyimpan indikator ceklis...');
+        try {
+          const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria');
+          hideLoading();
+          if (error) throw error;
+          closeModal('criteriaModal');
+          showToast('Indikator ceklis berhasil disimpan!', 'success');
+          buildChecklistForm(divisi, cachedCriteria[divisi]);
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menyimpan: ' + err.message, 'error');
+        }
+      }
+
+      function promptDeleteCriteriaItem(divisi, catKey, itemIdx, textPreview) {
+        pendingDeleteCrit = { divisi: divisi, catKey: catKey, itemIdx: itemIdx };
+        if (document.getElementById('criteriaDeletePreview')) {
+          document.getElementById('criteriaDeletePreview').innerText = '"' + textPreview + '"';
+        }
+        openModal('criteriaDeleteModal');
+      }
+
+      async function executeDeleteCriteriaItem() {
+        if (!pendingDeleteCrit) return;
+        var d = pendingDeleteCrit.divisi;
+        var k = pendingDeleteCrit.catKey;
+        var idx = pendingDeleteCrit.itemIdx;
+
+        if (cachedCriteria && cachedCriteria[d] && cachedCriteria[d][k] && Array.isArray(cachedCriteria[d][k].items)) {
+          cachedCriteria[d][k].items.splice(idx, 1);
+        }
+
+        showLoading('Menghapus indikator...');
+        try {
+          const { error } = await supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria');
+          hideLoading();
+          if (error) throw error;
+          pendingDeleteCrit = null;
+          closeModal('criteriaDeleteModal');
+          showToast('Indikator berhasil dihapus!', 'success');
+          buildChecklistForm(d, cachedCriteria[d]);
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menghapus: ' + err.message, 'error');
+        }
+      }
+
       function calculateLiveScore(divisi) {
         var pfx = divisi.toLowerCase();
         var selStatus = document.getElementById(pfx + 'StatusKehadiran');
