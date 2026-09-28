@@ -4226,8 +4226,7 @@
             '</div></div>';
           tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
         }
-      } // <--- TAMBAHKAN KURUNG KURAWAL PENUTUP INI!
-
+      } // <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
 
       function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
@@ -8386,7 +8385,6 @@
         };
         reader.readAsDataURL(file);
       }
-
     </script>
     <!-- Register Service Worker PWA -->
     <script>
