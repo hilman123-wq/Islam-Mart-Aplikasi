@@ -8266,12 +8266,80 @@
         } else {
           if (imgEl) imgEl.style.display = 'none';
           if (initEl) initEl.style.display = 'block';
-        }
+        }function triggerWaliUploadFotoSantri() {
       }
 
       function triggerWaliUploadFotoSantri() {
+        if (!currentUser) return;
+        var fotoUrl = formatSantriPhotoUrl(currentUser.foto);
+
+        // Jika sudah ada foto profil, tampilkan pop-up gambar membesar dengan jelas
+        if (fotoUrl) {
+          openWaliSantriPhotoPreview(fotoUrl);
+        } else {
+          // Jika belum ada foto sama sekali, langsung buka galeri/kamera untuk upload
+          pickNewWaliSantriPhoto();
+        }
+      }
+
+      function pickNewWaliSantriPhoto() {
         var inp = document.getElementById('waliSantriFotoInput');
         if (inp) inp.click();
+      }
+
+      function openWaliSantriPhotoPreview(fotoUrl) {
+        var modal = document.getElementById('waliSantriPhotoPreviewModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'waliSantriPhotoPreviewModal';
+          modal.style.display = 'none';
+          modal.style.zIndex = '9999';
+          modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4';
+          document.body.appendChild(modal);
+
+          if (typeof ALL_MODAL_IDS !== 'undefined' && !ALL_MODAL_IDS.includes('waliSantriPhotoPreviewModal')) {
+            ALL_MODAL_IDS.push('waliSantriPhotoPreviewModal');
+          }
+        }
+
+        var namaSantri = currentUser.nama_santri || String(currentUser.nama || '').replace('Wali: ', '') || 'Santri';
+        var kelasInfo = document.getElementById('waliHeaderSantriClass')
+          ? document.getElementById('waliHeaderSantriClass').innerText
+          : ('Santri IM ' + (currentUser.im || 'Banin'));
+
+        modal.innerHTML = `
+          <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl border border-slate-200 animate-fadeIn">
+            <div class="bg-gradient-to-r from-emerald-700 to-teal-800 p-4 text-white flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <h3 class="text-sm font-black truncate">${namaSantri}</h3>
+                <p class="text-[11px] text-emerald-100 font-semibold truncate">${kelasInfo}</p>
+              </div>
+              <button type="button" onclick="closeModal('waliSantriPhotoPreviewModal')"
+                class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white shrink-0">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="p-3 bg-slate-900 flex items-center justify-center">
+              <img id="waliSantriZoomImg" src="${fotoUrl}" alt="Foto Profil Santri"
+                class="w-full aspect-square max-h-[65vh] object-cover rounded-2xl shadow-lg border border-slate-700">
+            </div>
+
+            <div class="p-4 bg-white flex items-center justify-between gap-2.5">
+              <button type="button" onclick="pickNewWaliSantriPhoto()"
+                class="flex-1 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 active:scale-95 transition">
+                <i class="fa-solid fa-camera text-emerald-600"></i>
+                <span>Ganti Foto</span>
+              </button>
+              <button type="button" onclick="closeModal('waliSantriPhotoPreviewModal')"
+                class="flex-1 py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider active:scale-95 transition">
+                Tutup
+              </button>
+            </div>
+          </div>
+        `;
+
+        openModal('waliSantriPhotoPreviewModal');
       }
 
       function handleUploadFotoProfilSantri(e) {
@@ -8279,12 +8347,12 @@
         if (!file || !currentUser) return;
 
         var reader = new FileReader();
-        reader.onload = function(evt) {
+        reader.onload = function (evt) {
           var img = new Image();
-          img.onload = async function() {
-            // Kompresi foto profil ukuran 250x250px (Hanya ~12 KB agar sangat hemat database & Egress)
+          img.onload = async function () {
+            // Resolusi 600x600px agar saat foto diperbesar terlihat tajam & jelas, namun tetap hemat kuota
             var canvas = document.createElement('canvas');
-            var size = 250;
+            var size = 600;
             canvas.width = size;
             canvas.height = size;
             var ctx = canvas.getContext('2d');
@@ -8294,7 +8362,7 @@
             var sy = (img.height - minSide) / 2;
             ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
 
-            var base64Foto = canvas.toDataURL('image/jpeg', 0.7);
+            var base64Foto = canvas.toDataURL('image/jpeg', 0.78);
             showLoading('Menyimpan foto profil santri...');
             try {
               const { error } = await supaClient.from('master_santri').update({ foto: base64Foto }).eq('id', currentUser.id);
@@ -8303,6 +8371,11 @@
               currentUser.foto = base64Foto;
               sessionStorage.setItem('ISLAMMART_USER', JSON.stringify(currentUser));
               renderWaliHeaderSantriProfile();
+
+              // Jika pop-up zoom foto sedang terbuka, langsung perbarui gambarnya
+              var zoomImg = document.getElementById('waliSantriZoomImg');
+              if (zoomImg) zoomImg.src = base64Foto;
+
               showToast('Foto profil santri berhasil diperbarui!', 'success');
             } catch (err) {
               hideLoading();
