@@ -2533,10 +2533,22 @@
       </button>
       <!-- END TOMBOL KHUSUS GUDANG -->
 
-      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;"
+     <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
         <i class="fa-solid fa-folder-open text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Arsip</span>
+      </button>
+
+      <button id="btnNavBtmStaf" onclick="switchTab('user-management')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-purple-600 focus:text-purple-600 transition-colors">
+        <i class="fa-solid fa-users-gear text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kelola Staf</span>
+      </button>
+
+      <button id="btnNavBtmSantri" onclick="switchTab('santri-management')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+        <i class="fa-solid fa-user-graduate text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Master Santri</span>
       </button>
 
       <button id="btnNavBtmForm" onclick="goToMyChecklist()"
@@ -3692,6 +3704,8 @@
         var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
         var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
         var btmBazar = document.getElementById('btnNavBtmBazar');
+        var btmStaf = document.getElementById('btnNavBtmStaf');
+        var btmSantri = document.getElementById('btnNavBtmSantri');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -3703,6 +3717,8 @@
         if (btmLapMingguan) btmLapMingguan.style.display = 'none';
         if (btmLapBulanan) btmLapBulanan.style.display = 'none';
         if (btmBazar) btmBazar.style.display = 'none';
+        if (btmStaf) btmStaf.style.display = 'none';
+        if (btmSantri) btmSantri.style.display = 'none';
 
         // ATURAN KHUSUS BAZAR BANIN & BANAT (Tanpa Menu Arsip)
         if (isBazar) {
@@ -3747,8 +3763,10 @@
         }
         // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
         else if (isAdmin || isKepalaAdmin) {
-          if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
+          if (btmLaporan) btmLaporan.style.display = 'flex';
+          if (btmStaf) btmStaf.style.display = 'flex';
+          if (btmSantri) btmSantri.style.display = 'flex';
         }
 
         // Atur visibilitas Header Logo, Bottom Bar, & Ikon Riwayat Pojok Kanan Atas khusus Wali Santri
@@ -4173,29 +4191,8 @@
         }
 
         if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
-          var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-5 mt-6 mb-2 border-t border-slate-200 pt-6">' +
-            '<h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3>' +
-            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">' +
-
-            // 1. Tombol Laporan Bulanan
-            '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
-
-            // 2. Tombol WA Reminder
-            '<div onclick="switchTab(\'wa-reminder\')" class="bg-gradient-to-br from-emerald-700 to-emerald-950 p-5 rounded-3xl border border-emerald-600 shadow-lg hover:shadow-emerald-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-emerald-500/30 text-emerald-200 flex items-center justify-center text-xl mb-4 border border-emerald-500/40"><i class="fa-brands fa-whatsapp"></i></div><h4 class="text-sm font-black text-white">2. Pengingat WA</h4><p class="text-[10px] text-emerald-200/70 mt-1">Tegur staf/divisi via WhatsApp.</p></div>' +
-
-            // 3. Tombol Kelola Karyawan
-            '<div onclick="switchTab(\'user-management\')" class="bg-gradient-to-br from-purple-700 to-purple-950 p-5 rounded-3xl border border-purple-600 shadow-lg hover:shadow-purple-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-purple-500/30 text-purple-200 flex items-center justify-center text-xl mb-4 border border-purple-500/40"><i class="fa-solid fa-users-gear"></i></div><h4 class="text-sm font-black text-white">3. Kelola Staf</h4><p class="text-[10px] text-purple-200/70 mt-1">Atur akun karyawan & hak akses.</p></div>' +
-
-            // 4. Tombol Master Data Santri
-            '<div onclick="switchTab(\'santri-management\')" class="bg-gradient-to-br from-teal-700 to-teal-950 p-5 rounded-3xl border border-teal-600 shadow-lg hover:shadow-teal-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-teal-500/30 text-teal-200 flex items-center justify-center text-xl mb-4 border border-teal-500/40"><i class="fa-solid fa-user-graduate"></i></div><h4 class="text-sm font-black text-white">4. Master Santri</h4><p class="text-[10px] text-teal-200/70 mt-1">Database login santri & wali santri.</p></div>' +
-
-            // 5. Tombol Operasional Bazar
-'<div onclick="switchTab(\'bazar-management\')" class="bg-gradient-to-br from-amber-600 to-amber-900 p-5 rounded-3xl border border-amber-500 shadow-lg hover:shadow-amber-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-amber-400/30 text-amber-100 flex items-center justify-center text-xl mb-4 border border-amber-400/40"><i class="fa-solid fa-store"></i></div><h4 class="text-sm font-black text-white">5. Toko Bazar</h4><p class="text-[10px] text-amber-100/70 mt-1">Stok, nota beli, & laba/rugi bazar.</p></div>' +
-
-            '</div>' +
-
-            // PANEL BARU KHUSUS ADMIN: KELOLA INDIKATOR CEKLIS (CLHK KASIR, CLHG GUDANG, CLHKA KEUANGAN) & RAPORT
-            '<h3 class="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-2 pt-2"><i class="fa-solid fa-list-check"></i> Kelola Indikator Ceklis & Evaluasi Divisi (Khusus Admin)</h3>' +
+          var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6">' +
+            '<h3 class="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-2"><i class="fa-solid fa-list-check"></i> Kelola Indikator Ceklis & Evaluasi Divisi (Khusus Admin)</h3>' +
             '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">' +
 
             // Pintasan 1: Edit Indikator CLHK Kasir
@@ -4224,8 +4221,7 @@
 
             '</div></div>';
           tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
-        }
-      } // <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
+        } // <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
 
       function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
