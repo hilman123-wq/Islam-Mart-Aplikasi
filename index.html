@@ -2557,17 +2557,28 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODAL: INSTRUKSI TRANSFER & QRIS OTOMATIS (WALI SANTRI) -->
+    <!-- MODAL: INSTRUKSI TRANSFER, AKAD KODE UNIK & TIMER 2 MENIT (WALI SANTRI) -->
     <!-- ========================================================================= -->
     <div id="waliTransferModal" style="display: none; z-index: 9999;"
       class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div
         class="bg-white rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-3.5 text-center">
-        <div>
-          <span id="tfModalNoPo"
-            class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-100 text-emerald-800">SNT-000000</span>
-          <h3 class="text-base sm:text-lg font-black text-slate-800 mt-1">Pembayaran Pesanan Santri</h3>
-          <p class="text-[11px] text-slate-500">Scan QRIS di bawah ini atau transfer tepat hingga <b>3 digit kode unik</b>.</p>
+        
+        <!-- Header & Timer Hitung Mundur 2 Menit -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between bg-rose-50 border border-rose-200 px-3 py-2 rounded-2xl">
+            <div class="flex items-center gap-1.5 text-rose-700 text-[11px] font-black">
+              <i class="fa-solid fa-stopwatch animate-pulse text-sm"></i>
+              <span>Batas Waktu Bayar:</span>
+            </div>
+            <span id="tfCountdownTimer" class="font-mono font-black text-sm sm:text-base text-white bg-rose-600 px-2.5 py-0.5 rounded-lg shadow-2xs">10:00</span>
+          </div>
+          <div>
+            <span id="tfModalNoPo"
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-emerald-100 text-emerald-800">SNT-000000</span>
+            <h3 class="text-base sm:text-lg font-black text-slate-800 mt-1">Pembayaran Pesanan Santri</h3>
+            <p class="text-[11px] text-slate-500">Selesaikan pembayaran sebelum waktu habis agar pesanan tidak otomatis dibatalkan.</p>
+          </div>
         </div>
 
         <!-- Rincian Nominal + Kode Unik -->
@@ -2591,7 +2602,36 @@
           </div>
         </div>
 
-        <!-- KOTAK QRIS OTOMATIS (MUNCUL JIKA KODE QRIS TOKO DIISI) -->
+        <!-- PILIHAN AKAD SYAR'I KELEBIHAN KODE UNIK -->
+        <div class="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200 text-left space-y-2">
+          <div class="flex items-center gap-1.5 text-[11px] font-black text-amber-900 uppercase">
+            <i class="fa-solid fa-hand-holding-heart text-amber-600"></i>
+            <span>Akad Kelebihan Kode Unik (<span id="tfAkadNominalLabel">Rp 0</span>) *</span>
+          </div>
+          <p class="text-[10px] text-slate-600 leading-snug">Agar transaksi 100% halal & berkah, silakan pilih penyaluran kelebihan nominal kode unik Anda:</p>
+          
+          <label class="flex items-start gap-2.5 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-50/50 transition">
+            <input type="radio" name="waliAkadKodeUnik" value="Infaq / Shadaqah untuk Pondok" checked
+              onchange="onWaliAkadKodeUnikChange(this.value)"
+              class="mt-0.5 w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+            <div class="text-[11px] leading-tight">
+              <span class="font-black text-slate-800 block">1. Infaq / Shadaqah untuk Pondok</span>
+              <span class="text-[10px] text-slate-500">Saya ikhlaskan kelebihan kode unik sebagai infaq/shadaqah pondok.</span>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-2.5 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-50/50 transition">
+            <input type="radio" name="waliAkadKodeUnik" value="Berikan ke Santri (Bentuk Permen/Snack)"
+              onchange="onWaliAkadKodeUnikChange(this.value)"
+              class="mt-0.5 w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+            <div class="text-[11px] leading-tight">
+              <span class="font-black text-slate-800 block">2. Berikan kepada Santri (Permen / Snack)</span>
+              <span class="text-[10px] text-slate-500">Tambahkan ke paket ananda dalam bentuk permen/snack senilai kode unik.</span>
+            </div>
+          </label>
+        </div>
+
+        <!-- KOTAK QRIS OTOMATIS -->
         <div id="tfQrisBox" class="bg-white p-3.5 rounded-2xl border-2 border-slate-200 space-y-2.5 shadow-2xs">
           <div class="flex items-center justify-between border-b pb-2">
             <span class="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
@@ -2631,7 +2671,7 @@
           </div>
         </div>
 
-        <!-- Tombol Aksi: Kirim WA, Lihat Riwayat, & Batal Transaksi -->
+        <!-- Tombol Aksi: Kirim WA, Sudah Bayar (Lihat Riwayat), & Batal Transaksi -->
         <div class="flex flex-col gap-2 pt-1">
           <button type="button" onclick="confirmTransferViaWA()"
             class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-95 transition">
@@ -2639,9 +2679,9 @@
             <span id="tfBtnWaText">Kirim Bukti TF ke WA IM Banin</span>
           </button>
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="closeModal('waliTransferModal'); switchTab('order-history');"
+            <button type="button" onclick="stopWaliTransferCountdown(); closeModal('waliTransferModal'); switchTab('order-history');"
               class="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition">
-              Lihat Riwayat
+              Sudah Bayar / Riwayat
             </button>
             <button type="button" onclick="cancelCurrentWaliTransfer()"
               class="w-full py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 active:scale-95 transition">
@@ -5340,12 +5380,175 @@
         }
       }
 
+      window.waliTransferTimerInterval = null;
+      window.selectedWaliAkadKodeUnik = 'Infaq / Shadaqah untuk Pondok';
+
+      function stopWaliTransferCountdown() {
+        if (window.waliTransferTimerInterval) {
+          clearInterval(window.waliTransferTimerInterval);
+          window.waliTransferTimerInterval = null;
+        }
+      }
+
+      // Fungsi Bunyi Alarm Peringatan + Getar HP saat waktu tersisa 2 menit
+      function triggerWaliTwoMinutesWarning() {
+        // 1. Getarkan HP (3 kali getaran panjang) jika dibuka di Android/HP yang mendukung
+        if (navigator.vibrate) {
+          try { navigator.vibrate([400, 150, 400, 150, 500]); } catch (e) { }
+        }
+
+        // 2. Bunyikan nada alarm "Beep-Beep-Beep" menggunakan Web Audio API (Tanpa perlu file MP3)
+        try {
+          var AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            var ctx = new AudioCtx();
+            [0, 0.35, 0.7].forEach(function (delay) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime + delay); // Nada tinggi A5 yang jelas
+              gain.gain.setValueAtTime(0.35, ctx.currentTime + delay);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime + delay);
+              osc.stop(ctx.currentTime + delay + 0.25);
+            });
+          }
+        } catch (e) { }
+
+        // 3. Beri efek kedip pada kotak timer & munculkan notifikasi peringatan di layar
+        var timerEl = document.getElementById('tfCountdownTimer');
+        if (timerEl) {
+          timerEl.className = 'font-mono font-black text-sm sm:text-base text-amber-300 bg-rose-700 px-2.5 py-0.5 rounded-lg shadow-md animate-bounce ring-2 ring-amber-400';
+        }
+        showToast('⚠️ Waktu pembayaran tersisa 2 menit lagi! Segera selesaikan pembayaran Anda.', 'error');
+      }
+
+      // Fungsi Bunyi Alarm Peringatan + Getar HP saat waktu tersisa 2 menit
+      function triggerWaliTwoMinutesWarning() {
+        // 1. Getarkan HP (3 kali getaran panjang) jika dibuka di Android/HP yang mendukung
+        if (navigator.vibrate) {
+          try { navigator.vibrate([400, 150, 400, 150, 500]); } catch (e) { }
+        }
+
+        // 2. Bunyikan nada alarm "Beep-Beep-Beep" menggunakan Web Audio API (Tanpa perlu file MP3)
+        try {
+          var AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            var ctx = new AudioCtx();
+            [0, 0.35, 0.7].forEach(function (delay) {
+              var osc = ctx.createOscillator();
+              var gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime + delay); // Nada tinggi A5 yang jelas
+              gain.gain.setValueAtTime(0.35, ctx.currentTime + delay);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime + delay);
+              osc.stop(ctx.currentTime + delay + 0.25);
+            });
+          }
+        } catch (e) { }
+
+        // 3. Beri efek kedip pada kotak timer & munculkan notifikasi peringatan di layar
+        var timerEl = document.getElementById('tfCountdownTimer');
+        if (timerEl) {
+          timerEl.className = 'font-mono font-black text-sm sm:text-base text-amber-300 bg-rose-700 px-2.5 py-0.5 rounded-lg shadow-md animate-bounce ring-2 ring-amber-400';
+        }
+        showToast('⚠️ Waktu pembayaran tersisa 2 menit lagi! Segera selesaikan pembayaran Anda.', 'error');
+      }
+
+      function startWaliTransferCountdown(seconds) {
+        stopWaliTransferCountdown();
+        var remaining = seconds || 600; // Default 10 menit (600 detik)
+        var timerEl = document.getElementById('tfCountdownTimer');
+
+        if (timerEl) {
+          timerEl.className = 'font-mono font-black text-sm sm:text-base text-white bg-rose-600 px-2.5 py-0.5 rounded-lg shadow-2xs';
+        }
+
+        function updateDisplay() {
+          if (!timerEl) return;
+          var m = String(Math.floor(remaining / 60)).padStart(2, '0');
+          var s = String(remaining % 60).padStart(2, '0');
+          timerEl.innerText = m + ':' + s;
+        }
+
+        updateDisplay();
+        window.waliTransferTimerInterval = setInterval(async function () {
+          remaining--;
+
+          // Tepat saat waktu tersisa 2 menit (120 detik), bunyikan suara & getarkan HP!
+          if (remaining === 120) {
+            triggerWaliTwoMinutesWarning();
+          }
+
+          if (remaining <= 0) {
+            stopWaliTransferCountdown();
+            if (timerEl) timerEl.innerText = '00:00';
+            await autoExpireWaliTransfer();
+          } else {
+            updateDisplay();
+          }
+        }, 1000);
+      }
+
+      async function autoExpireWaliTransfer() {
+        var d = window.lastWaliOrderData;
+        closeModal('waliTransferModal');
+        if (!d || !d.order || !d.order.no_po) return;
+
+        showLoading('Waktu pembayaran 10 menit habis. Membatalkan pesanan otomatis...');
+        try {
+          await supaClient.from('orders').delete().eq('no_po', d.order.no_po);
+          hideLoading();
+          window.lastWaliOrderData = null;
+          window.isOrdersLoaded = false;
+          showToast('Waktu pembayaran (10 menit) telah habis! Pesanan ' + d.order.no_po + ' otomatis dibatalkan.', 'error');
+          if (activeTab === 'order-history') {
+            loadOrdersTable(true);
+          }
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal membatalkan otomatis: ' + err.message, 'error');
+        }
+      }
+
+      async function onWaliAkadKodeUnikChange(akadChoice) {
+        window.selectedWaliAkadKodeUnik = akadChoice;
+        var d = window.lastWaliOrderData;
+        if (!d || !d.order || !d.order.no_po) return;
+
+        // Perbarui keterangan catatan pesanan di database agar Kasir tahu apakah kode unik diinfaqkan atau diberi permen
+        var baseCatatan = String(d.order.catatan || '').replace(/\s*\|\s*AKAD KODE UNIK:[^\]]+/i, '');
+        if (baseCatatan.includes(']')) {
+          baseCatatan = baseCatatan.replace(']', ' | AKAD KODE UNIK: ' + akadChoice + ']');
+        } else {
+          baseCatatan = '[AKAD KODE UNIK: ' + akadChoice + '] ' + baseCatatan;
+        }
+        d.order.catatan = baseCatatan;
+
+        try {
+          await supaClient.from('orders').update({ catatan: baseCatatan }).eq('no_po', d.order.no_po);
+        } catch (e) { }
+      }
+
       function showWaliTransferModal(orderData, subTotal, kodeUnik, totalTf, rekInfo) {
         var unitToko = (String(orderData.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
         var noWaToko = getStoreWaNumber(unitToko);
 
+        // Set default akad pilihan pertama (Infaq Pondok)
+        window.selectedWaliAkadKodeUnik = 'Infaq / Shadaqah untuk Pondok';
+        var radios = document.querySelectorAll('input[name="waliAkadKodeUnik"]');
+        if (radios.length > 0) radios[0].checked = true;
+
         window.lastWaliOrderData = { order: orderData, subTotal: subTotal, kodeUnik: kodeUnik, totalTf: totalTf, rekInfo: rekInfo, noWaToko: noWaToko };
         window.lastUniqueTransferAmount = totalTf;
+
+        // Simpan pilihan akad default ke catatan order
+        onWaliAkadKodeUnikChange(window.selectedWaliAkadKodeUnik);
 
         if (document.getElementById('tfModalNoPo')) document.getElementById('tfModalNoPo').innerText = orderData.no_po;
         if (document.getElementById('tfBankName')) document.getElementById('tfBankName').innerText = rekInfo.bank;
@@ -5353,6 +5556,7 @@
         if (document.getElementById('tfRekeningName')) document.getElementById('tfRekeningName').innerText = 'a.n. ' + rekInfo.atas_nama;
         if (document.getElementById('tfSubTotal')) document.getElementById('tfSubTotal').innerText = 'Rp ' + Number(subTotal).toLocaleString('id-ID');
         if (document.getElementById('tfKodeUnik')) document.getElementById('tfKodeUnik').innerText = '+ Rp ' + kodeUnik;
+        if (document.getElementById('tfAkadNominalLabel')) document.getElementById('tfAkadNominalLabel').innerText = 'Rp ' + kodeUnik;
         if (document.getElementById('tfTotalBayar')) document.getElementById('tfTotalBayar').innerText = 'Rp ' + Number(totalTf).toLocaleString('id-ID');
 
         // Tampilkan Nomor WA IM Banin / IM Banat sesuai unit santri
@@ -5402,6 +5606,8 @@
         }
 
         openModal('waliTransferModal');
+        // Jalankan timer hitung mundur 10 menit (600 detik)
+        startWaliTransferCountdown(600);
       }
 
       function copyTextToClipboard(txt, label) {
@@ -5415,12 +5621,14 @@
       async function cancelCurrentWaliTransfer() {
         var d = window.lastWaliOrderData;
         if (!d || !d.order || !d.order.no_po) {
+          stopWaliTransferCountdown();
           closeModal('waliTransferModal');
           return;
         }
 
         if (!confirm('Yakin ingin membatalkan transaksi pesanan ' + d.order.no_po + ' ini?')) return;
 
+        stopWaliTransferCountdown();
         showLoading('Membatalkan pesanan...');
         try {
           const { error } = await supaClient
@@ -5446,6 +5654,7 @@
       }
 
       function confirmTransferViaWA() {
+        stopWaliTransferCountdown(); // Hentikan timer karena Wali Santri sudah konfirmasi bayar
         var d = window.lastWaliOrderData;
         if (!d) return;
         sendWaliPaymentConfirmationWA(d.order, d.subTotal, d.kodeUnik, d.totalTf, d.rekInfo);
@@ -5454,6 +5663,7 @@
       function sendWaliPaymentConfirmationWA(o, subTotal, kodeUnik, totalTf, rekInfo) {
         var unitToko = (String(o.im || '').toLowerCase() === 'banat') ? 'Banat' : 'Banin';
         var rek = rekInfo || REKENING_TOKO[unitToko] || REKENING_TOKO.Banin;
+        var akadPilihan = window.selectedWaliAkadKodeUnik || 'Infaq / Shadaqah untuk Pondok';
         var rincianBarang = '';
         (o.items || []).forEach((it, idx) => {
           rincianBarang += (idx + 1) + '. ' + it.nama + ' (' + it.qty + ' ' + (it.satuan || 'Pcs') + ')\n';
@@ -5469,12 +5679,19 @@
           (subTotal ? "Total Belanja: Rp " + Number(subTotal).toLocaleString('id-ID') + "\n" : "") +
           (kodeUnik ? "Kode Unik: *" + kodeUnik + "*\n" : "") +
           "*TOTAL TRANSFER: Rp " + Number(totalTf || o.estimasi_total || 0).toLocaleString('id-ID') + "*\n" +
+          "Akad Kode Unik: *" + akadPilihan + "*\n" +
           "Tujuan: " + rek.bank + " (" + rek.norek + ")\n\n" +
           "Berikut saya lampirkan bukti transfernya. Mohon diproses untuk ananda, terima kasih.";
 
         var storePhone = getStoreWaNumber(unitToko).replace(/[^0-9]/g, '');
         if (storePhone.startsWith('0')) storePhone = '62' + storePhone.substring(1);
         window.open("https://api.whatsapp.com/send?phone=" + storePhone + "&text=" + encodeURIComponent(msg), '_blank');
+      }
+
+      function sendWaliOrderWaById(orderId) {
+        var o = cachedOrdersList.find(x => String(x.id) === String(orderId));
+        if (!o) return;
+        sendWaliPaymentConfirmationWA(o, null, null, o.estimasi_total, null);
       }
 
       // Fungsi kirim bukti TF dari tabel Riwayat Pembelanjaan Wali Santri
