@@ -3920,6 +3920,10 @@
         else if (tabId === 'wa-reminder') loadWaReminder(false);
         else if (tabId === 'santri-management') loadSantriTable(false);
         else if (tabId === 'bazar-management') initBazarView(false);
+        else if (tabId === 'bazar-management') initBazarView(false);
+        else if (tabId === 'clhk-form') checkAndLoadChecklistByDate('CLHK');
+        else if (tabId === 'clhg-form') checkAndLoadChecklistByDate('CLHG');
+        else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
       }
 
       function refreshTab() {
@@ -6633,7 +6637,23 @@
         container.innerHTML = '';
         var pfx = divisi.toLowerCase();
         // Hanya Admin / Kepala Toko, Gudang, dan Keuangan yang bisa edit indikator (Kasir dikunci agar tidak terhapus tidak sengaja)
-        var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('kepala administrasi') || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
+        var canEdit = isUserAdmin(currentUser) || (currentUser && (currentUser.role || '').toLowerCase().includes('kepala administrasi')) || (currentUser && (currentUser.role || '').toLowerCase().includes('gudang')) || (currentUser && (currentUser.role || '').toLowerCase().includes('keuangan'));
+
+        // 0. Banner Peringatan Jika Tanggal Ini Sudah Pernah Diisi
+        var lockedBanner = document.createElement('div');
+        lockedBanner.id = pfx + 'AlreadySubmittedBanner';
+        lockedBanner.style.display = 'none';
+        lockedBanner.className = 'bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs';
+        lockedBanner.innerHTML = `
+          <div class="flex items-center gap-2.5 text-amber-900">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-lg shrink-0"></i>
+            <div>
+              <p class="font-black">Ceklis Pada Tanggal Ini Sudah Anda Isi!</p>
+              <p class="text-[11px] text-slate-600 mt-0.5">Menampilkan hasil isian ceklis Anda sebelumnya. Tombol kirim dikunci agar tidak terinput ganda (Hapus dari menu Riwayat jika ingin mengisi ulang).</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(lockedBanner);
 
         // 1. Kotak Pilihan Status Kehadiran / Tugas / Libur
         var statusCard = document.createElement('div');
@@ -6699,6 +6719,9 @@
 
         container.appendChild(itemsWrap);
         calculateLiveScore(divisi);
+
+        // Langsung cek apakah tanggal yang sedang tampil sudah pernah diisi oleh staf ini
+        checkAndLoadChecklistByDate(divisi);
       }
 
       async function addNewCategory(divisi) {
@@ -6802,10 +6825,8 @@
         }
 
         if (idxStr === '' || idxStr === null) {
-          // Tambah indikator baru
           cachedCriteria[divisi][catKey].items.push(text);
         } else {
-          // Edit indikator yang sudah ada
           var idx = parseInt(idxStr, 10);
           cachedCriteria[divisi][catKey].items[idx] = text;
         }
@@ -6880,21 +6901,51 @@
         if (document.getElementById(pfx + 'LiveGrade')) document.getElementById(pfx + 'LiveGrade').innerText = grade;
       }
 
-      // Fungsi untuk mengosongkan kembali seluruh centangan ceklis, catatan, & skor ke 0.0
-      function resetChecklistForm(divisi, keepDate) {
+      // Fungsi Pengunci / Pembuka Tombol Submit & Input Ceklis
+      function setChecklistFormLockedState(divisi, isLocked) {
         var pfx = divisi.toLowerCase();
+        var btnSubmit = document.querySelector('button[onclick="submitChecklist(\'' + divisi + '\')"]');
+        var banner = document.getElementById(pfx + 'AlreadySubmittedBanner');
+        var selStatus = document.getElementById(pfx + 'StatusKehadiran');
+        var catatanEl = document.getElementById(pfx + 'Catatan');
+        var endDateEl = document.getElementById(pfx + 'TanggalSelesai');
 
-        // 1. Hapus semua centangan checkbox pada form divisi ini
+        if (banner) banner.style.display = isLocked ? 'flex' : 'none';
+        if (selStatus) selStatus.disabled = isLocked;
+        if (catatanEl) catatanEl.readOnly = isLocked;
+        if (endDateEl) endDateEl.disabled = isLocked;
+
+        document.querySelectorAll('#tab-' + pfx + '-form input[type="checkbox"]').forEach(cb => {
+          cb.disabled = isLocked;
+        });
+
+        if (btnSubmit) {
+          btnSubmit.disabled = isLocked;
+          var labelMap = { 'CLHK': 'Kirim Ceklis Kasir', 'CLHG': 'Kirim Ceklis Gudang', 'CLHKA': 'Kirim Ceklis Keuangan' };
+          var colorMap = { 'CLHK': 'bg-amber-600 hover:bg-amber-700', 'CLHG': 'bg-blue-600 hover:bg-blue-700', 'CLHKA': 'bg-purple-600 hover:bg-purple-700' };
+
+          if (isLocked) {
+            btnSubmit.className = 'px-6 py-2.5 bg-slate-300 text-slate-500 font-black rounded-xl text-xs cursor-not-allowed flex items-center gap-2';
+            btnSubmit.innerHTML = '<i class="fa-solid fa-lock"></i><span>Ceklis Tanggal Ini Sudah Terkirim</span>';
+          } else {
+            btnSubmit.className = 'px-6 py-2.5 ' + (colorMap[divisi] || 'bg-emerald-600') + ' text-white font-black rounded-xl text-xs shadow active:scale-95 transition flex items-center gap-2';
+            btnSubmit.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i><span>' + (labelMap[divisi] || 'Kirim Ceklis') + '</span>';
+          }
+        }
+      }
+
+      // Fungsi Mengosongkan Form Ceklis (Reset ke Kosong / 0.0)
+      function resetChecklistForm(divisi) {
+        var pfx = divisi.toLowerCase();
+        setChecklistFormLockedState(divisi, false);
+
         document.querySelectorAll('#tab-' + pfx + '-form input[type="checkbox"]').forEach(cb => {
           cb.checked = false;
         });
 
-        // 2. Kosongkan kolom catatan tambahan
         if (document.getElementById(pfx + 'Catatan')) {
           document.getElementById(pfx + 'Catatan').value = '';
         }
-
-        // 3. Kembalikan dropdown Status Kehadiran ke HADIR
         if (document.getElementById(pfx + 'StatusKehadiran')) {
           document.getElementById(pfx + 'StatusKehadiran').value = 'HADIR';
         }
@@ -6902,37 +6953,91 @@
           document.getElementById(pfx + 'TanggalSelesai').value = '';
         }
 
-        // 4. Jika baru selesai kirim ceklis tanggal mundur (misal 4 Sep), otomatis majukan tanggal ke hari berikutnya (5 Sep)
-        if (!keepDate && document.getElementById(pfx + 'Tanggal')) {
-          var curVal = document.getElementById(pfx + 'Tanggal').value;
-          var todayStr = new Date().toISOString().split('T')[0];
-          if (curVal && curVal < todayStr) {
-            var nextD = new Date(curVal + 'T00:00:00');
-            nextD.setDate(nextD.getDate() + 1);
-            var yyyy = nextD.getFullYear();
-            var mm = String(nextD.getMonth() + 1).padStart(2, '0');
-            var dd = String(nextD.getDate()).padStart(2, '0');
-            document.getElementById(pfx + 'Tanggal').value = yyyy + '-' + mm + '-' + dd;
-          }
-        }
-
-        // 5. Kembalikan tampilan indikator & skor langsung ke 0.0 (Grade E)
         onChecklistAttendanceChange(divisi);
         calculateLiveScore(divisi);
       }
 
-      // Otomatis kosongkan centangan setiap kali staf mengganti Tanggal Tugas di kalender
+      // Fungsi Otomatis Cek ke Database Apakah Tanggal Tersebut Sudah Pernah Diisi oleh Staf Ini
+      async function checkAndLoadChecklistByDate(divisi) {
+        if (!currentUser) return;
+        var pfx = divisi.toLowerCase();
+        var tglEl = document.getElementById(pfx + 'Tanggal');
+        if (!tglEl || !tglEl.value) return;
+        var selectedDate = tglEl.value;
+
+        // Bersihkan form terlebih dahulu
+        resetChecklistForm(divisi);
+
+        try {
+          const { data, error } = await supaClient
+            .from('checklists')
+            .select('*')
+            .eq('divisi', divisi)
+            .eq('username', currentUser.username)
+            .eq('tanggal', selectedDate)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (error || !data || data.length === 0) {
+            // Belum pernah diisi pada tanggal ini -> Biarkan kosong & tombol submit aktif
+            return;
+          }
+
+          var savedRow = data[0];
+          var selStatus = document.getElementById(pfx + 'StatusKehadiran');
+          var catatanEl = document.getElementById(pfx + 'Catatan');
+
+          // 1. Jika yang tersimpan pada tanggal tersebut adalah OFF / TUGAS / LIBUR / IZIN
+          if (isExcusedChecklist(savedRow)) {
+            var code = getExcusedCode(savedRow) || 'OFF';
+            if (selStatus) selStatus.value = code;
+            onChecklistAttendanceChange(divisi);
+            if (catatanEl) {
+              catatanEl.value = String(savedRow.catatan || '').replace(/^\[[^\]]+\]\s*/, '');
+            }
+          } else {
+            // 2. Jika yang tersimpan adalah HADIR KERJA NORMAL -> Munculkan kembali semua centangannya!
+            if (selStatus) selStatus.value = 'HADIR';
+            onChecklistAttendanceChange(divisi);
+
+            var detail = savedRow.checklist_detail || {};
+            for (var catKey in detail) {
+              var arr = detail[catKey];
+              if (Array.isArray(arr)) {
+                var cbs = document.querySelectorAll('input[name="chk_' + divisi + '_' + catKey + '"]');
+                cbs.forEach((cb, idx) => {
+                  cb.checked = Boolean(arr[idx]);
+                });
+              }
+            }
+            if (catatanEl) catatanEl.value = savedRow.catatan || '';
+            calculateLiveScore(divisi);
+          }
+
+          // Kunci form & matikan tombol Kirim Ceklis agar tidak bisa diklik lagi di tanggal yang sudah terisi ini
+          setChecklistFormLockedState(divisi, true);
+        } catch (err) {
+          console.error('Gagal memeriksa ceklis per tanggal:', err);
+        }
+      }
+
+      // Pasang pendeteksi otomatis saat staf mengganti Tanggal Tugas di kalender
       ['CLHK', 'CLHG', 'CLHKA'].forEach(function (div) {
         var tglEl = document.getElementById(div.toLowerCase() + 'Tanggal');
         if (tglEl) {
           tglEl.addEventListener('change', function () {
-            resetChecklistForm(div, true);
+            checkAndLoadChecklistByDate(div);
           });
         }
       });
 
       async function submitChecklist(divisi) {
         var pfx = divisi.toLowerCase();
+        var btnSubmit = document.querySelector('button[onclick="submitChecklist(\'' + divisi + '\')"]');
+        if (btnSubmit && btnSubmit.disabled) {
+          return showToast('Ceklis pada tanggal ini sudah pernah dikirim!', 'info');
+        }
+
         var tglMulai = document.getElementById(pfx + 'Tanggal').value;
         var catatanUser = document.getElementById(pfx + 'Catatan').value.trim();
         var statusKehadiran = document.getElementById(pfx + 'StatusKehadiran') ? document.getElementById(pfx + 'StatusKehadiran').value : 'HADIR';
@@ -6947,11 +7052,10 @@
 
           if (tglSelesai < tglMulai) tglSelesai = tglMulai;
 
-          // Buat daftar tanggal (mendukung 1 hari maupun rentang libur semester/Idul Fitri)
           var dateList = [];
           var currDate = new Date(tglMulai + 'T00:00:00');
           var lastDate = new Date(tglSelesai + 'T00:00:00');
-          var maxLoop = 45; // Batas aman maksimal 45 hari sekaligus
+          var maxLoop = 45;
           while (currDate <= lastDate && dateList.length < maxLoop) {
             var yyyy = currDate.getFullYear();
             var mm = String(currDate.getMonth() + 1).padStart(2, '0');
@@ -6979,7 +7083,7 @@
             hideLoading();
             if (error) throw error;
             window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
-            resetChecklistForm(divisi, false); // <-- Kosongkan kembali form ceklis!
+            checkAndLoadChecklistByDate(divisi); // Langsung kunci tampilan tanggal tersebut
             showToast('Status "' + infoLabel + '" berhasil dicatat (' + rowsToInsert.length + ' hari) & tidak mengurangi poin!', 'success');
             switchTab('data-history');
           } catch (err) {
@@ -7015,7 +7119,7 @@
           hideLoading();
           if (error) throw error;
           window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
-          resetChecklistForm(divisi, false); // <-- Kosongkan kembali semua centangan ceklis!
+          checkAndLoadChecklistByDate(divisi); // Langsung kunci tampilan tanggal tersebut
           showToast('Ceklis disimpan!', 'success');
           switchTab('data-history');
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
