@@ -6635,6 +6635,57 @@
         if (document.getElementById(pfx + 'LiveGrade')) document.getElementById(pfx + 'LiveGrade').innerText = grade;
       }
 
+      // Fungsi untuk mengosongkan kembali seluruh centangan ceklis, catatan, & skor ke 0.0
+      function resetChecklistForm(divisi, keepDate) {
+        var pfx = divisi.toLowerCase();
+
+        // 1. Hapus semua centangan checkbox pada form divisi ini
+        document.querySelectorAll('#tab-' + pfx + '-form input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+        });
+
+        // 2. Kosongkan kolom catatan tambahan
+        if (document.getElementById(pfx + 'Catatan')) {
+          document.getElementById(pfx + 'Catatan').value = '';
+        }
+
+        // 3. Kembalikan dropdown Status Kehadiran ke HADIR
+        if (document.getElementById(pfx + 'StatusKehadiran')) {
+          document.getElementById(pfx + 'StatusKehadiran').value = 'HADIR';
+        }
+        if (document.getElementById(pfx + 'TanggalSelesai')) {
+          document.getElementById(pfx + 'TanggalSelesai').value = '';
+        }
+
+        // 4. Jika baru selesai kirim ceklis tanggal mundur (misal 4 Sep), otomatis majukan tanggal ke hari berikutnya (5 Sep)
+        if (!keepDate && document.getElementById(pfx + 'Tanggal')) {
+          var curVal = document.getElementById(pfx + 'Tanggal').value;
+          var todayStr = new Date().toISOString().split('T')[0];
+          if (curVal && curVal < todayStr) {
+            var nextD = new Date(curVal + 'T00:00:00');
+            nextD.setDate(nextD.getDate() + 1);
+            var yyyy = nextD.getFullYear();
+            var mm = String(nextD.getMonth() + 1).padStart(2, '0');
+            var dd = String(nextD.getDate()).padStart(2, '0');
+            document.getElementById(pfx + 'Tanggal').value = yyyy + '-' + mm + '-' + dd;
+          }
+        }
+
+        // 5. Kembalikan tampilan indikator & skor langsung ke 0.0 (Grade E)
+        onChecklistAttendanceChange(divisi);
+        calculateLiveScore(divisi);
+      }
+
+      // Otomatis kosongkan centangan setiap kali staf mengganti Tanggal Tugas di kalender
+      ['CLHK', 'CLHG', 'CLHKA'].forEach(function (div) {
+        var tglEl = document.getElementById(div.toLowerCase() + 'Tanggal');
+        if (tglEl) {
+          tglEl.addEventListener('change', function () {
+            resetChecklistForm(div, true);
+          });
+        }
+      });
+
       async function submitChecklist(divisi) {
         var pfx = divisi.toLowerCase();
         var tglMulai = document.getElementById(pfx + 'Tanggal').value;
@@ -6683,6 +6734,7 @@
             hideLoading();
             if (error) throw error;
             window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
+            resetChecklistForm(divisi, false); // <-- Kosongkan kembali form ceklis!
             showToast('Status "' + infoLabel + '" berhasil dicatat (' + rowsToInsert.length + ' hari) & tidak mengurangi poin!', 'success');
             switchTab('data-history');
           } catch (err) {
@@ -6718,6 +6770,7 @@
           hideLoading();
           if (error) throw error;
           window.isHistoryLoaded = false; window.isWeeklyLoaded = false; window.isRaportLoaded = false;
+          resetChecklistForm(divisi, false); // <-- Kosongkan kembali semua centangan ceklis!
           showToast('Ceklis disimpan!', 'success');
           switchTab('data-history');
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
