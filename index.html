@@ -4174,7 +4174,9 @@
         }
 
         if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
-          var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6"><h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">' +
+          var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-5 mt-6 mb-2 border-t border-slate-200 pt-6">' +
+            '<h3 class="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Pusat Administrasi Terpadu</h3>' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">' +
 
             // 1. Tombol Laporan Bulanan
             '<div onclick="switchTab(\'laporan-bulanan\')" class="bg-gradient-to-br from-rose-700 to-rose-950 p-5 rounded-3xl border border-rose-600 shadow-lg hover:shadow-rose-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-rose-500/30 text-rose-200 flex items-center justify-center text-xl mb-4 border border-rose-500/40"><i class="fa-solid fa-file-excel"></i></div><h4 class="text-sm font-black text-white">1. Arsip Laporan</h4><p class="text-[10px] text-rose-200/70 mt-1">Pantau & cetak rekap Excel divisi.</p></div>' +
@@ -4190,6 +4192,36 @@
 
             // 5. Tombol Operasional Bazar
             '<div onclick="switchTab(\'bazar-management\')" class="bg-gradient-to-br from-amber-600 to-amber-900 p-5 rounded-3xl border border-amber-500 shadow-lg hover:shadow-amber-900/40 hover:-translate-y-1 transition duration-300 cursor-pointer relative overflow-hidden group"><div class="w-12 h-12 rounded-2xl bg-amber-400/30 text-amber-100 flex items-center justify-center text-xl mb-4 border border-amber-400/40"><i class="fa-solid fa-store"></i></div><h4 class="text-sm font-black text-white">5. Toko Bazar</h4><p class="text-[10px] text-amber-100/70 mt-1">Stok, nota beli, & laba/rugi bazar.</p></div>' +
+
+            '</div>' +
+
+            // PANEL BARU KHUSUS ADMIN: KELOLA INDIKATOR CEKLIS (CLHK KASIR, CLHG GUDANG, CLHKA KEUANGAN) & RAPORT
+            '<h3 class="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-2 pt-2"><i class="fa-solid fa-list-check"></i> Kelola Indikator Ceklis & Evaluasi Divisi (Khusus Admin)</h3>' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">' +
+
+            // Pintasan 1: Edit Indikator CLHK Kasir
+            '<div onclick="switchTab(\'clhk-form\')" class="bg-white p-4 rounded-3xl border-2 border-amber-200 hover:border-amber-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
+              '<div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-cash-register"></i></div>' +
+              '<div><h4 class="text-xs font-black text-slate-800">Kelola CLHK (Kasir)</h4><p class="text-[10px] text-slate-500 mt-0.5">Tambah, edit, & hapus indikator ceklis Kasir.</p></div>' +
+            '</div>' +
+
+            // Pintasan 2: Edit Indikator CLHG Gudang
+            '<div onclick="switchTab(\'clhg-form\')" class="bg-white p-4 rounded-3xl border-2 border-blue-200 hover:border-blue-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
+              '<div class="w-11 h-11 rounded-2xl bg-blue-100 text-blue-700 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-warehouse"></i></div>' +
+              '<div><h4 class="text-xs font-black text-slate-800">Kelola CLHG (Gudang)</h4><p class="text-[10px] text-slate-500 mt-0.5">Tambah, edit, & hapus indikator ceklis Gudang.</p></div>' +
+            '</div>' +
+
+            // Pintasan 3: Edit Indikator CLHKA Keuangan
+            '<div onclick="switchTab(\'clhka-form\')" class="bg-white p-4 rounded-3xl border-2 border-purple-200 hover:border-purple-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
+              '<div class="w-11 h-11 rounded-2xl bg-purple-100 text-purple-700 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-file-invoice-dollar"></i></div>' +
+              '<div><h4 class="text-xs font-black text-slate-800">Kelola CLHKA (Keuangan)</h4><p class="text-[10px] text-slate-500 mt-0.5">Tambah, edit, & hapus indikator Keuangan.</p></div>' +
+            '</div>' +
+
+            // Pintasan 4: Lihat Riwayat & Raport Ceklis Semua Staf
+            '<div onclick="switchTab(\'monthly-raport\')" class="bg-white p-4 rounded-3xl border-2 border-emerald-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
+              '<div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-award"></i></div>' +
+              '<div><h4 class="text-xs font-black text-slate-800">Raport & Evaluasi Staf</h4><p class="text-[10px] text-slate-500 mt-0.5">Pantau ranking bulanan & nilai seluruh divisi.</p></div>' +
+            '</div>' +
 
             '</div></div>';
           tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
@@ -6283,7 +6315,8 @@
         if (!container || !divCriteria) return;
         container.innerHTML = '';
         var pfx = divisi.toLowerCase();
-        var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('kasir') || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
+        // Hanya Admin / Kepala Toko, Gudang, dan Keuangan yang bisa edit indikator (Kasir dikunci agar tidak terhapus tidak sengaja)
+        var canEdit = isUserAdmin(currentUser) || (currentUser.role || '').toLowerCase().includes('kepala administrasi') || (currentUser.role || '').toLowerCase().includes('gudang') || (currentUser.role || '').toLowerCase().includes('keuangan');
 
         // 1. Kotak Pilihan Status Kehadiran / Tugas / Libur
         var statusCard = document.createElement('div');
