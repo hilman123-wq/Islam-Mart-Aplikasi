@@ -4788,26 +4788,139 @@
         openModal('priceTagModal');
       }
 
-      function exportLabelItemsArrayToExcel(items) {
-        if (!items || items.length === 0) return showToast('Pilih/centang minimal 1 barang terlebih dahulu!', 'info');
-        var unitToko = (currentUser && currentUser.im) ? currentUser.im : (items[0].im || 'Banin');
-        var todayStr = new Date().toISOString().split('T')[0];
+      // Fungsi pembuat Workbook Excel yang sudah berbentuk KOTAK LABEL RAK SIAP CETAK (4 Kolom A4)
+      function createPrintableShelfLabelWorkbook(items, unitToko) {
+        var todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        var storeHeader = "ISLAM MART " + String(unitToko || 'BANIN').toUpperCase();
 
-        var rows = items.map((it, idx) => ({
+        // SHEET 1: TATA LETAK KARTU LABEL SIAP CETAK A4 (4 KOLOM MENYAMPING)
+        var gridAoA = [];
+        var merges = [];
+        var colsPerRow = 4; // 4 Label menyamping per baris
+
+        for (var i = 0; i < items.length; i += colsPerRow) {
+          var rowStore = [];
+          var rowName = [];
+          var rowPrice = [];
+          var rowBarcode = [];
+          var rowSpacer = [];
+
+          for (var c = 0; c < colsPerRow; c++) {
+            var it = items[i + c];
+            if (it) {
+              var hrg = Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID');
+              rowStore.push("[" + storeHeader + "]");
+              rowName.push(String(it.nama || '').toUpperCase());
+              rowPrice.push("Rp " + hrg);
+              rowBarcode.push((it.barcode || '-') + "  •  " + todayStr);
+            } else {
+              rowStore.push("");
+              rowName.push("");
+              rowPrice.push("");
+              rowBarcode.push("");
+            }
+          }
+
+          gridAoA.push(rowStore);
+          gridAoA.push(rowName);
+          gridAoA.push(rowPrice);
+          gridAoA.push(rowBarcode);
+          gridAoA.push(["", "", "", ""]); // Baris pemisah antar kartu label (untuk gunting)
+        }
+
+        var wsPrint = XLSX.utils.aoa_to_sheet(gridAoA);
+
+        // Atur lebar 4 kolom agar pas 1 lembar A4 Portrait saat di-print di Excel
+        wsPrint['!cols'] = [
+          { wch: 23 },
+          { wch: 23 },
+          { wch: 23 },
+          { wch: 23 }
+        ];
+
+        // Atur margin halaman cetak Excel tipis agar muat banyak
+        wsPrint['!margins'] = { left: 0.25, right: 0.25, top: 0.3, bottom: 0.3, header: 0.1, footer: 0.1 };
+
+        // SHEET 2: DATA TABEL MASTER (Untuk arsip / olah data kantor)
+        var dataRows = items.map((it, idx) => ({
           "No": idx + 1,
           "Unit Toko": "Islam Mart " + (it.im || unitToko),
           "Barcode": it.barcode || '-',
           "Nama Barang": it.nama || '-',
           "Kategori": it.kategori || '-',
           "Harga Jual Rak (Rp)": Number(it.harga_jual || it.hargaJual || 0),
-          "Tanggal Label": todayStr
+          "Tampilan Harga": "Rp " + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID'),
+          "Tanggal Pengajuan": todayStr
         }));
+        var wsData = XLSX.utils.json_to_sheet(dataRows);
+        wsData['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 16 }, { wch: 32 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }];
 
         var wb = XLSX.utils.book_new();
-        var ws = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, "Label Harga Rak");
-        XLSX.writeFile(wb, "Label_Harga_IM_" + unitToko + "_" + todayStr + ".xlsx");
-        showToast(items.length + ' data label harga berhasil diekspor ke Excel!', 'success');
+        XLSX.utils.book_append_sheet(wb, wsPrint, "SIAP_CETAK_LABEL_A4");
+        XLSX.utils.book_append_sheet(wb, wsData, "DATA_TABEL_BARANG");
+        return wb;
+      }
+
+      function exportLabelItemsArrayToExcel(items) {
+        if (!items || items.length === 0) return showToast('Pilih/centang minimal 1 barang terlebih dahulu!', 'info');
+        var lockedUnit = (typeof getUserLockedUnit === 'function') ? getUserLockedUnit(currentUser) : null;
+        var unitToko = lockedUnit || (currentUser && currentUser.im) || (items[0] && items[0].im) || 'Banin';
+        unitToko = String(unitToko).toLowerCase().includes('banat') ? 'Banat' : 'Banin';
+        var todayStr = new Date().toISOString().split('T')[0];
+
+        var wb = createPrintableShelfLabelWorkbook(items, unitToko);
+        var fileName = "Cetak_Label_Rak_IM_" + unitToko + "_" + todayStr + ".xlsx";
+        XLSX.writeFile(wb, fileName);
+        showToast('File Excel Siap Cetak (' + fileName + ') berhasil diunduh!', 'success');
+        return fileName;
+      }
+
+      async function sendLabelItemsArrayToStoreWA(items) {
+        if (!items || items.length === 0) return showToast('Centang minimal 1 barang pada tabel untuk dikirim ke WA Kantor!', 'info');
+
+        // 1. Deteksi otomatis Unit Toko (IM Banin / IM Banat) dari akun Kasir yang sedang login
+        var lockedUnit = (typeof getUserLockedUnit === 'function') ? getUserLockedUnit(currentUser) : null;
+        var unitToko = lockedUnit || (currentUser && currentUser.im) || (items[0] && items[0].im) || 'Banin';
+        unitToko = String(unitToko).toLowerCase().includes('banat') ? 'Banat' : 'Banin';
+
+        // 2. Ambil Nomor WA HP Kantor masing-masing toko (IM Banin: 081399128497 / IM Banat: 082214011329)
+        var rawPhone = (typeof getStoreWaNumber === 'function') ? getStoreWaNumber(unitToko) : (WA_ADMIN_KONFIRMASI[unitToko] || '');
+        var phone = String(rawPhone || '').replace(/[^0-9]/g, '');
+        if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+
+        var todayStr = new Date().toISOString().split('T')[0];
+        var todayFmt = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        var fileName = "Cetak_Label_Rak_IM_" + unitToko + "_" + todayStr + ".xlsx";
+
+        // 3. Buat & Unduh Otomatis File Excel Siap Cetak terlebih dahulu
+        var wb = createPrintableShelfLabelWorkbook(items, unitToko);
+        XLSX.writeFile(wb, fileName);
+
+        // 4. Siapkan pesan pengantar WhatsApp ke Kantor Toko
+        var msg = "*FILE EXCEL CETAK LABEL HARGA RAK - IM " + unitToko.toUpperCase() + "*\n" +
+          "Tanggal: " + todayFmt + "\n" +
+          "Petugas: *" + (currentUser ? currentUser.nama : 'Kasir') + "*\n" +
+          "Unit Toko: *Islam Mart " + unitToko + "*\n" +
+          "Jumlah Label: *" + items.length + " Produk*\n" +
+          "Nama File: *" + fileName + "*\n\n" +
+          "*Ringkasan Barang:*\n";
+
+        items.slice(0, 15).forEach((it, idx) => {
+          var hrg = Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID');
+          msg += (idx + 1) + ". " + it.nama + " — *Rp " + hrg + "*\n";
+        });
+        if (items.length > 15) {
+          msg += "...dan " + (items.length - 15) + " barang lainnya (lengkap di file Excel).\n";
+        }
+
+        msg += "\n📎 *Berikut saya lampirkan file Excel (" + fileName + ") yang sudah disusun siap cetak (4 kolom A4).*";
+
+        showToast('File Excel "' + fileName + '" terunduh! Membuka WA Kantor IM ' + unitToko + '...', 'success');
+
+        // Beri jeda 600ms agar file Excel selesai terunduh di pojok browser, lalu buka WA Kantor
+        setTimeout(function () {
+          window.open("https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(msg), '_blank');
+        }, 600);
       }
 
       function sendLabelItemsArrayToStoreWA(items) {
