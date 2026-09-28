@@ -3979,11 +3979,21 @@
         });
       }
 
+      window.dashboardChartMode = 'MONTH'; // 'MONTH' (Mulai Tgl 1) atau '7DAYS' (7 Hari Terakhir)
+
+      function switchDashboardChartMode(mode) {
+        window.dashboardChartMode = mode;
+        loadDashboard();
+      }
+
       async function loadDashboard() {
         if (!currentUser) return;
         try {
           var today = new Date();
-          var todayStr = today.toISOString().split('T')[0];
+          var yyyy = today.getFullYear();
+          var mm = String(today.getMonth() + 1).padStart(2, '0');
+          var dd = String(today.getDate()).padStart(2, '0');
+          var todayStr = yyyy + '-' + mm + '-' + dd;
 
           // Otomatis bersihkan hanya foto bukti yang sudah lewat 30 hari (data nota tetap aman)
           var batas30Hari = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -3993,71 +4003,138 @@
           const { data: clToday } = await supaClient.from('checklists').select('id').eq('tanggal', todayStr).eq('username', currentUser.username);
           var hasFilled = clToday && clToday.length > 0;
 
-          // 2. Tarik data orderan & ceklis dari Supabase (Bulan Ini)
-          var curMonth = todayStr.substring(0, 7);
-          var year = curMonth.split('-')[0];
-          var month = curMonth.split('-')[1];
-          var lastDay = new Date(year, month, 0).getDate();
+          // 2. Tarik seluruh data orderan & ceklis dari Tanggal 1 bulan ini
+          var curMonth = yyyy + '-' + mm;
+          var lastDay = new Date(yyyy, Number(mm), 0).getDate();
           var startDate = curMonth + '-01';
-          var endDate = curMonth + '-' + lastDay;
+          var endDate = curMonth + '-' + String(lastDay).padStart(2, '0');
 
-          const { data: orders } = await supaClient.from('orders').select('tanggal, estimasi_total').gte('tanggal', startDate).lte('tanggal', endDate);
-          const { data: checksRaw } = await supaClient.from('checklists').select('tanggal, im, nilai_akhir, predikat, checklist_detail').gte('tanggal', startDate).lte('tanggal', endDate);
+          const { data: orders } = await supaClient
+            .from('orders')
+            .select('no_po, tanggal, estimasi_total')
+            .gte('tanggal', startDate)
+            .lte('tanggal', endDate);
 
-          // Saring hanya hari kerja aktif (abaikan hari Off, Tugas Belanja, Libur Pondok, & Izin dari pembagi grafik)
-          const checks = (checksRaw || []).filter(c => typeof isExcusedChecklist === 'function' ? !isExcusedChecklist(c) : true);
+          const { data: checksRaw } = await supaClient
+            .from('checklists')
+            .select('id, created_at, tanggal, divisi, username, im, nilai_akhir, predikat, checklist_detail')
+            .gte('tanggal', startDate)
+            .lte('tanggal', endDate)
+            .order('created_at', { ascending: true });
 
-          // 3. Kalkulasi Statistik Kartu Orderan PO (Bulan Ini)
+          // 3. Deduplikasi Otomatis: Jika staf mengisi ulang di tanggal yang sama, ambil isian TERBARU
+          var latestCheckMap = {};
+          (checksRaw || []).forEach(c => {
+            var key = String(c.username || '').toLowerCase() + '_' + String(c.divisi || '') + '_' + String(c.tanggal || '');
+            latestCheckMap[key] = c;
+          });
+          var uniqueChecks = Object.values(latestCheckMap);
+
+          // Saring hanya hari kerja aktif (abaikan Off, Tugas Belanja, Libur Pondok, & Izin)
+          const checks = uniqueChecks.filter(c => typeof isExcusedChecklist === 'function' ? !isExcusedChecklist(c) : true);
+
+          // 4. Kalkulasi Statistik Kartu Orderan PO (Bulan Ini)
           var totalPO = 0, totalRp = 0;
           if (orders) {
             totalPO = orders.length;
             totalRp = orders.reduce((sum, o) => sum + Number(o.estimasi_total || 0), 0);
           }
 
-          // 4. Kalkulasi Statistik Disiplin Ceklis Banin & Banat (Bulan Ini)
+          // 5. Kalkulasi Statistik Disiplin Ceklis Banin & Banat (Mulai Tanggal 1)
           var sumBanin = 0, countBanin = 0, sumBanat = 0, countBanat = 0;
-          if (checks) {
-            checks.forEach(c => {
-              if (String(c.im).toLowerCase() === 'banin') { sumBanin += Number(c.nilai_akhir || 0); countBanin++; }
-              if (String(c.im).toLowerCase() === 'banat') { sumBanat += Number(c.nilai_akhir || 0); countBanat++; }
-            });
-          }
+          checks.forEach(c => {
+            var unitStr = String(c.im || '').toLowerCase();
+            if (unitStr.includes('banin')) {
+              sumBanin += Number(c.nilai_akhir || 0);
+              countBanin++;
+            } else if (unitStr.includes('banat')) {
+              sumBanat += Number(c.nilai_akhir || 0);
+              countBanat++;
+            }
+          });
+
           var avgBanin = countBanin > 0 ? (sumBanin / countBanin).toFixed(1) : 0;
           var avgBanat = countBanat > 0 ? (sumBanat / countBanat).toFixed(1) : 0;
 
-          // 5. Kalkulasi Data Grafik (7 Hari Terakhir)
+          // 6. Kalkulasi Data Grafik (Mulai Tanggal 1 s.d. Hari Ini ATAU 7 Hari Terakhir)
           var chartLabels = [];
           var poData = [];
           var checkBaninData = [];
           var checkBanatData = [];
 
-          for (var i = 6; i >= 0; i--) {
-            var d = new Date(); d.setDate(d.getDate() - i);
-            var dateStr = d.toISOString().split('T')[0];
-            var shortDate = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+          var currentDayNum = today.getDate();
+          var startLoopDay = (window.dashboardChartMode === '7DAYS') ? Math.max(1, currentDayNum - 6) : 1;
+
+          for (var dayNum = startLoopDay; dayNum <= currentDayNum; dayNum++) {
+            var dayPad = String(dayNum).padStart(2, '0');
+            var dateStr = curMonth + '-' + dayPad;
+            var dObj = new Date(yyyy, Number(mm) - 1, dayNum);
+            var shortDate = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
             chartLabels.push(shortDate);
 
             // Filter harian PO
-            var dailyPO = (orders || []).filter(o => o.tanggal === dateStr).reduce((sum, o) => sum + Number(o.estimasi_total || 0), 0);
+            var dailyPO = (orders || [])
+              .filter(o => o.tanggal === dateStr)
+              .reduce((sum, o) => sum + Number(o.estimasi_total || 0), 0);
             poData.push(dailyPO);
 
-            // Filter harian Nilai Ceklis
-            var dailyBanin = (checks || []).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banin');
-            var dailyBanat = (checks || []).filter(c => c.tanggal === dateStr && String(c.im).toLowerCase() === 'banat');
+            // Filter harian Nilai Ceklis Banin & Banat
+            var dailyBanin = checks.filter(c => c.tanggal === dateStr && String(c.im || '').toLowerCase().includes('banin'));
+            var dailyBanat = checks.filter(c => c.tanggal === dateStr && String(c.im || '').toLowerCase().includes('banat'));
 
-            var dAvgBanin = dailyBanin.length > 0 ? dailyBanin.reduce((sum, c) => sum + Number(c.nilai_akhir), 0) / dailyBanin.length : 0;
-            var dAvgBanat = dailyBanat.length > 0 ? dailyBanat.reduce((sum, c) => sum + Number(c.nilai_akhir), 0) / dailyBanat.length : 0;
+            var dAvgBanin = dailyBanin.length > 0 ? dailyBanin.reduce((sum, c) => sum + Number(c.nilai_akhir || 0), 0) / dailyBanin.length : 0;
+            var dAvgBanat = dailyBanat.length > 0 ? dailyBanat.reduce((sum, c) => sum + Number(c.nilai_akhir || 0), 0) / dailyBanat.length : 0;
 
-            checkBaninData.push(dAvgBanin.toFixed(1));
-            checkBanatData.push(dAvgBanat.toFixed(1));
+            checkBaninData.push(Number(dAvgBanin.toFixed(1)));
+            checkBanatData.push(Number(dAvgBanat.toFixed(1)));
           }
 
-          // 6. Tampilkan ke layar Dashboard
+          // 7. Tampilkan ke layar Dashboard
           renderDashboard({
             hasFilledToday: hasFilled,
-            stats: { totalPO, totalRp, avgBanin, avgBanat },
+            stats: { totalPO, totalRp, avgBanin, avgBanat, countBanin, countBanat },
             charts: { labels: chartLabels, po: poData, checkBanin: checkBaninData, checkBanat: checkBanatData }
           });
+
+          // 8. Tambahkan info jumlah ceklis masuk & tombol mode grafik (Mulai Tgl 1 vs 7 Hari)
+          var elBanin = document.getElementById('statKinerjaBanin');
+          if (elBanin) {
+            var subB = document.getElementById('subCountBanin');
+            if (!subB) {
+              subB = document.createElement('p');
+              subB.id = 'subCountBanin';
+              subB.className = 'text-[10px] font-bold text-slate-400 mt-0.5';
+              elBanin.parentElement.appendChild(subB);
+            }
+            subB.innerText = countBanin + ' laporan aktif (sejak Tgl 1)';
+          }
+
+          var elBanat = document.getElementById('statKinerjaBanat');
+          if (elBanat) {
+            var subBt = document.getElementById('subCountBanat');
+            if (!subBt) {
+              subBt = document.createElement('p');
+              subBt.id = 'subCountBanat';
+              subBt.className = 'text-[10px] font-bold text-slate-400 mt-0.5';
+              elBanat.parentElement.appendChild(subBt);
+            }
+            subBt.innerText = countBanat + ' laporan aktif (sejak Tgl 1)';
+          }
+
+          var ceklisCanvas = document.getElementById('ceklisChartCanvas');
+          if (ceklisCanvas) {
+            var chartCard = ceklisCanvas.closest('.bg-white');
+            var h3 = chartCard ? chartCard.querySelector('h3') : null;
+            if (h3) {
+              var isMonth = window.dashboardChartMode !== '7DAYS';
+              h3.className = 'text-xs sm:text-sm font-black text-slate-800 mb-4 uppercase tracking-wider flex flex-wrap items-center justify-between gap-2';
+              h3.innerHTML = '<span><i class="fa-solid fa-chart-pie text-emerald-500 mr-1.5"></i> Rata-Rata Disiplin Ceklis (' + (isMonth ? 'Mulai Tgl 1' : '7 Hari') + ')</span>' +
+                '<div class="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] font-black">' +
+                '<button type="button" onclick="switchDashboardChartMode(\'MONTH\')" class="px-2 py-1 rounded-md transition ' + (isMonth ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600') + '">Mulai Tgl 1</button>' +
+                '<button type="button" onclick="switchDashboardChartMode(\'7DAYS\')" class="px-2 py-1 rounded-md transition ' + (!isMonth ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600') + '">7 Hari</button>' +
+                '</div>';
+            }
+          }
         } catch (err) {
           console.error('Error loadDashboard:', err);
         }
