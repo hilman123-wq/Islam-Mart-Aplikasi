@@ -3836,7 +3836,7 @@
         }
       }
 
-      function handleLogout() {
+        function handleLogout() {
         sessionStorage.removeItem('ISLAMMART_USER'); currentUser = null;
         document.getElementById('mainApp').style.setProperty('display', 'none', 'important');
         document.getElementById('loginPage').style.setProperty('display', 'flex', 'important');
@@ -4221,7 +4221,8 @@
 
             '</div></div>';
           tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
-        } // <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
+        }
+       }// <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
 
       function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
