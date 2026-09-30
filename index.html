@@ -4714,6 +4714,18 @@
         openModal('importBarangModal');
       }
 
+      function getFuzzyValue(row, baseIndex) {
+        if (baseIndex < 0) return '';
+        if (row[baseIndex] !== undefined && String(row[baseIndex]).trim() !== '') return String(row[baseIndex]).trim();
+        for (var offset of [1, -1, 2, -2]) {
+          var checkIdx = baseIndex + offset;
+          if (checkIdx >= 0 && checkIdx < row.length) {
+            if (row[checkIdx] !== undefined && String(row[checkIdx]).trim() !== '') return String(row[checkIdx]).trim();
+          }
+        }
+        return '';
+      }
+
       function readExcelFileAOA(file) {
         return new Promise((resolve, reject) => {
           var r = new FileReader();
@@ -4730,20 +4742,37 @@
       }
 
       function parseZahirExcelAOA(aoa) {
+        var idxKode = -1, idxNama = -1, idxKat = -1, idxStok = -1, idxBeli = -1, idxJual = -1, idxSup = -1, idxGbr = -1;
         var headerRowIdx = -1;
-        // Cari baris mana yang merupakan Judul Kolom (Kode Barang & Nama)
+
+        // 1. Cari baris mana yang merupakan Header Kolom
         for (var i = 0; i < aoa.length; i++) {
-          var rowStr = JSON.stringify(aoa[i]).toLowerCase();
-          if ((rowStr.includes('kode barang') || rowStr.includes('barcode') || rowStr.includes('sku')) &&
+          var row = aoa[i];
+          if (!row || !row.length) continue;
+          
+          var rowStr = JSON.stringify(row).toLowerCase();
+          if ((rowStr.includes('kode') || rowStr.includes('barcode') || rowStr.includes('sku')) &&
               (rowStr.includes('nama') || rowStr.includes('deskripsi'))) {
             headerRowIdx = i;
+            // Petakan index kolom pintar
+            for (var j = 0; j < row.length; j++) {
+              var val = String(row[j] || '').toLowerCase().trim();
+              if (val.includes('kode') || val.includes('barcode') || val.includes('sku')) idxKode = j;
+              else if (val.includes('nama') || val.includes('deskripsi')) idxNama = j;
+              else if (val === 'kategori' || val === 'kelompok') idxKat = j;
+              else if (val.includes('tersedia') || val.includes('stok') || val.includes('qty')) idxStok = j;
+              // Deteksi 'harga satuan' karena Zahir memakai nama itu untuk Harga Beli
+              else if (val.includes('harga satuan') || val.includes('harga beli') || val.includes('hpp')) idxBeli = j;
+              else if (val.includes('harga jual')) idxJual = j;
+              else if (val.includes('pemasok') || val.includes('supplier')) idxSup = j;
+              else if (val.includes('gambar') || val.includes('image')) idxGbr = j;
+            }
             break;
           }
         }
 
-        if (headerRowIdx === -1) return []; // Format tidak dikenali
+        if (headerRowIdx === -1) return [];
 
-        var headers = aoa[headerRowIdx].map(h => String(h || '').toLowerCase().trim());
         var results = [];
         var currentKategori = "Lainnya"; 
 
@@ -4751,39 +4780,52 @@
           var row = aoa[i];
           if (!row || row.length === 0) continue;
 
-          var obj = {};
-          for (var j = 0; j < headers.length; j++) {
-            if (headers[j]) obj[headers[j]] = row[j];
-          }
+          // Gunakan Fuzzy Value untuk mengatasi kolom Zahir yang sering bergeser karena format XML/Merge
+          var barcode = getFuzzyValue(row, idxKode);
+          var nama = getFuzzyValue(row, idxNama);
 
-          var barcode = String(obj['kode barang'] || obj['kode'] || obj['sku'] || obj['barcode'] || '').trim();
-          var nama = String(obj['deskripsi'] || obj['nama barang'] || obj['nama'] || '').trim();
-
+          // Deteksi Kategori (Zahir memakai format "Kelompok : NAMA KATEGORI" pada baris kosong)
           if (!barcode && !nama) {
-            var possibleCat = row.find(x => x && typeof x === 'string' && x.trim().length > 0);
-            if (possibleCat && possibleCat.toLowerCase() !== 'head quarter') {
-              currentKategori = possibleCat.trim().toUpperCase();
+            var possibleText = row.find(x => x && typeof x === 'string' && x.trim().length > 0);
+            if (possibleText) {
+              var txt = possibleText.trim();
+              if (txt.toLowerCase().includes('kelompok') || txt.toLowerCase().includes('kategori')) {
+                var parts = txt.split(':');
+                currentKategori = parts.length > 1 ? parts[1].trim().toUpperCase() : txt.toUpperCase();
+              }
             }
-            continue;
+            continue; // Lewati baris kosong / baris hitungan Zahir yang tidak berguna
           }
 
-          var qty = parseFloat(obj['tersedia'] || obj['stok'] || obj['saldo'] || obj['qty'] || 0);
-          var hb = parseFloat(obj['harga satuan'] || obj['harga beli'] || obj['hpp'] || obj['harga_beli'] || 0);
-          var hj = parseFloat(obj['harga jual'] || obj['harga_jual'] || 0);
-          var supplier = String(obj['pemasok'] || obj['supplier'] || '').trim();
-          var gambar = String(obj['gambar'] || obj['link gambar'] || '').trim();
+          if (nama) {
+            var qtyRaw = getFuzzyValue(row, idxStok);
+            var hbRaw = getFuzzyValue(row, idxBeli);
+            var hjRaw = getFuzzyValue(row, idxJual);
+            var supRaw = getFuzzyValue(row, idxSup);
+            var gbrRaw = getFuzzyValue(row, idxGbr);
+            
+            var rowKat = getFuzzyValue(row, idxKat);
+            var finalKat = rowKat ? rowKat : currentKategori;
 
-          if (nama) { 
-              results.push({
-                barcode: barcode,
-                nama: nama,
-                kategori: obj['kategori'] || obj['kelompok'] || currentKategori,
-                qty: isNaN(qty) ? 0 : qty,
-                harga_beli: isNaN(hb) ? 0 : hb,
-                harga_jual: isNaN(hj) ? 0 : hj,
-                supplier: supplier,
-                gambar: gambar 
-              });
+            // Pembersih angka ribuan (Zahir menggunakan koma ribuan: 1,450.00 -> 1450)
+            var parseNum = function(val) {
+              if (typeof val === 'number') return val;
+              if (!val) return 0;
+              var clean = String(val).replace(/,/g, '');
+              var n = parseFloat(clean);
+              return isNaN(n) ? 0 : n;
+            };
+
+            results.push({
+              barcode: barcode,
+              nama: nama,
+              kategori: finalKat,
+              qty: parseNum(qtyRaw),
+              harga_beli: parseNum(hbRaw),
+              harga_jual: parseNum(hjRaw),
+              supplier: supRaw,
+              gambar: gbrRaw
+            });
           }
         }
         return results;
@@ -4798,23 +4840,22 @@
         var unitToko = document.getElementById('importBarangIM').value;
         var globalSup = document.getElementById('importSupplierGlobal') ? document.getElementById('importSupplierGlobal').value.trim() : '';
 
-        // Validasi harus memilih salah satu jalur
         if (!fileStandar && !fileBeli) {
           return showToast('Pilih File Zahir (Opsi A) ATAU File Standar (Opsi B)!', 'error');
         }
 
-        showLoading('Membaca file Excel...');
+        showLoading('Membaca file Excel & menyaring data ganda...');
 
         try {
           var dataToProcess = [];
 
           if (fileStandar) {
-            // Jalur B: Excel Standar Islam Mart
+            // JALUR B: Excel Standar
             var aoaStandar = await readExcelFileAOA(fileStandar);
             dataToProcess = parseZahirExcelAOA(aoaStandar);
             if (dataToProcess.length === 0) throw new Error("Format Standar tidak dikenali. Pastikan ada baris judul kolom Barcode & Nama Barang.");
           } else {
-            // Jalur A: Zahir (Beli + Jual)
+            // JALUR A: Zahir (File Beli & Jual)
             var aoaBeli = await readExcelFileAOA(fileBeli);
             var dataBeli = parseZahirExcelAOA(aoaBeli);
             if (dataBeli.length === 0) throw new Error("Format Zahir tidak dikenali.");
@@ -4825,44 +4866,61 @@
               dataJual = parseZahirExcelAOA(aoaJual);
             }
 
-            var mergedMap = {};
-            dataBeli.forEach(r => { mergedMap[r.barcode || r.nama] = r; });
-            dataJual.forEach(r => {
-              var key = r.barcode || r.nama;
-              if (mergedMap[key]) {
-                if (r.harga_jual > 0) mergedMap[key].harga_jual = r.harga_jual;
+            // AUTO-MERGE: Gabungkan Beli & Jual tanpa duplikat
+            var mergedList = [];
+            dataBeli.forEach(r => mergedList.push(r));
+
+            dataJual.forEach(rj => {
+              // Cek apakah barang sudah ada di file Beli (Cocokkan Barcode atau Nama)
+              var match = null;
+              if (rj.barcode) {
+                match = mergedList.find(b => String(b.barcode).toLowerCase() === String(rj.barcode).toLowerCase());
+              }
+              if (!match) {
+                match = mergedList.find(b => String(b.nama).toLowerCase().trim() === String(rj.nama).toLowerCase().trim());
+              }
+              
+              if (match) {
+                if (rj.harga_jual > 0) match.harga_jual = rj.harga_jual;
+                if (rj.barcode && !match.barcode) match.barcode = rj.barcode; // Tambal barcode jika di Beli kosong
               } else {
-                mergedMap[key] = r;
+                mergedList.push(rj);
               }
             });
-            dataToProcess = Object.values(mergedMap);
+            dataToProcess = mergedList;
           }
 
-          // Sinkronisasi Database
+          // SINKRONISASI DATABASE (Mencegah data ganda dengan yang sudah ada di sistem)
           const existingItems = await fetchAllMasterBarang();
-          var existingMap = {};
-          (existingItems || []).forEach(it => {
-            var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
-            existingMap[key] = { id: it.id, gambar: it.gambar, supplier: it.supplier };
-          });
-
-          var insertMap = {};
-          var updateMap = {};
+          var itemsToInsert = [];
+          var itemsToUpdate = [];
 
           dataToProcess.forEach(r => {
-            var lookupKey = (r.barcode + '_' + r.nama + '_' + unitToko).toLowerCase();
-            var matchObj = existingMap[lookupKey];
+            var matchObj = null;
+            
+            // Prioritas 1: Cocokkan Barcode
+            if (r.barcode) {
+              matchObj = existingItems.find(it => it.im === unitToko && String(it.barcode).toLowerCase() === String(r.barcode).toLowerCase());
+            }
+            // Prioritas 2: Jika Barcode tidak ketemu/kosong, cocokkan Nama Persis
+            if (!matchObj) {
+              matchObj = existingItems.find(it => it.im === unitToko && String(it.nama).toLowerCase().trim() === String(r.nama).toLowerCase().trim());
+            }
 
             var finalSupplier = globalSup || r.supplier || (matchObj ? matchObj.supplier : '');
             var finalGambar = r.gambar || (matchObj ? matchObj.gambar : '');
+            
+            // Jangan jadikan 0 jika data barunya kosong, pertahankan harga lama!
+            var finalHB = (r.harga_beli > 0) ? r.harga_beli : (matchObj ? matchObj.harga_beli : 0);
+            var finalHJ = (r.harga_jual > 0) ? r.harga_jual : (matchObj ? matchObj.harga_jual : 0);
 
             var payload = {
-              barcode: r.barcode,
+              barcode: r.barcode || (matchObj ? matchObj.barcode : ''), // Selamatkan barcode lama jika baru kosong
               nama: r.nama,
               kategori: r.kategori,
               qty: r.qty,
-              harga_beli: r.harga_beli,
-              harga_jual: r.harga_jual,
+              harga_beli: finalHB,
+              harga_jual: finalHJ,
               supplier: finalSupplier,
               im: unitToko,
               gambar: finalGambar
@@ -4870,14 +4928,11 @@
 
             if (matchObj) {
               payload.id = matchObj.id;
-              updateMap[matchObj.id] = payload;
+              itemsToUpdate.push(payload);
             } else {
-              insertMap[lookupKey] = payload;
+              itemsToInsert.push(payload);
             }
           });
-
-          var itemsToInsert = Object.values(insertMap);
-          var itemsToUpdate = Object.values(updateMap);
 
           showLoading('Menyinkronkan ' + dataToProcess.length + ' barang ke server...');
 
