@@ -677,15 +677,16 @@
                   <b id="waliShopeeSantriLabel" class="text-white truncate block">-</b>
                 </div>
 
-                <!-- Tampilan Khusus Kasir/Staf: Dropdown Pilih Distributor (Pas di Layar HP) -->
+                <!-- Tampilan Khusus Kasir/Staf: Cari Distributor (Bisa Diketik) -->
                 <div id="stafSupplierDropdownBox" style="display: none;"
                   class="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                   <i class="fa-solid fa-truck-field text-amber-300 shrink-0"></i>
                   <span class="text-emerald-100 font-bold shrink-0 text-[10px] sm:text-[11px]">Distributor:</span>
-                  <select id="stafTopSupplierSelect" onchange="onTopSupplierDropdownChange(this.value)"
-                    class="w-full min-w-0 max-w-full flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
-                    <option value="">-- Semua Distributor --</option>
-                  </select>
+                  <input type="text" id="stafTopSupplierSelect" list="stafTopSupplierDatalist"
+                    onchange="onTopSupplierDropdownChange(this.value)" onclick="this.select()"
+                    placeholder="-- Semua Distributor --"
+                    class="w-full min-w-0 max-w-full flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2 py-1.5 rounded-lg outline-none cursor-text truncate shadow-xs">
+                  <datalist id="stafTopSupplierDatalist"></datalist>
                 </div>
 
                 <span id="waliShopeeUnitBadge"
@@ -5121,8 +5122,10 @@
 
       // Aktifkan Tampilan Ala Shopee untuk SEMUA USER (Wali Santri & Kasir/Staf)
       function populateTopSupplierDropdown() {
-        var sel = document.getElementById('stafTopSupplierSelect');
-        if (!sel) return;
+        var inp = document.getElementById('stafTopSupplierSelect');
+        var dl = document.getElementById('stafTopSupplierDatalist');
+        if (!inp || !dl) return;
+
         var currentVal = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
         var selectedIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
 
@@ -5136,12 +5139,16 @@
         });
         uniqueSuppliers.sort((a, b) => a.localeCompare(b));
 
-        var html = '<option value="">-- Semua Distributor (' + uniqueSuppliers.length + ' Supplier) --</option>';
+        // Susun daftar opsi untuk Datalist
+        var html = '';
         uniqueSuppliers.forEach(s => {
-          var isSel = (s === currentVal) ? 'selected' : '';
-          html += '<option value="' + s.replace(/"/g, '&quot;') + '" ' + isSel + '>' + s + '</option>';
+          html += '<option value="' + s.replace(/"/g, '&quot;') + '">';
         });
-        sel.innerHTML = html;
+        dl.innerHTML = html;
+
+        // Perbarui teks petunjuk dengan jumlah total supplier
+        inp.placeholder = '-- Ketik Cari ' + uniqueSuppliers.length + ' Supplier --';
+        inp.value = currentVal; // Sinkronkan nilai dengan yang sedang dipilih
       }
 
       function onTopSupplierDropdownChange(supName) {
