@@ -2972,58 +2972,96 @@
     <!-- MODAL: IMPORT EXCEL BARANG MASSAL -->
     <div id="importBarangModal" style="display: none;"
       class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-white rounded-3xl max-w-md w-full max-h-[95vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
         
         <!-- Header Modal (Tetap diam di atas) -->
-        <div class="flex justify-between items-center p-5 border-b bg-white shrink-0">
+        <div class="flex justify-between items-center p-4 sm:p-5 border-b bg-white shrink-0">
           <div>
             <h3 class="text-sm sm:text-base font-black text-slate-800">Import Master Barang</h3>
-            <p class="text-[11px] text-slate-500">Unggah file Excel / CSV Zahir</p>
+            <p class="text-[11px] text-slate-500">Unggah file Excel Standar / CSV Zahir</p>
           </div>
           <button type="button" onclick="closeModal('importBarangModal')" class="text-slate-400 hover:text-slate-600">
             <i class="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
-        <!-- Isi Form (Bisa di-scroll jika layar HP/PC kecil) -->
-        <div class="p-5 overflow-y-auto custom-scrollbar">
+        <!-- Isi Form (Bisa di-scroll) -->
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar">
           <form id="importBarangForm" onsubmit="submitImportBarang(event)" class="space-y-4 text-xs">
             
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">Pisahkan ke Unit Toko *</label>
-              <select id="importBarangIM" required
-                class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-600">
-                <option value="Banin">Islam Mart Banin</option>
-                <option value="Banat">Islam Mart Banat</option>
-              </select>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Unit Toko *</label>
+                <select id="importBarangIM" required
+                  class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-600">
+                  <option value="Banin">Islam Mart Banin</option>
+                  <option value="Banat">Islam Mart Banat</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Supplier (Opsional)</label>
+                <input type="text" id="importSupplierGlobal" list="supplierMasterDatalist" placeholder="Ketik supplier..."
+                  class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-600">
+              </div>
             </div>
 
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">Nama Distributor / Supplier (Opsional)</label>
-              <input type="text" id="importSupplierGlobal" list="supplierMasterDatalist" placeholder="Ketik nama supplier untuk barang ini..."
-                class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-600">
-              <p class="text-[10px] text-slate-500 mt-1 italic">Jika diisi, semua barang di file ini otomatis menggunakan supplier ini. Kosongkan jika ingin pakai data lama.</p>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 uppercase mb-1">1. File Excel Data Stok / Harga Beli Zahir *</label>
-              <div class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-3.5 text-center hover:border-blue-400 transition cursor-pointer relative mb-3">
-                <i class="fa-solid fa-file-csv text-2xl text-blue-600 mb-1.5"></i>
-                <p id="importBeliFileName" class="text-[11px] font-bold text-slate-600">Klik untuk Pilih File Beli (Wajib)</p>
-                <input type="file" id="importFileBeli" accept=".xlsx, .xls, .csv" required 
-                  onchange="document.getElementById('importBeliFileName').innerText = this.files[0] ? this.files[0].name : 'Klik untuk Pilih File Beli (Wajib)';"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <!-- OPSI A: ZAHIR -->
+            <div class="p-3.5 border-2 border-blue-200 bg-blue-50/40 rounded-2xl space-y-3">
+              <h4 class="font-black text-blue-800 text-[11px] uppercase tracking-wide"><i class="fa-solid fa-file-csv mr-1"></i> Opsi A: File Export Zahir</h4>
+              
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">1. File Stok & Harga Beli Zahir</label>
+                <div class="border-2 border-dashed border-blue-300 bg-white rounded-xl p-2.5 text-center hover:border-blue-500 transition cursor-pointer relative">
+                  <p id="importBeliFileName" class="text-[10px] font-bold text-slate-600 truncate"><i class="fa-solid fa-upload mr-1"></i> Klik Pilih File 1 (Zahir Beli)</p>
+                  <input type="file" id="importFileBeli" accept=".xlsx, .xls, .csv" 
+                    onchange="document.getElementById('importBeliFileName').innerText = this.files[0] ? this.files[0].name : 'Klik Pilih File 1 (Zahir Beli)';"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
               </div>
               
-              <label class="block font-bold text-slate-700 uppercase mb-1">2. File Excel Harga Jual Zahir (Opsional)</label>
-              <div class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-3.5 text-center hover:border-emerald-400 transition cursor-pointer relative">
-                <i class="fa-solid fa-file-excel text-2xl text-emerald-600 mb-1.5"></i>
-                <p id="importJualFileName" class="text-[11px] font-bold text-slate-600">Klik untuk Pilih File Jual (Opsional)</p>
-                <input type="file" id="importFileJual" accept=".xlsx, .xls, .csv" 
-                  onchange="document.getElementById('importJualFileName').innerText = this.files[0] ? this.files[0].name : 'Klik untuk Pilih File Jual (Opsional)';"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">2. File Harga Jual Zahir (Opsional)</label>
+                <div class="border-2 border-dashed border-blue-300 bg-white rounded-xl p-2.5 text-center hover:border-blue-500 transition cursor-pointer relative">
+                  <p id="importJualFileName" class="text-[10px] font-bold text-slate-600 truncate"><i class="fa-solid fa-upload mr-1"></i> Klik Pilih File 2 (Zahir Jual)</p>
+                  <input type="file" id="importFileJual" accept=".xlsx, .xls, .csv" 
+                    onchange="document.getElementById('importJualFileName').innerText = this.files[0] ? this.files[0].name : 'Klik Pilih File 2 (Zahir Jual)';"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
               </div>
             </div>
+
+            <div class="text-center font-black text-slate-300 text-[10px] uppercase tracking-widest">- ATAU -</div>
+
+            <!-- OPSI B: STANDARD -->
+            <div class="p-3.5 border-2 border-emerald-200 bg-emerald-50/40 rounded-2xl space-y-3">
+              <h4 class="font-black text-emerald-800 text-[11px] uppercase tracking-wide"><i class="fa-solid fa-file-excel mr-1"></i> Opsi B: Excel Standar</h4>
+              
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">3. File Excel Format Islam Mart</label>
+                <div class="border-2 border-dashed border-emerald-400 bg-white rounded-xl p-3.5 text-center hover:border-emerald-600 transition cursor-pointer relative">
+                  <i class="fa-solid fa-file-excel text-2xl text-emerald-500 mb-1.5"></i>
+                  <p id="importStandarFileName" class="text-[11px] font-bold text-slate-600 truncate">Klik Pilih Excel Standar</p>
+                  <input type="file" id="importFileStandar" accept=".xlsx, .xls, .csv" 
+                    onchange="document.getElementById('importStandarFileName').innerText = this.files[0] ? this.files[0].name : 'Klik Pilih Excel Standar';"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tombol Aksi di Bawah Form -->
+            <div class="flex justify-end gap-2 pt-4 border-t mt-4">
+              <button type="button" onclick="closeModal('importBarangModal')" 
+                class="px-4 py-2.5 border rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition">Batal</button>
+              <button type="submit" 
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-upload"></i> Mulai Import
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- ========================================================================= -->
     <!-- MODAL: FORM MASTER BARANG (BANIN / BANAT) -->
@@ -4665,10 +4703,13 @@
         if (form) form.reset(); 
         
         var lbl1 = document.getElementById('importBeliFileName');
-        if (lbl1) lbl1.innerText = 'Klik untuk Pilih File Beli (Wajib)';
+        if (lbl1) lbl1.innerHTML = '<i class="fa-solid fa-upload mr-1"></i> Klik Pilih File 1 (Zahir Beli)';
         
         var lbl2 = document.getElementById('importJualFileName');
-        if (lbl2) lbl2.innerText = 'Klik untuk Pilih File Jual (Opsional)';
+        if (lbl2) lbl2.innerHTML = '<i class="fa-solid fa-upload mr-1"></i> Klik Pilih File 2 (Zahir Jual)';
+
+        var lbl3 = document.getElementById('importStandarFileName');
+        if (lbl3) lbl3.innerText = 'Klik Pilih Excel Standar';
         
         openModal('importBarangModal');
       }
@@ -4704,7 +4745,7 @@
 
         var headers = aoa[headerRowIdx].map(h => String(h || '').toLowerCase().trim());
         var results = [];
-        var currentKategori = "Lainnya"; // Default kategori
+        var currentKategori = "Lainnya"; 
 
         for (var i = headerRowIdx + 1; i < aoa.length; i++) {
           var row = aoa[i];
@@ -4712,15 +4753,12 @@
 
           var obj = {};
           for (var j = 0; j < headers.length; j++) {
-            if (headers[j]) {
-              obj[headers[j]] = row[j];
-            }
+            if (headers[j]) obj[headers[j]] = row[j];
           }
 
           var barcode = String(obj['kode barang'] || obj['kode'] || obj['sku'] || obj['barcode'] || '').trim();
           var nama = String(obj['deskripsi'] || obj['nama barang'] || obj['nama'] || '').trim();
 
-          // KECERDASAN ZAHIR: Jika Kode & Nama kosong, tapi ada teks, berarti itu adalah JUDUL KELOMPOK (Kategori)
           if (!barcode && !nama) {
             var possibleCat = row.find(x => x && typeof x === 'string' && x.trim().length > 0);
             if (possibleCat && possibleCat.toLowerCase() !== 'head quarter') {
@@ -4732,16 +4770,21 @@
           var qty = parseFloat(obj['tersedia'] || obj['stok'] || obj['saldo'] || obj['qty'] || 0);
           var hb = parseFloat(obj['harga satuan'] || obj['harga beli'] || obj['hpp'] || obj['harga_beli'] || 0);
           var hj = parseFloat(obj['harga jual'] || obj['harga_jual'] || 0);
+          var supplier = String(obj['pemasok'] || obj['supplier'] || '').trim();
+          var gambar = String(obj['gambar'] || obj['link gambar'] || '').trim();
 
-          results.push({
-            barcode: barcode,
-            nama: nama,
-            kategori: obj['kategori'] || obj['kelompok'] || currentKategori,
-            qty: isNaN(qty) ? 0 : qty,
-            harga_beli: isNaN(hb) ? 0 : hb,
-            harga_jual: isNaN(hj) ? 0 : hj,
-            supplier: String(obj['pemasok'] || obj['supplier'] || '').trim()
-          });
+          if (nama) { 
+              results.push({
+                barcode: barcode,
+                nama: nama,
+                kategori: obj['kategori'] || obj['kelompok'] || currentKategori,
+                qty: isNaN(qty) ? 0 : qty,
+                harga_beli: isNaN(hb) ? 0 : hb,
+                harga_jual: isNaN(hj) ? 0 : hj,
+                supplier: supplier,
+                gambar: gambar 
+              });
+          }
         }
         return results;
       }
@@ -4750,60 +4793,68 @@
         e.preventDefault();
         var fileBeli = document.getElementById('importFileBeli').files[0];
         var fileJual = document.getElementById('importFileJual').files[0];
+        var fileStandar = document.getElementById('importFileStandar').files[0];
+        
         var unitToko = document.getElementById('importBarangIM').value;
         var globalSup = document.getElementById('importSupplierGlobal') ? document.getElementById('importSupplierGlobal').value.trim() : '';
 
-        if (!fileBeli) return showToast('Pilih File Harga Beli/Stok (File 1) terlebih dahulu!', 'error');
+        // Validasi harus memilih salah satu jalur
+        if (!fileStandar && !fileBeli) {
+          return showToast('Pilih File Zahir (Opsi A) ATAU File Standar (Opsi B)!', 'error');
+        }
 
-        showLoading('Membaca & menggabungkan file Zahir/Excel...');
+        showLoading('Membaca file Excel...');
 
         try {
-          var aoaBeli = await readExcelFileAOA(fileBeli);
-          var dataBeli = parseZahirExcelAOA(aoaBeli);
-          
-          if (dataBeli.length === 0) throw new Error("Format tabel tidak dikenali. Pastikan ada kolom 'Kode Barang' dan 'Nama Barang'.");
+          var dataToProcess = [];
 
-          var dataJual = [];
-          if (fileJual) {
-            var aoaJual = await readExcelFileAOA(fileJual);
-            dataJual = parseZahirExcelAOA(aoaJual);
+          if (fileStandar) {
+            // Jalur B: Excel Standar Islam Mart
+            var aoaStandar = await readExcelFileAOA(fileStandar);
+            dataToProcess = parseZahirExcelAOA(aoaStandar);
+            if (dataToProcess.length === 0) throw new Error("Format Standar tidak dikenali. Pastikan ada baris judul kolom Barcode & Nama Barang.");
+          } else {
+            // Jalur A: Zahir (Beli + Jual)
+            var aoaBeli = await readExcelFileAOA(fileBeli);
+            var dataBeli = parseZahirExcelAOA(aoaBeli);
+            if (dataBeli.length === 0) throw new Error("Format Zahir tidak dikenali.");
+
+            var dataJual = [];
+            if (fileJual) {
+              var aoaJual = await readExcelFileAOA(fileJual);
+              dataJual = parseZahirExcelAOA(aoaJual);
+            }
+
+            var mergedMap = {};
+            dataBeli.forEach(r => { mergedMap[r.barcode || r.nama] = r; });
+            dataJual.forEach(r => {
+              var key = r.barcode || r.nama;
+              if (mergedMap[key]) {
+                if (r.harga_jual > 0) mergedMap[key].harga_jual = r.harga_jual;
+              } else {
+                mergedMap[key] = r;
+              }
+            });
+            dataToProcess = Object.values(mergedMap);
           }
 
-          // 1. Ambil data lama dari database untuk di-update (jika sudah ada)
+          // Sinkronisasi Database
           const existingItems = await fetchAllMasterBarang();
           var existingMap = {};
           (existingItems || []).forEach(it => {
             var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
-            // Simpan gambar dan supplier lama agar tidak hilang jika diupdate!
             existingMap[key] = { id: it.id, gambar: it.gambar, supplier: it.supplier };
           });
 
-          // 2. Gabungkan Data Beli & Data Jual (Auto-Merge)
-          var mergedMap = {};
-          
-          dataBeli.forEach(r => {
-            mergedMap[r.barcode || r.nama] = r;
-          });
-
-          dataJual.forEach(r => {
-            var key = r.barcode || r.nama;
-            if (mergedMap[key]) {
-              if (r.harga_jual > 0) mergedMap[key].harga_jual = r.harga_jual;
-            } else {
-              mergedMap[key] = r;
-            }
-          });
-
-          var rawDataMerged = Object.values(mergedMap);
           var insertMap = {};
           var updateMap = {};
 
-          rawDataMerged.forEach(r => {
+          dataToProcess.forEach(r => {
             var lookupKey = (r.barcode + '_' + r.nama + '_' + unitToko).toLowerCase();
             var matchObj = existingMap[lookupKey];
 
-            // Prioritas Penamaan Supplier: 1. Ketikan di form Import -> 2. Bawaan dari file Zahir/Excel -> 3. Data lama di database
             var finalSupplier = globalSup || r.supplier || (matchObj ? matchObj.supplier : '');
+            var finalGambar = r.gambar || (matchObj ? matchObj.gambar : '');
 
             var payload = {
               barcode: r.barcode,
@@ -4814,7 +4865,7 @@
               harga_jual: r.harga_jual,
               supplier: finalSupplier,
               im: unitToko,
-              gambar: matchObj ? matchObj.gambar : '' // Biarkan kosong atau pakai gambar lama
+              gambar: finalGambar
             };
 
             if (matchObj) {
@@ -4828,7 +4879,7 @@
           var itemsToInsert = Object.values(insertMap);
           var itemsToUpdate = Object.values(updateMap);
 
-          showLoading('Menyinkronkan ' + rawDataMerged.length + ' barang ke server...');
+          showLoading('Menyinkronkan ' + dataToProcess.length + ' barang ke server...');
 
           var BATCH_SIZE = 500;
           if (itemsToInsert.length > 0) {
