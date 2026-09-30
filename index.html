@@ -966,9 +966,9 @@
             </form>
           </div>
 
-          <!-- ================= 3. BAR CHECKOUT MELAYANG ALA SHOPEE (KHUSUS WALI SANTRI) ================= -->
+          <!-- ================= 3. BAR CHECKOUT MELAYANG ALA SHOPEE (KHUSUS WALI SANTRI & STAF) ================= -->
           <div id="waliFloatingCheckoutBar" style="display: none;"
-            class="fixed bottom-16 sm:bottom-20 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none">
+            class="fixed bottom-24 sm:bottom-28 inset-x-0 z-[60] px-3 sm:px-6 pointer-events-none transition-all duration-300">
             <div
               class="max-w-lg mx-auto bg-slate-900 text-white rounded-2xl p-3 shadow-2xl border border-emerald-500/40 flex items-center justify-between gap-3 pointer-events-auto">
               <div onclick="openWaliCheckoutModal()" class="flex items-center gap-3 cursor-pointer">
@@ -3811,13 +3811,13 @@
           if (waliSpacerEl) waliSpacerEl.style.display = 'flex';
           renderWaliHeaderSantriProfile();
           if (btnWaliHistHeader) btnWaliHistHeader.style.display = 'flex';
-          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-4 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none';
+          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-6 sm:bottom-8 inset-x-0 z-[60] px-3 sm:px-6 pointer-events-none transition-all duration-300';
         } else {
           if (bottomNavBarEl) bottomNavBarEl.style.display = 'flex';
           if (headerBrandEl) headerBrandEl.style.display = 'flex';
           if (waliSpacerEl) waliSpacerEl.style.display = 'none';
           if (btnWaliHistHeader) btnWaliHistHeader.style.display = 'none';
-          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-16 sm:bottom-20 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none';
+          if (floatCheckoutBar) floatCheckoutBar.className = 'fixed bottom-24 sm:bottom-28 inset-x-0 z-[60] px-3 sm:px-6 pointer-events-none transition-all duration-300';
         }
 
         var mainSidebar = document.getElementById('mainSidebar');
