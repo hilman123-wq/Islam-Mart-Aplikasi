@@ -116,6 +116,16 @@
       background: transparent;
     }
 
+    /* Sembunyikan panah atas-bawah pada input angka (spinner) */
+    .hide-arrows::-webkit-outer-spin-button,
+    .hide-arrows::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .hide-arrows {
+      -moz-appearance: textfield;
+    }
+
     /* Format Presisi 36 Label Rak per Kertas A4 */
     .a4-shelf-grid {
       display: grid;
@@ -5219,6 +5229,29 @@
         }
       }
 
+      // FUNGSI BARU: Mengubah QTY berdasarkan ketikan langsung di input
+      function setWaliItemQtyExact(itemId, val) {
+        var row = document.querySelector('#orderItemsTableBody tr[data-id="' + itemId + '"]');
+        var newQty = parseInt(val, 10);
+        
+        if (isNaN(newQty) || newQty <= 0) {
+          // Jika diketik 0 atau kosong, hapus dari keranjang
+          if (row) {
+            row.remove();
+            var rows = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
+            if (rows.length === 0) clearPoCart();
+          }
+        } else {
+          // Jika diketik angka (misal 50), perbarui jumlah di keranjang
+          if (row) {
+            row.querySelector('.item-qty').value = newQty;
+          }
+        }
+        calcOrderTotals();
+        renderPoCatalogPage();
+        renderWaliCheckoutModalList();
+      }
+
       function changeCartItemUnit(itemId, newUnit) {
         var row = document.querySelector('#orderItemsTableBody tr[data-id="' + itemId + '"]');
         if (row) {
@@ -5243,10 +5276,10 @@
         var modal = document.getElementById('waliCheckoutModal');
         if (modal) {
           if (modal.parentElement !== document.body) {
-            document.body.appendChild(modal); // Pindahkan ke body agar di atas Bottom Navigation Bar
+            document.body.appendChild(modal);
           }
           modal.style.zIndex = '9999';
-          modal.style.paddingBottom = '85px'; // Ruang aman agar tombol bawah tidak pernah tertutup
+          modal.style.paddingBottom = '85px';
           modal.style.alignItems = 'center';
           modal.style.paddingLeft = '12px';
           modal.style.paddingRight = '12px';
@@ -5276,7 +5309,6 @@
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
         var html = '';
 
-        // Jika Kasir / Staf: Tampilkan pengaturan Unit Toko & Supplier di bagian atas pop-up Checkout
         if (!isWali) {
           var curIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : 'Banin';
           var curSup = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
@@ -5333,9 +5365,9 @@
             '<p class="text-[11px] font-black text-emerald-600 mt-0.5">Rp' + price.toLocaleString('id-ID') + ' <span class="text-slate-400 font-normal">x ' + qty + ' ' + unitVal + ' = Rp' + sub.toLocaleString('id-ID') + '</span></p>' +
             '</div>' +
             '<div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">' +
-            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 font-black shadow-2xs active:scale-90">-</button>' +
-            '<span class="w-6 text-center font-black text-xs text-slate-800">' + qty + '</span>' +
-            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90">+</button>' +
+            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 font-black shadow-2xs active:scale-90 shrink-0">-</button>' +
+            '<input type="number" value="' + qty + '" onchange="setWaliItemQtyExact(\'' + id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-slate-800 bg-transparent outline-none border-b border-slate-300 focus:border-emerald-500 m-0 p-0 hide-arrows">' +
+            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90 shrink-0">+</button>' +
             '</div>' +
             '</div>' +
             extraStafControls +
@@ -5357,7 +5389,6 @@
         if (!container) return;
 
         var isWali = isWaliSantri(currentUser);
-        // Untuk Wali Santri, sembunyikan hanya barang BANNED, sedangkan barang DISCONTINUE tetap tampil dengan capnya
         var sourceList = isWali
           ? window.filteredPoItems.filter(it => getItemSpecialStamp(it) !== 'BANNED')
           : window.filteredPoItems;
@@ -5396,7 +5427,6 @@
           var subInfo = isWali ? (it.kategori || 'Produk') : (it.supplier || it.kategori || '-');
           var stokBadge = isWali ? '' : '<div class="absolute top-2 left-2 z-10 flex flex-col gap-1"><span class="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">Stok: ' + stokNum + '</span></div>';
 
-          // Deteksi Cap BANNED atau DISCONTINUE (Tampil di Kasir maupun Wali Santri)
           var stampType = getItemSpecialStamp(it);
           var stampOverlayHtml = '';
           if (stampType === 'BANNED') {
@@ -5433,16 +5463,15 @@
               '</button>';
             }
           } else if (isHabisWali) {
-            // Tampilan khusus Wali Santri jika Stok Barang = 0 (Persis contoh gambar)
             infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sedang habis / tidak tersedia di toko</p>';
             actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center shadow-2xs">' +
               '<span>Tidak Tersedia</span>' +
             '</button>';
           } else if (qtyInCart > 0) {
             actionButtonHtml = '<div class="flex items-center justify-between bg-emerald-50 border-2 border-emerald-500 rounded-xl p-1">' +
-              '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-emerald-800 font-black shadow-2xs active:scale-90">-</button>' +
-              '<span class="font-black text-xs text-emerald-900">' + qtyInCart + '</span>' +
-              '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90">+</button>' +
+              '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-emerald-800 font-black shadow-2xs active:scale-90 shrink-0">-</button>' +
+              '<input type="number" value="' + qtyInCart + '" onchange="setWaliItemQtyExact(\'' + it.id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-emerald-900 bg-transparent outline-none border-b border-emerald-300 focus:border-emerald-600 m-0 p-0 hide-arrows" style="-moz-appearance: textfield;">' +
+              '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90 shrink-0">+</button>' +
               '</div>';
           } else {
             var btnLabel = isWali ? '+ Beli' : '+ Order PO';
