@@ -4745,7 +4745,7 @@
         var idxKode = -1, idxNama = -1, idxKat = -1, idxStok = -1, idxBeli = -1, idxJual = -1, idxSup = -1, idxGbr = -1;
         var headerRowIdx = -1;
 
-        // 1. Cari baris pertama mana yang merupakan Header Kolom Utama
+        // 1. Cari baris pertama yang merupakan Header Kolom Utama
         for (var i = 0; i < aoa.length; i++) {
           var row = aoa[i];
           if (!row || !row.length) continue;
@@ -4765,7 +4765,7 @@
               else if (val.includes('pemasok') || val.includes('supplier')) idxSup = j;
               else if (val.includes('gambar') || val.includes('image')) idxGbr = j;
             }
-            break; // Berhenti mencari header setelah ketemu yang pertama
+            break; 
           }
         }
 
@@ -4781,27 +4781,32 @@
           var barcode = getFuzzyValue(row, idxKode);
           var nama = getFuzzyValue(row, idxNama);
 
-          // 2. DETEKSI KATEGORI PINTAR (Membaca baris kosong di Zahir)
+          // 2. DETEKSI KATEGORI PINTAR
           if (!barcode && !nama) {
-            // Filter ketat: Abaikan Angka, Jam (16:29), Tanggal (12-10), IDR, Pcs, dan Spasi Kosong
-            var possibleText = row.find(x => x && typeof x === 'string' && x.trim().length > 0 && 
-                                        !String(x).match(/^[0-9.,:\s\-]+$/) && 
-                                        String(x).trim().toLowerCase() !== 'idr' && 
-                                        String(x).trim().toLowerCase() !== 'pcs');
+            // Filter sangat ketat: Buang jam (misal 16:29), tanggal (September), IDR, dll.
+            var possibleText = row.find(x => {
+              if (!x || typeof x !== 'string') return false;
+              var str = String(x).trim();
+              if (str.length < 3 || str.length > 30) return false;
+              if (str.toLowerCase() === 'idr' || str.toLowerCase() === 'pcs') return false;
+              // Blokir format Jam (HH:MM)
+              if (str.match(/^[0-9]{1,2}:[0-9]{2}$/)) return false; 
+              // Blokir full angka/simbol
+              if (str.match(/^[0-9.,:\s\-]+$/)) return false;
+              return true;
+            });
             
             if (possibleText) {
               var txt = possibleText.trim();
               var txtLower = txt.toLowerCase();
               
-              // Kumpulan kata kunci blokiran untuk membuang Kop Surat / Header Halaman Zahir
               var isKopSurat = txtLower.includes('head quarter') || 
                                txtLower.includes('daftar') || 
                                txtLower.includes('islam mart') || 
                                txtLower.includes('total') ||
                                txtLower.includes('hal') ||
                                txtLower.includes('page') ||
-                               txtLower.match(/januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember/) ||
-                               txt.length <= 2 || txt.length >= 35;
+                               txtLower.match(/januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember/);
 
               if (!isKopSurat) {
                 if (txtLower.includes('kelompok') || txtLower.includes('kategori')) {
@@ -4816,8 +4821,11 @@
           }
 
           if (nama) {
-            // Abaikan jika ternyata baris ini adalah Header Kolom yang diulang oleh Zahir di halaman berikutnya
-            if (nama.toLowerCase() === 'nama barang' || nama.toLowerCase() === 'deskripsi') continue;
+            var nLow = nama.toLowerCase().trim();
+            // Buang baris header yang diulang oleh Zahir di setiap halaman baru
+            if (nLow === 'nama barang' || nLow === 'deskripsi' || nLow === 'head quarter') continue;
+            // Buang baris yang hanya berisi jam (jika meleset masuk ke kolom nama)
+            if (nLow.match(/^[0-9]{1,2}:[0-9]{2}$/)) continue;
 
             var qtyRaw = getFuzzyValue(row, idxStok);
             var hbRaw = getFuzzyValue(row, idxBeli);
