@@ -3020,7 +3020,7 @@
               </div>
               
               <div>
-                <label class="block font-bold text-slate-700 mb-1">2. File Harga Jual Zahir (Opsional)</label>
+                <label class="block font-bold text-slate-700 mb-1">2. File Harga Jual Zahir</label>
                 <div class="border-2 border-dashed border-blue-300 bg-white rounded-xl p-2.5 text-center hover:border-blue-500 transition cursor-pointer relative">
                   <p id="importJualFileName" class="text-[10px] font-bold text-slate-600 truncate"><i class="fa-solid fa-upload mr-1"></i> Klik Pilih File 2 (Zahir Jual)</p>
                   <input type="file" id="importFileJual" accept=".xlsx, .xls, .csv" 
@@ -4868,8 +4868,9 @@
         var unitToko = document.getElementById('importBarangIM').value;
         var globalSup = document.getElementById('importSupplierGlobal') ? document.getElementById('importSupplierGlobal').value.trim() : '';
 
-        if (!fileStandar && !fileBeli) {
-          return showToast('Pilih File Zahir (Opsi A) ATAU File Standar (Opsi B)!', 'error');
+        // Validasi: Minimal salah satu dari 3 kotak harus diisi
+        if (!fileStandar && !fileBeli && !fileJual) {
+          return showToast('Pilih minimal 1 file Excel untuk di-import!', 'error');
         }
 
         showLoading('Membaca file Excel & menyaring data ganda...');
@@ -4883,10 +4884,12 @@
             dataToProcess = parseZahirExcelAOA(aoaStandar);
             if (dataToProcess.length === 0) throw new Error("Format Standar tidak dikenali. Pastikan ada baris judul kolom Barcode & Nama Barang.");
           } else {
-            // JALUR A: Zahir (File Beli & Jual)
-            var aoaBeli = await readExcelFileAOA(fileBeli);
-            var dataBeli = parseZahirExcelAOA(aoaBeli);
-            if (dataBeli.length === 0) throw new Error("Format Zahir tidak dikenali.");
+            // JALUR A: Zahir (File Beli & Jual - Bisa salah satu)
+            var dataBeli = [];
+            if (fileBeli) {
+              var aoaBeli = await readExcelFileAOA(fileBeli);
+              dataBeli = parseZahirExcelAOA(aoaBeli);
+            }
 
             var dataJual = [];
             if (fileJual) {
@@ -4894,12 +4897,17 @@
               dataJual = parseZahirExcelAOA(aoaJual);
             }
 
+            if (dataBeli.length === 0 && dataJual.length === 0) {
+                throw new Error("Format Zahir tidak dikenali atau file kosong.");
+            }
+
             // AUTO-MERGE: Gabungkan Beli & Jual tanpa duplikat
             var mergedList = [];
+            // Jika file beli ada, masukkan sebagai basis
             dataBeli.forEach(r => mergedList.push(r));
 
+            // Tambahkan / update dari file jual (meskipun file belinya kosong)
             dataJual.forEach(rj => {
-              // Cek apakah barang sudah ada di file Beli (Cocokkan Barcode atau Nama)
               var match = null;
               if (rj.barcode) {
                 match = mergedList.find(b => String(b.barcode).toLowerCase() === String(rj.barcode).toLowerCase());
@@ -4910,7 +4918,7 @@
               
               if (match) {
                 if (rj.harga_jual > 0) match.harga_jual = rj.harga_jual;
-                if (rj.barcode && !match.barcode) match.barcode = rj.barcode; // Tambal barcode jika di Beli kosong
+                if (rj.barcode && !match.barcode) match.barcode = rj.barcode; 
               } else {
                 mergedList.push(rj);
               }
@@ -4918,7 +4926,7 @@
             dataToProcess = mergedList;
           }
 
-          // SINKRONISASI DATABASE (Mencegah data ganda dengan yang sudah ada di sistem)
+          // SINKRONISASI DATABASE (Menyatukan dengan data lama di server)
           const existingItems = await fetchAllMasterBarang();
           var itemsToInsert = [];
           var itemsToUpdate = [];
@@ -4938,15 +4946,16 @@
             var finalSupplier = globalSup || r.supplier || (matchObj ? matchObj.supplier : '');
             var finalGambar = r.gambar || (matchObj ? matchObj.gambar : '');
             
-            // Jangan jadikan 0 jika data barunya kosong, pertahankan harga lama!
+            // Pertahankan harga/stok lama jika di file yang baru tidak ada datanya (misal hanya upload file jual)
             var finalHB = (r.harga_beli > 0) ? r.harga_beli : (matchObj ? matchObj.harga_beli : 0);
             var finalHJ = (r.harga_jual > 0) ? r.harga_jual : (matchObj ? matchObj.harga_jual : 0);
+            var finalQty = (r.qty !== undefined && fileBeli) ? r.qty : (matchObj ? matchObj.qty : 0); // Stok hanya diupdate jika file beli dilampirkan
 
             var payload = {
-              barcode: r.barcode || (matchObj ? matchObj.barcode : ''), // Selamatkan barcode lama jika baru kosong
+              barcode: r.barcode || (matchObj ? matchObj.barcode : ''), 
               nama: r.nama,
               kategori: r.kategori,
-              qty: r.qty,
+              qty: finalQty,
               harga_beli: finalHB,
               harga_jual: finalHJ,
               supplier: finalSupplier,
