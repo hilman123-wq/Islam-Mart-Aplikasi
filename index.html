@@ -4754,14 +4754,12 @@
           if ((rowStr.includes('kode') || rowStr.includes('barcode') || rowStr.includes('sku')) &&
               (rowStr.includes('nama') || rowStr.includes('deskripsi'))) {
             headerRowIdx = i;
-            // Petakan index kolom pintar
             for (var j = 0; j < row.length; j++) {
               var val = String(row[j] || '').toLowerCase().trim();
               if (val.includes('kode') || val.includes('barcode') || val.includes('sku')) idxKode = j;
               else if (val.includes('nama') || val.includes('deskripsi')) idxNama = j;
               else if (val === 'kategori' || val === 'kelompok') idxKat = j;
               else if (val.includes('tersedia') || val.includes('stok') || val.includes('qty')) idxStok = j;
-              // Deteksi 'harga satuan' karena Zahir memakai nama itu untuk Harga Beli
               else if (val.includes('harga satuan') || val.includes('harga beli') || val.includes('hpp')) idxBeli = j;
               else if (val.includes('harga jual')) idxJual = j;
               else if (val.includes('pemasok') || val.includes('supplier')) idxSup = j;
@@ -4780,21 +4778,35 @@
           var row = aoa[i];
           if (!row || row.length === 0) continue;
 
-          // Gunakan Fuzzy Value untuk mengatasi kolom Zahir yang sering bergeser karena format XML/Merge
           var barcode = getFuzzyValue(row, idxKode);
           var nama = getFuzzyValue(row, idxNama);
 
-          // Deteksi Kategori (Zahir memakai format "Kelompok : NAMA KATEGORI" pada baris kosong)
+          // 2. DETEKSI KATEGORI PINTAR (Membaca baris kosong di Zahir)
           if (!barcode && !nama) {
-            var possibleText = row.find(x => x && typeof x === 'string' && x.trim().length > 0);
+            // Cari teks di baris tsb yang BUKAN angka, BUKAN IDR, dan BUKAN Pcs
+            var possibleText = row.find(x => x && typeof x === 'string' && x.trim().length > 0 && !String(x).match(/^[0-9.,]+$/) && String(x).trim().toLowerCase() !== 'idr' && String(x).trim().toLowerCase() !== 'pcs');
+            
             if (possibleText) {
               var txt = possibleText.trim();
-              if (txt.toLowerCase().includes('kelompok') || txt.toLowerCase().includes('kategori')) {
-                var parts = txt.split(':');
-                currentKategori = parts.length > 1 ? parts[1].trim().toUpperCase() : txt.toUpperCase();
+              var txtLower = txt.toLowerCase();
+              // Abaikan teks bawaan kop surat dari Zahir
+              if (txtLower !== 'head quarter' && 
+                  !txtLower.includes('daftar') && 
+                  !txtLower.includes('islam mart') && 
+                  !txtLower.includes('total') &&
+                  !txtLower.includes('202') && 
+                  txt.length > 2 && txt.length < 35) {
+                  
+                if (txtLower.includes('kelompok') || txtLower.includes('kategori')) {
+                  var parts = txt.split(':');
+                  currentKategori = parts.length > 1 ? parts[1].trim().toUpperCase() : txt.toUpperCase();
+                } else {
+                  // Jika hanya tulisan tunggal (Misal: "ATK" atau "MAKANAN"), jadikan Kategori
+                  currentKategori = txt.toUpperCase();
+                }
               }
             }
-            continue; // Lewati baris kosong / baris hitungan Zahir yang tidak berguna
+            continue; 
           }
 
           if (nama) {
@@ -4807,7 +4819,6 @@
             var rowKat = getFuzzyValue(row, idxKat);
             var finalKat = rowKat ? rowKat : currentKategori;
 
-            // Pembersih angka ribuan (Zahir menggunakan koma ribuan: 1,450.00 -> 1450)
             var parseNum = function(val) {
               if (typeof val === 'number') return val;
               if (!val) return 0;
