@@ -2983,8 +2983,6 @@
         </div>
 
         <form id="importBarangForm" onsubmit="submitImportBarang(event)" class="space-y-4 text-xs">
-          <input type="hidden" id="importBarangRawJson" value="">
-
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Pisahkan ke Unit Toko *</label>
             <select id="importBarangIM" required
@@ -2992,9 +2990,34 @@
               <option value="Banin">Islam Mart Banin</option>
               <option value="Banat">Islam Mart Banat</option>
             </select>
-            <p class="text-[10px] text-slate-500 mt-1 italic">Semua barang di dalam Excel ini akan otomatis dimasukkan
-              ke toko yang dipilih di atas.</p>
           </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Nama Distributor / Supplier (Opsional)</label>
+            <input type="text" id="importSupplierGlobal" list="supplierMasterDatalist" placeholder="Ketik nama supplier untuk barang-barang ini..."
+              class="w-full p-2.5 bg-slate-50 border rounded-xl font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-600">
+            <p class="text-[10px] text-slate-500 mt-1 italic">Jika diisi, semua barang di file ini otomatis menggunakan supplier ini. Kosongkan jika ingin mempertahankan data supplier lama.</p>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">1. File Excel Data Stok / Harga Beli Zahir *</label>
+            <input type="file" id="importFileBeli" accept=".xlsx, .xls, .csv" required
+              class="w-full p-2 bg-white border border-slate-300 rounded-xl mb-3 cursor-pointer">
+            
+            <label class="block font-bold text-slate-700 uppercase mb-1">2. File Excel Harga Jual Zahir (Opsional)</label>
+            <input type="file" id="importFileJual" accept=".xlsx, .xls, .csv"
+              class="w-full p-2 bg-white border border-slate-300 rounded-xl cursor-pointer">
+          </div>
+
+          <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-[10px] text-blue-800">
+            <p class="font-black mb-0.5"><i class="fa-solid fa-robot"></i> Sistem Auto-Merge Zahir Aktif</p>
+            <p class="leading-snug">Gambar tidak wajib. Jika data dari Zahir terpisah, cukup masukkan <b>File Harga Beli</b> di kotak (1) dan <b>File Harga Jual</b> di kotak (2). Sistem otomatis mendeteksi kategori dan menggabungkannya!</p>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t">
+            <button type="button" onclick="closeModal('importBarangModal')" class="px-4 py-2.5 border rounded-xl font-bold text-slate-600">Batal</button>
+            <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-upload"></i> Mulai Import</button>
+          </div>
+        </form>
 
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Pilih File Excel *</label>
@@ -4665,91 +4688,164 @@
         openModal('importBarangModal');
       }
 
-      function parseImportBarangExcel(e) {
-        var file = e.target.files[0]; if (!file) return;
-        document.getElementById('importBarangFileName').innerText = file.name;
-        var r = new FileReader(); r.onload = function (evt) {
-          try {
-            var wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-            var json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            if (!json.length) throw new Error("Excel kosong atau format salah");
-            document.getElementById('importBarangRawJson').value = JSON.stringify(json);
-            showToast('Data Excel siap diimport!', 'success');
-          } catch (err) { showToast('Gagal membaca Excel: ' + err.message, 'error'); }
-        }; r.readAsArrayBuffer(file);
+      function readExcelFileAOA(file) {
+        return new Promise((resolve, reject) => {
+          var r = new FileReader();
+          r.onload = function (e) {
+            try {
+              var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+              var aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+              resolve(aoa);
+            } catch (err) { reject(err); }
+          };
+          r.onerror = reject;
+          r.readAsArrayBuffer(file);
+        });
+      }
+
+      function parseZahirExcelAOA(aoa) {
+        var headerRowIdx = -1;
+        // Cari baris mana yang merupakan Judul Kolom (Kode Barang & Nama)
+        for (var i = 0; i < aoa.length; i++) {
+          var rowStr = JSON.stringify(aoa[i]).toLowerCase();
+          if ((rowStr.includes('kode barang') || rowStr.includes('barcode') || rowStr.includes('sku')) &&
+              (rowStr.includes('nama') || rowStr.includes('deskripsi'))) {
+            headerRowIdx = i;
+            break;
+          }
+        }
+
+        if (headerRowIdx === -1) return []; // Format tidak dikenali
+
+        var headers = aoa[headerRowIdx].map(h => String(h || '').toLowerCase().trim());
+        var results = [];
+        var currentKategori = "Lainnya"; // Default kategori
+
+        for (var i = headerRowIdx + 1; i < aoa.length; i++) {
+          var row = aoa[i];
+          if (!row || row.length === 0) continue;
+
+          var obj = {};
+          for (var j = 0; j < headers.length; j++) {
+            if (headers[j]) {
+              obj[headers[j]] = row[j];
+            }
+          }
+
+          var barcode = String(obj['kode barang'] || obj['kode'] || obj['sku'] || obj['barcode'] || '').trim();
+          var nama = String(obj['deskripsi'] || obj['nama barang'] || obj['nama'] || '').trim();
+
+          // KECERDASAN ZAHIR: Jika Kode & Nama kosong, tapi ada teks, berarti itu adalah JUDUL KELOMPOK (Kategori)
+          if (!barcode && !nama) {
+            var possibleCat = row.find(x => x && typeof x === 'string' && x.trim().length > 0);
+            if (possibleCat && possibleCat.toLowerCase() !== 'head quarter') {
+              currentKategori = possibleCat.trim().toUpperCase();
+            }
+            continue;
+          }
+
+          var qty = parseFloat(obj['tersedia'] || obj['stok'] || obj['saldo'] || obj['qty'] || 0);
+          var hb = parseFloat(obj['harga satuan'] || obj['harga beli'] || obj['hpp'] || obj['harga_beli'] || 0);
+          var hj = parseFloat(obj['harga jual'] || obj['harga_jual'] || 0);
+
+          results.push({
+            barcode: barcode,
+            nama: nama,
+            kategori: obj['kategori'] || obj['kelompok'] || currentKategori,
+            qty: isNaN(qty) ? 0 : qty,
+            harga_beli: isNaN(hb) ? 0 : hb,
+            harga_jual: isNaN(hj) ? 0 : hj,
+            supplier: String(obj['pemasok'] || obj['supplier'] || '').trim()
+          });
+        }
+        return results;
       }
 
       async function submitImportBarang(e) {
         e.preventDefault();
-        var j = document.getElementById('importBarangRawJson').value;
-        if (!j) return showToast('Pilih file Excel terlebih dahulu!', 'error');
+        var fileBeli = document.getElementById('importFileBeli').files[0];
+        var fileJual = document.getElementById('importFileJual').files[0];
         var unitToko = document.getElementById('importBarangIM').value;
+        var globalSup = document.getElementById('importSupplierGlobal') ? document.getElementById('importSupplierGlobal').value.trim() : '';
 
-        var rawData = JSON.parse(j);
-        showLoading('Menyaring duplikat & menyinkronkan data...');
+        if (!fileBeli) return showToast('Pilih File Harga Beli/Stok (File 1) terlebih dahulu!', 'error');
+
+        showLoading('Membaca & menggabungkan file Zahir/Excel...');
 
         try {
-          // 1. Ambil data lama dari database
-          const existingItems = await fetchAllMasterBarang();
+          var aoaBeli = await readExcelFileAOA(fileBeli);
+          var dataBeli = parseZahirExcelAOA(aoaBeli);
+          
+          if (dataBeli.length === 0) throw new Error("Format tabel tidak dikenali. Pastikan ada kolom 'Kode Barang' dan 'Nama Barang'.");
 
+          var dataJual = [];
+          if (fileJual) {
+            var aoaJual = await readExcelFileAOA(fileJual);
+            dataJual = parseZahirExcelAOA(aoaJual);
+          }
+
+          // 1. Ambil data lama dari database untuk di-update (jika sudah ada)
+          const existingItems = await fetchAllMasterBarang();
           var existingMap = {};
           (existingItems || []).forEach(it => {
             var key = (String(it.barcode || '').trim() + '_' + String(it.nama || '').trim() + '_' + String(it.im || '').trim()).toLowerCase();
-            existingMap[key] = { id: it.id, gambar: it.gambar };
+            // Simpan gambar dan supplier lama agar tidak hilang jika diupdate!
+            existingMap[key] = { id: it.id, gambar: it.gambar, supplier: it.supplier };
           });
 
-          // MENGGUNAKAN MAP UNTUK MENCEGAH BARANG DOBEL DARI DALAM EXCEL
-          var insertMap = {};
-          var updateMap = {};
+          // 2. Gabungkan Data Beli & Data Jual (Auto-Merge)
+          var mergedMap = {};
+          
+          dataBeli.forEach(r => {
+            mergedMap[r.barcode || r.nama] = r;
+          });
 
-          rawData.forEach(row => {
-            var barcode = String(row["Barcode"] || row["barcode"] || row["BARCODE"] || "").trim();
-            var nama = String(row["Nama Barang"] || row["nama"] || row["Nama"] || "").trim();
-            var kat = String(row["Kategori"] || row["kategori"] || "Lainnya").trim();
-            var qty = parseInt(row["Qty"] || row["qty"] || row["QTY"] || 0);
-            var hb = parseFloat(row["Harga Beli"] || row["harga beli"] || row["harga_beli"] || 0);
-            var hj = parseFloat(row["Harga Jual"] || row["harga jual"] || row["harga_jual"] || 0);
-            var sup = String(row["Supplier"] || row["supplier"] || "").trim();
-            var gbr = String(row["Gambar"] || row["gambar"] || row["Link Gambar"] || "").trim();
-
-            if (nama) {
-              var lookupKey = (barcode + '_' + nama + '_' + unitToko).toLowerCase();
-              var matchObj = existingMap[lookupKey];
-
-              var finalGambar = gbr;
-              if (!finalGambar && matchObj && matchObj.gambar) {
-                finalGambar = matchObj.gambar;
-              }
-
-              var payload = {
-                barcode: barcode,
-                nama: nama,
-                kategori: kat,
-                qty: isNaN(qty) ? 0 : qty,
-                harga_beli: isNaN(hb) ? 0 : hb,
-                harga_jual: isNaN(hj) ? 0 : hj,
-                supplier: sup,
-                im: unitToko,
-                gambar: finalGambar
-              };
-
-              if (matchObj) {
-                payload.id = matchObj.id;
-                // Jika ada barang kembar di Excel, ini akan otomatis menimpa/menggabungkannya jadi 1
-                updateMap[matchObj.id] = payload;
-              } else {
-                insertMap[lookupKey] = payload;
-              }
+          dataJual.forEach(r => {
+            var key = r.barcode || r.nama;
+            if (mergedMap[key]) {
+              if (r.harga_jual > 0) mergedMap[key].harga_jual = r.harga_jual;
+            } else {
+              mergedMap[key] = r;
             }
           });
 
-          // Ubah Map kembali menjadi Array untuk dikirim ke Supabase
+          var rawDataMerged = Object.values(mergedMap);
+          var insertMap = {};
+          var updateMap = {};
+
+          rawDataMerged.forEach(r => {
+            var lookupKey = (r.barcode + '_' + r.nama + '_' + unitToko).toLowerCase();
+            var matchObj = existingMap[lookupKey];
+
+            // Prioritas Penamaan Supplier: 1. Ketikan di form Import -> 2. Bawaan dari file Zahir/Excel -> 3. Data lama di database
+            var finalSupplier = globalSup || r.supplier || (matchObj ? matchObj.supplier : '');
+
+            var payload = {
+              barcode: r.barcode,
+              nama: r.nama,
+              kategori: r.kategori,
+              qty: r.qty,
+              harga_beli: r.harga_beli,
+              harga_jual: r.harga_jual,
+              supplier: finalSupplier,
+              im: unitToko,
+              gambar: matchObj ? matchObj.gambar : '' // Biarkan kosong atau pakai gambar lama
+            };
+
+            if (matchObj) {
+              payload.id = matchObj.id;
+              updateMap[matchObj.id] = payload;
+            } else {
+              insertMap[lookupKey] = payload;
+            }
+          });
+
           var itemsToInsert = Object.values(insertMap);
           var itemsToUpdate = Object.values(updateMap);
 
-          // 2. EKSEKUSI JALUR AMAN (BATCH PROCESSING)
-          var BATCH_SIZE = 500;
+          showLoading('Menyinkronkan ' + rawDataMerged.length + ' barang ke server...');
 
+          var BATCH_SIZE = 500;
           if (itemsToInsert.length > 0) {
             for (let i = 0; i < itemsToInsert.length; i += BATCH_SIZE) {
               const batch = itemsToInsert.slice(i, i + BATCH_SIZE);
@@ -4767,13 +4863,13 @@
           }
 
           hideLoading();
-          showToast('Sukses! ' + itemsToInsert.length + ' barang baru, ' + itemsToUpdate.length + ' harga diperbarui.', 'success');
+          showToast('Sukses! ' + itemsToInsert.length + ' barang baru, ' + itemsToUpdate.length + ' diperbarui.', 'success');
           closeModal('importBarangModal');
           loadMasterBarang(true);
 
         } catch (err) {
           hideLoading();
-          showToast('Gagal Sinkronisasi Server: ' + err.message, 'error');
+          showToast('Gagal Sinkronisasi: ' + err.message, 'error');
           console.error("Detail Error Import:", err);
         }
       }
