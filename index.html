@@ -5350,7 +5350,7 @@
 
           var extraStafControls = '';
           if (!isWali) {
-            var units = ['Pcs', 'Lusin (12 pcs)', 'Renceng (10 pcs)', 'Dus (24 pcs)', 'Pack', 'Bal', 'Kg'];
+            var units = ['Pcs', 'Lusin (12 pcs)', 'Renceng (10 pcs)', 'Dus (24 pcs)', 'Dus (30 pcs)', 'Dus (40 pcs)', 'Dus (60 pcs)', 'Pack', 'Pack (10 pcs)', 'Pack (12 pcs)', 'Bal', 'Kg'];
             var uOpts = units.map(u => '<option value="' + u + '" ' + (u === unitVal ? 'selected' : '') + '>' + u + '</option>').join('');
             extraStafControls = '<div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">' +
               '<div><span class="text-[9px] text-slate-400 font-bold block">Satuan Beli:</span><select onchange="changeCartItemUnit(\'' + id + '\', this.value)" class="w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-bold">' + uOpts + '</select></div>' +
@@ -5558,7 +5558,7 @@
           '<td class="py-2 px-2 text-center font-bold text-slate-400 row-num">' + rowCount + '</td>' +
           '<td class="py-2 px-3"><input type="hidden" class="item-barcode" value="' + (it.barcode || '') + '"><input type="hidden" class="item-name" value="' + it.nama + '"><input type="hidden" class="item-supplier" value="' + (it.supplier || '') + '"><span class="font-bold text-slate-800 text-[11px]">' + it.nama + '</span><br><span class="text-[9px] text-slate-500 font-mono">' + (it.barcode || '-') + '</span></td>' +
           '<td class="py-2 px-2 text-center"><input type="number" min="1" value="1" oninput="calcOrderTotals()" class="item-qty w-14 p-1.5 bg-slate-50 border rounded-lg text-xs font-bold text-center"></td>' +
-          '<td class="py-2 px-2"><select onchange="calcOrderTotals()" class="item-unit w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-semibold"><option value="Pcs">Pcs</option><option value="Lusin (12 pcs)">Lusin (12 pcs)</option><option value="Renceng (10 pcs)">Renceng (10)</option><option value="Dus (24 pcs)">Dus (24)</option><option value="Pack">Pack</option><option value="Bal">Bal</option><option value="Kg">Kg</option></select></td>' +
+          '<td class="py-2 px-2"><select onchange="calcOrderTotals()" class="item-unit w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-semibold"><option value="Pcs">Pcs</option><option value="Lusin (12 pcs)">Lusin (12 pcs)</option><option value="Renceng (10 pcs)">Renceng (10 pcs)</option><option value="Dus (24 pcs)">Dus (24 pcs)</option><option value="Dus (30 pcs)">Dus (30 pcs)</option><option value="Dus (40 pcs)">Dus (40 pcs)</option><option value="Dus (60 pcs)">Dus (60 pcs)</option><option value="Pack">Pack</option><option value="Pack (10 pcs)">Pack (10 pcs)</option><option value="Pack (12 pcs)">Pack (12 pcs)</option><option value="Bal">Bal</option><option value="Kg">Kg</option></select></td>' +
           '<td class="py-2 px-2"><input type="number" min="0" step="any" value="' + itemPrice + '" ' + lockPriceAttr + '></td>' +
           '<td class="py-2 px-3 text-right font-bold text-slate-800 item-subtotal">Rp ' + Number(itemPrice).toLocaleString('id-ID') + '</td>' +
           '<td class="py-2 px-2 text-center"><button type="button" onclick="removePoCartItem(this)" class="p-1.5 text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></td>';
