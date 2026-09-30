@@ -4683,8 +4683,8 @@
 
       // === FITUR IMPORT BARANG DARI EXCEL ===
       function openImportBarangModal() {
-        document.getElementById('importBarangRawJson').value = '';
-        document.getElementById('importBarangFileName').innerText = 'Klik untuk Pilih File Excel';
+        var form = document.getElementById('importBarangForm');
+        if (form) form.reset(); // Otomatis mengosongkan semua isian file & supplier saat pop-up dibuka
         openModal('importBarangModal');
       }
 
