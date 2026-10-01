@@ -9318,10 +9318,13 @@
 
         var option = document.querySelector('input[name="exportOption"]:checked').value;
         var dataToExport = [];
-        // Cek apakah tabel sedang menampilkan Preview Zahir atau Database asli
-        var isPreviewMode = document.getElementById('filterItemIM') && document.getElementById('filterItemIM').value === 'PREVIEW_ZAHIR';
-        var sumberData = isPreviewMode ? window.filteredMasterItems : (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []);
-                
+        
+        // KUNCI UTAMA: Ambil data dari tabel yang SEDANG TAMPIL di layar saat ini 
+        // (Jadi hasil cucian Zahir atau hasil pencarian akan ikut diekspor dengan akurat)
+        var sumberData = (window.filteredMasterItems && window.filteredMasterItems.length > 0) 
+            ? window.filteredMasterItems 
+            : (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []);
+        
         if (option === 'ALL') {
           dataToExport = [...sumberData];
         } else if (option === 'BANIN') {
@@ -9370,14 +9373,19 @@
         });
 
         var ws = XLSX.utils.aoa_to_sheet(wsData);
-        // Lebar kolom rapi
+        // Atur lebar kolom agar rapi saat dibuka
         ws['!cols'] = [{wch: 5}, {wch: 18}, {wch: 45}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 25}];
         
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Master Barang");
         
         var tanggal = new Date().toISOString().split('T')[0];
-        var filename = "IslamMart_Barang_" + option + "_" + tanggal + ".xlsx";
+        
+        // Deteksi penamaan file otomatis (Jika sedang mode Zahir, nama file berubah)
+        var selIM = document.getElementById('filterItemIM');
+        var prefixNama = (selIM && selIM.value === 'PREVIEW_ZAHIR') ? "Zahir_Bersih_" : "IslamMart_Barang_";
+        
+        var filename = prefixNama + option + "_" + tanggal + ".xlsx";
         XLSX.writeFile(wb, filename);
         
         showToast('File Excel berhasil didownload!', 'success');
