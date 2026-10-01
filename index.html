@@ -5013,6 +5013,48 @@
             var rowKat = getFuzzyValue(row, idxKat);
             var finalKat = rowKat ? rowKat : currentKategori;
 
+            // ==========================================
+            // MESIN AUTO-KATEGORISASI PINTAR (AI-LIKE)
+            // Membaca kata kunci pada nama barang jika kategorinya kosong/Lainnya
+            // ==========================================
+            if (!finalKat || finalKat.toLowerCase() === 'lainnya' || finalKat.trim() === '') {
+              var nLow = String(nama).toLowerCase();
+              
+              // 1. Kategori ATK (Alat Tulis & Kantor)
+              if (nLow.match(/buku|pulpen|pensil|penghapus|penggaris|spidol|kertas|hvs|binder|tinta|map|lakban|tipe-x|tipex|isolasi/)) {
+                finalKat = 'ATK';
+              } 
+              // 2. Kategori Pembersih & Perawatan Diri
+              else if (nLow.match(/sabun|shampo|rinso|soklin|daia|sunlight|mama lemon|pasta gigi|sikat gigi|deterjen|pewangi|molto|downy|pembalut|pepsodent|ciptadent|lifebuoy|nuvo|dettol|clear|pantene|sunsilk|rexona|biore|marina|tisu|tissue|kapas|bedak/)) {
+                finalKat = 'Pembersih';
+              } 
+              // 3. Kategori Obat-obatan
+              else if (nLow.match(/tolak angin|antangin|panadol|paramex|bodrex|promag|betadine|hansaplast|kayu putih|salonpas|freshcare|minyak telon|diapet|mixagrip|insto|rohto/)) {
+                finalKat = 'Obat-obatan';
+              } 
+              // 4. Kategori Minuman
+              else if (nLow.match(/air|teh|kopi|susu|milk|sirup|juice|jus|aqua|mineral|hydro|floridina|cimory|pucuk|bear brand|nescafe|luwak|nutriboost|yakult|mizone|pocari|cleo|le minerale/)) {
+                finalKat = 'Minuman';
+              } 
+              // 5. Kategori Makanan / Snack
+              else if (nLow.match(/mie|indomie|sedap|chitato|taro|biskuit|roti|wafer|coklat|permen|beng-beng|beras|gula|garam|kecap|saos|kaldu|tepung|snack|kacang|kuaci|qtela|keripik|beng|roma|slai|oreo|tango|biskuat|malkist|silverqueen|choki/)) {
+                finalKat = 'Makanan';
+              } 
+              // 6. Kategori Pakaian / Seragam
+              else if (nLow.match(/seragam|kaos|celana|baju|peci|sarung|jilbab|kerudung|kaos kaki|dasi|topi/)) {
+                finalKat = 'Seragam dan Pakaian';
+              } 
+              // 7. Kategori Peralatan / Lainnya
+              else if (nLow.match(/piring|gelas|sendok|garpu|ember|sapu|pel|pisau|gunting|gembok|korek|baterai/)) {
+                finalKat = 'Peralatan';
+              } 
+              // 8. Jika masih tidak dikenali, biarkan menjadi Lainnya
+              else {
+                finalKat = 'Lainnya';
+              }
+            }
+            // ==========================================
+
             var parseNum = function(val) {
               if (typeof val === 'number') return val;
               if (!val) return 0;
