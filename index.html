@@ -4487,13 +4487,15 @@
       }
 
       function filterAndRenderMasterBarang() {
-        var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase();
+        var searchEl = document.getElementById('filterItemSearch');
+        var q = searchEl ? searchEl.value.trim().toLowerCase() : '';
         var selIM = document.getElementById('filterItemIM');
-        var kat = document.getElementById('filterItemCategory').value;
+        var katEl = document.getElementById('filterItemCategory');
+        var kat = katEl ? katEl.value : 'ALL';
         var sortEl = document.getElementById('filterItemSort');
         var sortBy = sortEl ? sortEl.value : 'nama_asc';
 
-        // Kunci otomatis Unit Barang khusus Kasir (Aman dari Error)
+        // 1. Kunci Unit Otomatis untuk Kasir
         var lockedUnit = null;
         if (typeof getUserLockedUnit === 'function' && typeof currentUser !== 'undefined') {
           lockedUnit = getUserLockedUnit(currentUser);
@@ -4516,16 +4518,15 @@
 
         var imFilter = (selIM && !selIM.disabled) ? selIM.value : (lockedUnit ? lockedUnit : 'ALL');
 
-        // Proses Penyaringan (Filtering)
-        window.filteredMasterItems = (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []).filter(it => {
+        // 2. Proses Penyaringan (Filtering)
+        var dataSumber = (typeof cachedMasterBarang !== 'undefined' && cachedMasterBarang) ? cachedMasterBarang : [];
+        
+        window.filteredMasterItems = dataSumber.filter(it => {
           var itemIM = String(it.im || 'Banin').trim().toLowerCase();
           
-          // ==========================================
-          // FITUR AUDIT PENDETEKSI BEDA HARGA ANTAR TOKO
-          // ==========================================
           var matchIM = true;
           if (imFilter === 'BEDA_HARGA') {
-            var kembaran = (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []).find(x => {
+            var kembaran = dataSumber.find(x => {
               var isBedaToko = String(x.im || 'Banin').toLowerCase().trim() !== itemIM;
               var isBarcodeValid = it.barcode && String(it.barcode).trim() !== '' && it.barcode !== '-';
               
@@ -4548,10 +4549,9 @@
           } else if (imFilter !== 'ALL') {
             matchIM = itemIM.includes(String(imFilter).toLowerCase());
           }
-          // ==========================================
 
           var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
+          var targetKat = String(kat).toLowerCase().replace(/[^a-z0-9]/g, '');
           var matchKat = (kat === 'ALL') || (itemKat === targetKat);
           
           var matchQ = true;
@@ -4560,7 +4560,7 @@
           return matchIM && matchKat && matchQ;
         });
 
-        // Pengurutan (Sorting)
+        // 3. Pengurutan (Sorting)
         window.filteredMasterItems.sort((a, b) => {
           if (sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
           if (sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
@@ -4571,24 +4571,8 @@
           return 0;
         });
 
-        window.masterCurrentPage = 1; // Kembalikan ke halaman 1 setiap kali filter diubah
-        renderMasterBarangPage();
-      }
-          
-          // ==========================================
-
-          var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
-          var matchKat = (kat === 'ALL') || (itemKat === targetKat);
-          
-          var matchQ = true;
-          if (q) matchQ = String(it.nama || '').toLowerCase().includes(q) || String(it.barcode || '').toLowerCase().includes(q) || String(it.supplier || '').toLowerCase().includes(q);
-          
-          return matchIM && matchKat && matchQ;
-        });
-
-        window.masterCurrentPage = 1;
-        renderMasterBarangPage();
+        window.masterCurrentPage = 1; 
+        if (typeof renderMasterBarangPage === 'function') renderMasterBarangPage();
       }
 
       function changeMasterPage(delta) {
