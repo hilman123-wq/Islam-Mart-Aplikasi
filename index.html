@@ -4490,50 +4490,34 @@
         var q = (document.getElementById('filterItemSearch').value || '').trim().toLowerCase();
         var selIM = document.getElementById('filterItemIM');
         var kat = document.getElementById('filterItemCategory').value;
-        var sortBy = document.getElementById('filterItemSort') ? document.getElementById('filterItemSort').value : 'nama_asc';
-
-        // Rapikan susunan bar filter Master Barang jika masih menumpuk di dalam 1 div
-        var catEl = document.getElementById('filterItemCategory');
         var sortEl = document.getElementById('filterItemSort');
-        if (selIM && catEl && sortEl && selIM.parentElement.parentElement === sortEl.parentElement) {
-          var gridWrap = selIM.closest('.grid');
-          if (gridWrap) {
-            gridWrap.appendChild(selIM.parentElement);
-            gridWrap.appendChild(catEl.parentElement);
-            gridWrap.appendChild(sortEl);
-          }
-        }
+        var sortBy = sortEl ? sortEl.value : 'nama_asc';
 
-        // Kunci otomatis Unit Barang khusus Kasir (Gudang & Admin tetap dimunculkan agar bisa Audit Harga)
-        var lockedUnit = getUserLockedUnit(currentUser);
-        var isRoleKasir = currentUser && String(currentUser.role || '').toLowerCase().includes('kasir') && !isUserAdmin(currentUser);
+        // Kunci otomatis Unit Barang khusus Kasir (Aman dari Error)
+        var lockedUnit = null;
+        if (typeof getUserLockedUnit === 'function' && typeof currentUser !== 'undefined') {
+          lockedUnit = getUserLockedUnit(currentUser);
+        }
+        
+        var isRoleKasir = false;
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.role) {
+          var roleStr = String(currentUser.role).toLowerCase();
+          isRoleKasir = roleStr.includes('kasir') && !roleStr.includes('admin') && !roleStr.includes('gudang');
+        }
         
         if (lockedUnit && selIM && isRoleKasir) {
           selIM.value = lockedUnit;
           selIM.disabled = true;
-          if (selIM.parentElement) selIM.parentElement.style.display = 'none'; // Sembunyikan khusus Kasir
+          if (selIM.parentElement) selIM.parentElement.style.display = 'none'; 
         } else if (selIM) {
           selIM.disabled = false;
-          if (selIM.parentElement) selIM.parentElement.style.display = ''; // Munculkan untuk Gudang/Admin
+          if (selIM.parentElement) selIM.parentElement.style.display = ''; 
         }
 
-        // Ambil filter sesuai dropdown yang dipilih Gudang
         var imFilter = (selIM && !selIM.disabled) ? selIM.value : (lockedUnit ? lockedUnit : 'ALL');
 
-        var imFilter = lockedUnit ? lockedUnit : (selIM ? selIM.value : 'ALL');
-
-        window.filteredMasterItems = cachedMasterBarang.filter(it => {
-          var itemIM = String(it.im || 'Banin').trim().toLowerCase();
-          var matchIM = (imFilter === 'ALL') || (itemIM === imFilter.toLowerCase());
-          var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
-          var matchKat = (kat === 'ALL') || (itemKat === targetKat);
-          var matchQ = true;
-          if (q) matchQ = String(it.nama || '').toLowerCase().includes(q) || String(it.barcode || '').toLowerCase().includes(q) || String(it.supplier || '').toLowerCase().includes(q);
-          return matchIM && matchKat && matchQ;
-        });
-
-        window.filteredMasterItems = cachedMasterBarang.filter(it => {
+        // Proses Penyaringan (Filtering)
+        window.filteredMasterItems = (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []).filter(it => {
           var itemIM = String(it.im || 'Banin').trim().toLowerCase();
           
           // ==========================================
@@ -4541,8 +4525,7 @@
           // ==========================================
           var matchIM = true;
           if (imFilter === 'BEDA_HARGA') {
-            // Cari kembarannya di toko sebelah
-            var kembaran = cachedMasterBarang.find(x => {
+            var kembaran = (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []).find(x => {
               var isBedaToko = String(x.im || 'Banin').toLowerCase().trim() !== itemIM;
               var isBarcodeValid = it.barcode && String(it.barcode).trim() !== '' && it.barcode !== '-';
               
@@ -4555,17 +4538,42 @@
               return isBedaToko && (isBarcodeSama || isNamaSama);
             });
 
-            // Loloskan HANYA JIKA ada kembaran DAN harganya BERBEDA
             if (kembaran) {
               var hargaKu = Number(it.harga_jual || it.hargaJual || 0);
               var hargaDia = Number(kembaran.harga_jual || kembaran.hargaJual || 0);
               matchIM = (hargaKu !== hargaDia);
             } else {
-              matchIM = false; // Sembunyikan barang jika tidak punya kembaran di toko sebelah
+              matchIM = false; 
             }
           } else if (imFilter !== 'ALL') {
-            matchIM = itemIM.includes(imFilter.toLowerCase());
+            matchIM = itemIM.includes(String(imFilter).toLowerCase());
           }
+          // ==========================================
+
+          var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
+          var matchKat = (kat === 'ALL') || (itemKat === targetKat);
+          
+          var matchQ = true;
+          if (q) matchQ = String(it.nama || '').toLowerCase().includes(q) || String(it.barcode || '').toLowerCase().includes(q) || String(it.supplier || '').toLowerCase().includes(q);
+          
+          return matchIM && matchKat && matchQ;
+        });
+
+        // Pengurutan (Sorting)
+        window.filteredMasterItems.sort((a, b) => {
+          if (sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
+          if (sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
+          if (sortBy === 'stok_asc') return (a.qty || 0) - (b.qty || 0);
+          if (sortBy === 'stok_desc') return (b.qty || 0) - (a.qty || 0);
+          if (sortBy === 'harga_asc') return (a.harga_jual || a.hargaJual || 0) - (b.harga_jual || b.hargaJual || 0);
+          if (sortBy === 'harga_desc') return (b.harga_jual || b.hargaJual || 0) - (a.harga_jual || a.hargaJual || 0);
+          return 0;
+        });
+
+        window.masterCurrentPage = 1; // Kembalikan ke halaman 1 setiap kali filter diubah
+        renderMasterBarangPage();
+      }
           
           // ==========================================
 
