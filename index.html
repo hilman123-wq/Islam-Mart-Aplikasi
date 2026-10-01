@@ -4552,7 +4552,7 @@
               matchIM = false; 
             }
           } else if (imFilter !== 'ALL') {
-            matchIM = (itemIM === imFilter.toLowerCase());
+            matchIM = itemIM.includes(imFilter.toLowerCase());
           }
           // ==========================================
 
