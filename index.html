@@ -36,6 +36,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
+    /* Memaksa Browser Mencetak Warna Latar Belakang */
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
     /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
     html,
     body {
