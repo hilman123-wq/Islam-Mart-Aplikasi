@@ -61,7 +61,7 @@
         margin: 6mm; 
       }
     }
-    
+
     /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
     html,
     body {
@@ -1139,6 +1139,7 @@
                   <option value="ALL">Semua Toko</option>
                   <option value="Banin">Khusus Banin</option>
                   <option value="Banat">Khusus Banat</option>
+                  <option value="BEDA_HARGA">⚠️ Cek Beda Harga</option>
                 </select>
               </div>
               <div>
@@ -4527,14 +4528,37 @@
           return matchIM && matchKat && matchQ;
         });
 
-        window.filteredMasterItems.sort((a, b) => {
-          if (sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
-          if (sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
-          if (sortBy === 'stok_asc') return (a.qty || 0) - (b.qty || 0);
-          if (sortBy === 'stok_desc') return (b.qty || 0) - (a.qty || 0);
-          if (sortBy === 'harga_asc') return (a.harga_jual || a.hargaJual || 0) - (b.harga_jual || b.hargaJual || 0);
-          if (sortBy === 'harga_desc') return (b.harga_jual || b.hargaJual || 0) - (a.harga_jual || a.hargaJual || 0);
-          return 0;
+        window.filteredMasterItems = cachedMasterBarang.filter(it => {
+          var itemIM = String(it.im || 'Banin').trim().toLowerCase();
+          
+          // ==========================================
+          // FITUR AUDIT PENDETEKSI BEDA HARGA ANTAR TOKO
+          // ==========================================
+          var matchIM = true;
+          if (imFilter === 'BEDA_HARGA') {
+            var validBarcode = it.barcode && it.barcode.trim() !== '' && it.barcode !== '-';
+            var otherItem = cachedMasterBarang.find(x => 
+              x.id !== it.id && 
+              ( (validBarcode && x.barcode === it.barcode) || (!validBarcode && String(x.nama).toLowerCase().trim() === String(it.nama).toLowerCase().trim()) ) && 
+              String(x.im).toLowerCase() !== String(it.im).toLowerCase()
+            );
+            // Hanya loloskan jika ada kembaran di toko lain dan harganya beda
+            if (!otherItem || Number(otherItem.harga_jual || otherItem.hargaJual || 0) === Number(it.harga_jual || it.hargaJual || 0)) {
+              matchIM = false; 
+            }
+          } else if (imFilter !== 'ALL') {
+            matchIM = (itemIM === imFilter.toLowerCase());
+          }
+          // ==========================================
+
+          var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          var targetKat = kat.toLowerCase().replace(/[^a-z0-9]/g, '');
+          var matchKat = (kat === 'ALL') || (itemKat === targetKat);
+          
+          var matchQ = true;
+          if (q) matchQ = String(it.nama || '').toLowerCase().includes(q) || String(it.barcode || '').toLowerCase().includes(q) || String(it.supplier || '').toLowerCase().includes(q);
+          
+          return matchIM && matchKat && matchQ;
         });
 
         window.masterCurrentPage = 1;
@@ -4589,12 +4613,10 @@
           var actualIndex = startIndex + i + 1;
           var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
 
-          // Pisahkan tombol-tombol berdasarkan Hak Akses
           var btnCetak = '<button type="button" onclick=\'printSingleShelfLabel(' + safeIt + ')\' class="p-1.5 text-amber-600 hover:text-amber-700" title="Cetak Label"><i class="fa-solid fa-tag"></i></button>';
           var btnEdit = (!isRoleKasir) ? '<button type="button" onclick=\'openEditItemModal(' + safeIt + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit Barang"><i class="fa-solid fa-pen-to-square"></i></button>' : '';
           var btnHapus = (!isRoleKasir) ? '<button type="button" onclick="promptDeleteMasterItem(\'' + it.id + '\', \'' + String(it.nama).replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>' : '';
 
-          // Kolom Unit, Stok, Supplier, dan Harga Beli hanya dirender jika BUKAN Kasir
           var extraColsNonKasir = isRoleKasir ? '' : (
             '<td class="py-3 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (it.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + (it.im || 'Banin') + '</span></td>' +
             '<td class="py-3 px-3 text-center font-black ' + (it.qty <= 5 ? 'text-rose-600' : 'text-slate-800') + '">' + it.qty + '</td>' +
@@ -4602,14 +4624,39 @@
             '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + Number(it.harga_beli || it.hargaBeli || 0).toLocaleString('id-ID') + '</td>'
           );
 
-          html += '<tr class="hover:bg-slate-50">' +
+          // ==========================================
+          // LABEL MERAH JIKA BEDA HARGA
+          // ==========================================
+          var priceWarning = '';
+          if (cachedMasterBarang) {
+            var validBarcode = it.barcode && it.barcode.trim() !== '' && it.barcode !== '-';
+            var otherItem = cachedMasterBarang.find(x => 
+              x.id !== it.id && 
+              ( (validBarcode && x.barcode === it.barcode) || (!validBarcode && String(x.nama).toLowerCase().trim() === String(it.nama).toLowerCase().trim()) ) && 
+              String(x.im).toLowerCase() !== String(it.im).toLowerCase()
+            );
+
+            if (otherItem && Number(otherItem.harga_jual || otherItem.hargaJual || 0) !== Number(it.harga_jual || it.hargaJual || 0)) {
+              var otherUnitName = String(otherItem.im || 'Banin').toUpperCase();
+              var otherPrice = Number(otherItem.harga_jual || otherItem.hargaJual || 0).toLocaleString('id-ID');
+              priceWarning = '<div class="mt-1 text-[9px] font-black text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded shadow-sm inline-block"><i class="fa-solid fa-triangle-exclamation mr-1 animate-pulse"></i>' + otherUnitName + ': Rp ' + otherPrice + '</div>';
+            }
+          }
+          
+          var trClass = (priceWarning !== '') ? 'bg-rose-50/40 hover:bg-rose-100 transition' : 'hover:bg-slate-50 transition';
+          // ==========================================
+
+          html += '<tr class="' + trClass + '">' +
             '<td class="py-3 px-3 text-center"><input type="checkbox" value="' + it.id + '" onchange="handleItemSelection(this)" class="item-select-checkbox w-4 h-4 rounded text-emerald-600" ' + isChecked + '></td>' +
             '<td class="py-3 px-2 text-center font-bold text-slate-400">' + actualIndex + '</td>' +
             '<td class="py-3 px-3 font-mono font-semibold text-slate-600">' + (it.barcode || '-') + '</td>' +
             '<td class="py-3 px-4 font-bold text-slate-800">' + it.nama + '</td>' +
             '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">' + it.kategori + '</span></td>' +
             extraColsNonKasir +
-            '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</td>' +
+            '<td class="py-3 px-3 text-right">' + 
+              '<div class="font-mono font-black text-emerald-700">Rp ' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</div>' + 
+              priceWarning + 
+            '</td>' +
             '<td class="py-3 px-3 text-center"><div class="flex items-center justify-center gap-1.5">' +
             btnCetak + btnEdit + btnHapus +
             '</div></td></tr>';
