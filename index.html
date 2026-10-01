@@ -8079,7 +8079,7 @@
         if (!res.data || res.data.length === 0) { tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-slate-400">Tidak ada data.</td></tr>'; return; }
 
         res.data.forEach(r => {
-          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border font-black bg-slate-100">#' + r.rank + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border font-semibold text-slate-700">' + r.count + '</td>';
+          var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border font-black bg-slate-100">' + r.rank + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border font-semibold text-slate-700">' + r.count + '</td>';
           r.catAverages.forEach(function (score) {
             rowHtml += '<td class="border text-emerald-700 font-bold">' + score + '</td>';
           });
