@@ -5012,24 +5012,40 @@
       // LABEL RAK (CETAK A4, EKSPOR EXCEL, & KIRIM WA OTOMATIS KE NOMOR KANTOR TOKO)
       window.currentRenderedLabelItems = [];
 
+     // Helper pencegah cetak barang Banned / Discontinue / Karmin
+      function isItemPrintable(it) {
+        var gabungTeks = (String(it.nama || '') + ' ' + String(it.kategori || '') + ' ' + String(it.supplier || '') + ' ' + String(it.status || '') + ' ' + String(it.keterangan || '')).toLowerCase();
+        // Tambahkan 'karmin' ke dalam daftar blokir cetak
+        var isBanned = gabungTeks.includes('banned') || gabungTeks.includes('boikot') || gabungTeks.includes('dilarang') || gabungTeks.includes('karmin');
+        var isDiscontinue = gabungTeks.includes('discontinue') || gabungTeks.includes('diskontinu') || gabungTeks.includes('stop produksi') || gabungTeks.includes('nonaktif');
+        return !(isBanned || isDiscontinue);
+      }
+
       function getSelectedOrFilteredLabelItems() {
         document.querySelectorAll('.item-select-checkbox:checked').forEach(cb => {
           if (!window.selectedMasterItemIds.includes(cb.value)) window.selectedMasterItemIds.push(cb.value);
         });
         if (window.selectedMasterItemIds.length > 0) {
-          return cachedMasterBarang.filter(it => window.selectedMasterItemIds.includes(String(it.id)) || window.selectedMasterItemIds.includes(it.id));
+          return cachedMasterBarang.filter(it => {
+            var isSelected = window.selectedMasterItemIds.includes(String(it.id)) || window.selectedMasterItemIds.includes(it.id);
+            // Hanya loloskan barang yang dipilih DAN statusnya BUKAN Banned/Discontinue
+            return isSelected && isItemPrintable(it);
+          });
         }
         return [];
       }
 
       function printSingleShelfLabel(it) {
+        if (!isItemPrintable(it)) {
+          return showToast('Barang Banned / Discontinue tidak perlu dicetak!', 'error');
+        }
         renderShelfLabels([it]);
         openModal('priceTagModal');
       }
 
       function printSelectedShelfLabels() {
         var itemsToPrint = getSelectedOrFilteredLabelItems();
-        if (itemsToPrint.length === 0) return showToast('Centang minimal 1 barang pada tabel terlebih dahulu!', 'info');
+        if (itemsToPrint.length === 0) return showToast('Pilih barang valid! (Barang Banned/Discontinue otomatis diabaikan)', 'info');
         renderShelfLabels(itemsToPrint);
         openModal('priceTagModal');
       }
@@ -5609,7 +5625,8 @@
 
       function getItemSpecialStamp(it) {
         var gabungTeks = (String(it.nama || '') + ' ' + String(it.kategori || '') + ' ' + String(it.supplier || '') + ' ' + String(it.status || '') + ' ' + String(it.keterangan || '')).toLowerCase();
-        if (gabungTeks.includes('banned') || gabungTeks.includes('boikot') || gabungTeks.includes('dilarang')) return 'BANNED';
+        // Tambahkan 'karmin' agar mendapat stempel merah BANNED
+        if (gabungTeks.includes('banned') || gabungTeks.includes('boikot') || gabungTeks.includes('dilarang') || gabungTeks.includes('karmin')) return 'BANNED';
         if (gabungTeks.includes('discontinue') || gabungTeks.includes('diskontinu') || gabungTeks.includes('stop produksi') || gabungTeks.includes('nonaktif')) return 'DISCONTINUE';
         return '';
       }
