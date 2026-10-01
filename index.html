@@ -5497,7 +5497,7 @@
           var isKonsumsi = kat.includes('makanan') || kat.includes('minuman') || nLow.match(/air|teh|kopi|susu|roti|biskuit|permen|milk|drink|snack|yogurt|mie|noodle|jus|juice|cimory/);
           if (!isKonsumsi) return null;
 
-          if (nLow.match(/air mineral|aqua|cleo|le minerale|vit|nestle pure|amidis|teh tawar|tanpa gula|zero sugar|no sugar|plain water/)) return 'A';
+          if (nLow.match(/air mineral|mineral|aqua|cleo|le mineral|le minerale|vit|nestle pure|amidis|teh tawar|tanpa gula|zero sugar|no sugar|plain water/)) return 'A';
           if (nLow.match(/bear brand|susu murni|uht plain|susu full cream|hydro coco|fresh milk|pure milk|uht full cream|original 100%/)) return 'B';
           if (nLow.match(/teh pucuk|kopi|coffee|sirup|syrup|marjan|kental manis|fanta|coca cola|sprite|soda|permen|kopiko|coklat|cokelat|chocolate|chocomalt|silverqueen|chitato|indomie|mie|snack|taro|es krim|ice cream|milo|matcha|caramel|tiramisu|hazelnut|beng-beng|choki|drink beng|pop mie|wafer|oreo|tango/)) return 'D';
           return 'C'; 
