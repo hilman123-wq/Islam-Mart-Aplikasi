@@ -4541,19 +4541,32 @@
           // ==========================================
           var matchIM = true;
           if (imFilter === 'BEDA_HARGA') {
-            var validBarcode = it.barcode && it.barcode.trim() !== '' && it.barcode !== '-';
-            var otherItem = cachedMasterBarang.find(x => 
-              x.id !== it.id && 
-              ( (validBarcode && x.barcode === it.barcode) || (!validBarcode && String(x.nama).toLowerCase().trim() === String(it.nama).toLowerCase().trim()) ) && 
-              String(x.im).toLowerCase() !== String(it.im).toLowerCase()
-            );
-            // Hanya loloskan jika ada kembaran di toko lain dan harganya beda
-            if (!otherItem || Number(otherItem.harga_jual || otherItem.hargaJual || 0) === Number(it.harga_jual || it.hargaJual || 0)) {
-              matchIM = false; 
+            // Cari kembarannya di toko sebelah
+            var kembaran = cachedMasterBarang.find(x => {
+              var isBedaToko = String(x.im || 'Banin').toLowerCase().trim() !== itemIM;
+              var isBarcodeValid = it.barcode && String(it.barcode).trim() !== '' && it.barcode !== '-';
+              
+              var isBarcodeSama = false;
+              if (isBarcodeValid && x.barcode) {
+                isBarcodeSama = String(x.barcode).toLowerCase().trim() === String(it.barcode).toLowerCase().trim();
+              }
+              var isNamaSama = String(x.nama || '').toLowerCase().trim() === String(it.nama || '').toLowerCase().trim();
+              
+              return isBedaToko && (isBarcodeSama || isNamaSama);
+            });
+
+            // Loloskan HANYA JIKA ada kembaran DAN harganya BERBEDA
+            if (kembaran) {
+              var hargaKu = Number(it.harga_jual || it.hargaJual || 0);
+              var hargaDia = Number(kembaran.harga_jual || kembaran.hargaJual || 0);
+              matchIM = (hargaKu !== hargaDia);
+            } else {
+              matchIM = false; // Sembunyikan barang jika tidak punya kembaran di toko sebelah
             }
           } else if (imFilter !== 'ALL') {
             matchIM = itemIM.includes(imFilter.toLowerCase());
           }
+          
           // ==========================================
 
           var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
