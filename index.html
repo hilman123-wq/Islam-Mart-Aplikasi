@@ -1139,7 +1139,10 @@
                   <option value="Banin">Khusus Banin</option>
                   <option value="Banat">Khusus Banat</option>
                   <option value="BEDA_HARGA">⚠️ Cek Beda Harga</option>
-                </select>
+               <option value="PREVIEW_ZAHIR">📂 Filter File Zahir (Cuci Excel)</option>
+             </select>
+             <!-- Input tersembunyi untuk memilih file Zahir multi-file -->
+             <input type="file" id="previewZahirInput" accept=".xlsx, .xls, .csv" multiple style="display: none;" onchange="processPreviewZahir(event)">
               </div>
               <div>
                 <select id="filterItemCategory" onchange="filterAndRenderMasterBarang()"
@@ -4523,6 +4526,56 @@
         return u.im || 'Banin';
       }
 
+      // FUNGSI BARU: PREVIEW & CUCI FILE ZAHIR LANGSUNG DI TABEL
+      async function processPreviewZahir(e) {
+        var files = e.target.files;
+        if (!files || files.length === 0) {
+          document.getElementById('filterItemIM').value = 'ALL';
+          filterAndRenderMasterBarang();
+          return;
+        }
+        showLoading('Membaca & Merapikan File Zahir...');
+        try {
+          var allData = [];
+          for (var i = 0; i < files.length; i++) {
+            var aoa = await readExcelFileAOA(files[i]);
+            var parsed = parseZahirExcelAOA(aoa);
+            allData = allData.concat(parsed);
+          }
+          
+          // Deduplikasi (Gabung Harga Beli & Jual otomatis jika namanya sama)
+          var mergedList = [];
+          allData.forEach(r => {
+            var match = null;
+            if (r.barcode) match = mergedList.find(b => String(b.barcode).toLowerCase() === String(r.barcode).toLowerCase());
+            if (!match) match = mergedList.find(b => String(b.nama).toLowerCase().trim() === String(r.nama).toLowerCase().trim());
+
+            if (match) {
+              if (r.harga_beli > 0) match.harga_beli = r.harga_beli;
+              if (r.harga_jual > 0) match.harga_jual = r.harga_jual;
+              if (r.qty > 0) match.qty = r.qty;
+              if (r.barcode && !match.barcode) match.barcode = r.barcode;
+            } else {
+              mergedList.push(r);
+            }
+          });
+
+          // Tampilkan langsung ke tabel tanpa menyentuh Database!
+          window.filteredMasterItems = mergedList;
+          window.masterCurrentPage = 1;
+          renderMasterBarangPage();
+          
+          hideLoading();
+          showToast('Berhasil merapikan ' + mergedList.length + ' baris dari file Zahir!', 'success');
+          e.target.value = ''; // Reset input agar bisa pilih file lagi nanti
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal memproses file: ' + err.message, 'error');
+          document.getElementById('filterItemIM').value = 'ALL';
+          filterAndRenderMasterBarang();
+        }
+      }
+
       function filterAndRenderMasterBarang() {
         var searchEl = document.getElementById('filterItemSearch');
         var q = searchEl ? searchEl.value.trim().toLowerCase() : '';
@@ -4554,7 +4607,11 @@
         }
 
         var imFilter = (selIM && !selIM.disabled) ? selIM.value : (lockedUnit ? lockedUnit : 'ALL');
-
+        // Jika user memilih Filter File Zahir, hentikan filter database dan buka pencarian file
+      if (imFilter === 'PREVIEW_ZAHIR') {
+       document.getElementById('previewZahirInput').click();
+       return; 
+     }  
         // 2. Proses Penyaringan (Filtering)
         var dataSumber = (typeof cachedMasterBarang !== 'undefined' && cachedMasterBarang) ? cachedMasterBarang : [];
         
@@ -9261,8 +9318,10 @@
 
         var option = document.querySelector('input[name="exportOption"]:checked').value;
         var dataToExport = [];
-        var sumberData = (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []);
-        
+        // Cek apakah tabel sedang menampilkan Preview Zahir atau Database asli
+        var isPreviewMode = document.getElementById('filterItemIM') && document.getElementById('filterItemIM').value === 'PREVIEW_ZAHIR';
+        var sumberData = isPreviewMode ? window.filteredMasterItems : (typeof cachedMasterBarang !== 'undefined' ? cachedMasterBarang : []);
+                
         if (option === 'ALL') {
           dataToExport = [...sumberData];
         } else if (option === 'BANIN') {
@@ -9324,7 +9383,7 @@
         showToast('File Excel berhasil didownload!', 'success');
         closeModal('exportMasterModal');
       }
-      
+
     </script>
     <!-- Register Service Worker PWA -->
     <script>
