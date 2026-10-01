@@ -4504,16 +4504,21 @@
           }
         }
 
-        // Kunci otomatis Unit Barang untuk Kasir & Gudang (Banin / Banat)
+        // Kunci otomatis Unit Barang khusus Kasir (Gudang & Admin tetap dimunculkan agar bisa Audit Harga)
         var lockedUnit = getUserLockedUnit(currentUser);
-        if (lockedUnit && selIM) {
+        var isRoleKasir = currentUser && String(currentUser.role || '').toLowerCase().includes('kasir') && !isUserAdmin(currentUser);
+        
+        if (lockedUnit && selIM && isRoleKasir) {
           selIM.value = lockedUnit;
           selIM.disabled = true;
-          if (selIM.parentElement) selIM.parentElement.style.display = 'none'; // Sembunyikan dropdown "Semua Toko"
+          if (selIM.parentElement) selIM.parentElement.style.display = 'none'; // Sembunyikan khusus Kasir
         } else if (selIM) {
           selIM.disabled = false;
-          if (selIM.parentElement) selIM.parentElement.style.display = '';
+          if (selIM.parentElement) selIM.parentElement.style.display = ''; // Munculkan untuk Gudang/Admin
         }
+
+        // Ambil filter sesuai dropdown yang dipilih Gudang
+        var imFilter = (selIM && !selIM.disabled) ? selIM.value : (lockedUnit ? lockedUnit : 'ALL');
 
         var imFilter = lockedUnit ? lockedUnit : (selIM ? selIM.value : 'ALL');
 
