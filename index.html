@@ -5458,7 +5458,7 @@
       }
 
       // ==========================================
-      // FUNGSI RENDER LABEL HARGA RAK (A4) + NUTRI-GRADE AI (ANTI-TERPOTONG)
+      // FUNGSI RENDER LABEL HARGA RAK (A4) + NUTRI-GRADE AI (KAMUS PINTAR)
       // ==========================================
       function renderShelfLabels(items) {
         window.currentRenderedLabelItems = items || [];
@@ -5474,19 +5474,29 @@
           document.getElementById('btnModalLabelWaText').innerText = 'Kirim WA Kantor IM ' + cleanUnit;
         }
 
-        // FUNGSI AI PENDETEKSI KANDUNGAN GULA
+        // FUNGSI AI PENDETEKSI KANDUNGAN GULA DENGAN KAMUS KATA YANG SANGAT KAYA
         var getNutriGrade = function(itemName, category) {
           var nLow = String(itemName || '').toLowerCase();
           var kat = String(category || '').toLowerCase();
           
+          // Fitur Paksa (Override) jika AI tetap salah tebak: Tulis [GRADE-A] di nama barang
           var manualMatch = String(itemName).match(/\[GRADE-([ABCD])\]/i);
           if (manualMatch) return manualMatch[1].toUpperCase();
 
-          if (!kat.includes('makanan') && !kat.includes('minuman') && !nLow.match(/air|teh|kopi|susu|roti|biskuit|permen/)) return null;
+          // Deteksi apakah ini barang yang bisa diminum/dimakan
+          var isKonsumsi = kat.includes('makanan') || kat.includes('minuman') || nLow.match(/air|teh|kopi|susu|roti|biskuit|permen|milk|drink|snack|yogurt|mie|noodle|jus|juice|cimory/);
+          if (!isKonsumsi) return null;
 
-          if (nLow.match(/air mineral|aqua|cleo|le minerale|vit|nestle pure|amidis|teh tawar|tanpa gula/)) return 'A';
-          if (nLow.match(/bear brand|susu murni|uht plain|susu full cream|hydro coco/)) return 'B';
-          if (nLow.match(/teh pucuk|kopi|coffee|sirup|syrup|marjan|kental manis|fanta|coca cola|sprite|soda|permen|kopiko|coklat|silverqueen|chitato|indomie|mie|snack|taro|es krim|ice cream|milo/)) return 'D';
+          // Grade A (0% Gula / Tawar / Air Mineral Sehat)
+          if (nLow.match(/air mineral|aqua|cleo|le minerale|vit|nestle pure|amidis|teh tawar|tanpa gula|zero sugar|no sugar|plain water/)) return 'A';
+          
+          // Grade B (Susu Murni / Full Cream / Low Sugar)
+          if (nLow.match(/bear brand|susu murni|uht plain|susu full cream|hydro coco|fresh milk|pure milk|uht full cream|original 100%/)) return 'B';
+          
+          // Grade D (High Sugar / Sangat Manis / Cokelat / Kopi / Sirup / Junk Food)
+          if (nLow.match(/teh pucuk|kopi|coffee|sirup|syrup|marjan|kental manis|fanta|coca cola|sprite|soda|permen|kopiko|coklat|cokelat|chocolate|chocomalt|silverqueen|chitato|indomie|mie|snack|taro|es krim|ice cream|milo|matcha|caramel|tiramisu|hazelnut|beng-beng|choki|drink beng|pop mie|wafer|oreo|tango/)) return 'D';
+          
+          // Grade C (Moderate Sugar: Susu rasa buah, Yogurt biasa, Jus, Biskuit, dll)
           return 'C'; 
         };
 
@@ -5500,10 +5510,8 @@
 
           letters.forEach(l => {
             if (l === grade) {
-              // Jika ini Grade miliknya -> Buat Lingkaran JAUH LEBIH BESAR
               circlesHtml += '<div style="background: ' + colors[l] + '; color: #fff; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 1.5px solid #000; box-shadow: inset 0 0 0 1px #fff; z-index: 2; transform: scale(1.2); margin: 0 2px;">' + l + '</div>';
             } else {
-              // Huruf lain -> Buat kecil
               circlesHtml += '<div style="background: ' + colors[l] + '; color: #fff; width: 8px; height: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 5px; font-weight: bold; border: 0.5px solid #000; z-index: 1; opacity: 0.85;">' + l + '</div>';
             }
           });
@@ -5526,24 +5534,16 @@
           card.style.border = 'none';
           
           card.innerHTML = '<div style="display: flex; flex-direction: column; height: 100%; border: 1.5px solid #ea580c; border-radius: 4px; overflow: hidden; background-color: #fff;">' +
-            // 1. Header Toko (Tinggi Terkunci)
             '<div style="background-color: #059669; color: #fff; text-align: center; padding: 2px 0; flex-shrink: 0;">' +
                '<span style="font-weight: 900; font-size: 9px; letter-spacing: 0.5px;">ISLAM MART ' + (it.im ? it.im.toUpperCase() : 'BANIN') + '</span>' +
             '</div>' +
-            
-            // 2. Area Nama Barang & Nutri-Grade (Tinggi fleksibel tapi terkunci batasannya)
             '<div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 2px 4px; border-bottom: 1px dashed #fb923c; overflow: hidden;">' +
-               // Nama Barang Maksimal 2 Baris Saja! Jika lebih akan diberi titik-titik (...)
                '<h4 style="font-weight: 900; font-size: 9.5px; line-height: 1.05; color: #000; text-transform: uppercase; margin: 0 0 2px 0; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 100%;">' + displayName + '</h4>' +
                nutriBadge +
             '</div>' +
-            
-            // 3. Area Harga (Sangat Besar dan Tinggi Terkunci!)
             '<div style="height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: #fff;">' +
                '<div style="font-size: 21px; font-weight: 900; color: #000; letter-spacing: -1px; line-height: 1;">Rp' + Number(it.harga_jual || it.hargaJual || 0).toLocaleString('id-ID') + '</div>' +
             '</div>' +
-            
-            // 4. Footer Barcode & Tanggal (Kecil di Bawah)
             '<div style="height: 10px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; background-color: #fff7ed; border-top: 0.5px solid #fed7aa;">' +
                '<span style="font-size: 5px; font-family: monospace; font-weight: bold; color: #000;">' + (it.barcode || it.id).substring(0, 15) + '</span>' +
                '<span style="font-size: 4px; color: #ea580c; font-weight: bold;">' + todayStr + '</span>' +
