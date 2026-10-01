@@ -3645,6 +3645,15 @@
         if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'flex';
       }
       function hideLoading() { if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none'; }
+      // FUNGSI UNTUK MENCETAK LAPORAN (PDF/KERTAS)
+      function printReport(areaId) {
+        var printArea = document.getElementById(areaId);
+        if (!printArea) {
+          return showToast('Area laporan tidak ditemukan!', 'error');
+        }
+        // CSS @media print bawaan Anda sudah mengatur agar bagian tabel/laporannya saja yang dicetak
+        window.print();
+      }
       function openModal(id) {
         var el = document.getElementById(id);
         if (el) {
