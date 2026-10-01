@@ -5458,7 +5458,7 @@
       }
 
       // ==========================================
-      // FUNGSI RENDER LABEL HARGA RAK (A4) + NUTRI-GRADE AI (KAMUS PINTAR)
+      // FUNGSI RENDER LABEL HARGA RAK (A4) + NUTRI-GRADE (AKURAT DARI KEMASAN)
       // ==========================================
       function renderShelfLabels(items) {
         window.currentRenderedLabelItems = items || [];
@@ -5474,29 +5474,32 @@
           document.getElementById('btnModalLabelWaText').innerText = 'Kirim WA Kantor IM ' + cleanUnit;
         }
 
-        // FUNGSI AI PENDETEKSI KANDUNGAN GULA DENGAN KAMUS KATA YANG SANGAT KAYA
+        // FUNGSI PENDETEKSI KANDUNGAN GULA
         var getNutriGrade = function(itemName, category) {
           var nLow = String(itemName || '').toLowerCase();
           var kat = String(category || '').toLowerCase();
           
-          // Fitur Paksa (Override) jika AI tetap salah tebak: Tulis [GRADE-A] di nama barang
+          // 1. Fitur Paksa Langsung Tembak Grade (Misal: [GRADE-C])
           var manualMatch = String(itemName).match(/\[GRADE-([ABCD])\]/i);
           if (manualMatch) return manualMatch[1].toUpperCase();
 
-          // Deteksi apakah ini barang yang bisa diminum/dimakan
+          // 2. FITUR BARU: Deteksi dari Persen Gula Kemasan (Misal: [4%], [8%], [12%])
+          var sugarMatch = String(itemName).match(/\[(\d+(?:\.\d+)?)%\]/);
+          if (sugarMatch) {
+            var sugarValue = parseFloat(sugarMatch[1]);
+            if (sugarValue === 0) return 'A';       // 0% Gula
+            if (sugarValue <= 4.0) return 'B';      // Maksimal 4% Gula
+            if (sugarValue <= 8.0) return 'C';      // Maksimal 8% Gula
+            return 'D';                             // Di atas 8% Gula (misal 12%)
+          }
+
+          // 3. Jika staf belum memasukkan label % di nama barang, gunakan Tebakan Kamus Dasar
           var isKonsumsi = kat.includes('makanan') || kat.includes('minuman') || nLow.match(/air|teh|kopi|susu|roti|biskuit|permen|milk|drink|snack|yogurt|mie|noodle|jus|juice|cimory/);
           if (!isKonsumsi) return null;
 
-          // Grade A (0% Gula / Tawar / Air Mineral Sehat)
           if (nLow.match(/air mineral|aqua|cleo|le minerale|vit|nestle pure|amidis|teh tawar|tanpa gula|zero sugar|no sugar|plain water/)) return 'A';
-          
-          // Grade B (Susu Murni / Full Cream / Low Sugar)
           if (nLow.match(/bear brand|susu murni|uht plain|susu full cream|hydro coco|fresh milk|pure milk|uht full cream|original 100%/)) return 'B';
-          
-          // Grade D (High Sugar / Sangat Manis / Cokelat / Kopi / Sirup / Junk Food)
           if (nLow.match(/teh pucuk|kopi|coffee|sirup|syrup|marjan|kental manis|fanta|coca cola|sprite|soda|permen|kopiko|coklat|cokelat|chocolate|chocomalt|silverqueen|chitato|indomie|mie|snack|taro|es krim|ice cream|milo|matcha|caramel|tiramisu|hazelnut|beng-beng|choki|drink beng|pop mie|wafer|oreo|tango/)) return 'D';
-          
-          // Grade C (Moderate Sugar: Susu rasa buah, Yogurt biasa, Jus, Biskuit, dll)
           return 'C'; 
         };
 
@@ -5526,7 +5529,12 @@
         items.forEach(it => {
           var grade = getNutriGrade(it.nama, it.kategori);
           var nutriBadge = buildNutriGradeHtml(grade);
-          var displayName = (it.nama || '').replace(/\[GRADE-[ABCD]\]/gi, '').trim();
+          
+          // Bersihkan tag [GRADE-X] dan [X%] dari nama barang agar tidak ikut tercetak di kertas
+          var displayName = (it.nama || '')
+              .replace(/\[GRADE-[ABCD]\]/gi, '')
+              .replace(/\[\d+(?:\.\d+)?%\]/g, '')
+              .trim();
 
           var card = document.createElement('div'); 
           card.className = 'shelf-label-card'; 
