@@ -5885,15 +5885,17 @@
           var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
           var placeholderImg = 'https://placehold.co/400x400/e2e8f0/64748b?text=IM';
           var errorImg = 'https://placehold.co/400x400/fee2e2/ef4444?text=ISLAM+MART';
-          var rawImg = it.gambar || it.image || '';
+          var rawImg = String(it.gambar || it.image || '').trim();
           var imgUrl = placeholderImg;
 
           if (rawImg) {
             var gdriveMatch = rawImg.match(/(?:file\/d\/|id=)([a-zA-Z0-9_-]+)/);
             if (gdriveMatch && gdriveMatch[1]) {
               imgUrl = 'https://drive.google.com/thumbnail?id=' + gdriveMatch[1] + '&sz=w500';
-            } else {
+            } else if (rawImg.startsWith('http') || rawImg.startsWith('data:')) {
               imgUrl = rawImg;
+            } else {
+              imgUrl = placeholderImg; // Tolak teks nyasar (seperti nama PT) & gunakan logo default
             }
           }
 
