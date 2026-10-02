@@ -2478,6 +2478,11 @@
         <i class="fa-solid fa-clock-rotate-left text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
       </button>
+      <button id="btnNavBtmBazarBarang" onclick="switchTab('bazar-management'); switchBazarSubMenu('STOK');" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
+      </button>
       <!-- END MENU BAWAH KHUSUS BAZAR -->
 
       <button id="btnNavBtmBarang" onclick="switchTab('master-barang')"
@@ -3768,6 +3773,7 @@
         var btmBazarKasir = document.getElementById('btnNavBtmBazarKasir');
         var btmBazarNota = document.getElementById('btnNavBtmBazarNota');
         var btmBazarRiwayat = document.getElementById('btnNavBtmBazarRiwayat');
+        var btmBazarBarang = document.getElementById('btnNavBtmBazarBarang');
         var btmStaf = document.getElementById('btnNavBtmStaf');
         var btmSantri = document.getElementById('btnNavBtmSantri');
 
@@ -3783,6 +3789,7 @@
         if (btmBazarKasir) btmBazarKasir.style.display = 'none';
         if (btmBazarNota) btmBazarNota.style.display = 'none';
         if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'none';
+        if (btmBazarBarang) btmBazarBarang.style.display = 'none';
         if (btmStaf) btmStaf.style.display = 'none';
         if (btmSantri) btmSantri.style.display = 'none';
 
@@ -3795,7 +3802,7 @@
           if (btmBazarKasir) btmBazarKasir.style.display = 'flex';
           if (btmBazarNota) btmBazarNota.style.display = 'flex';
           if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'flex';
-          
+          if (btmBazarBarang) btmBazarBarang.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip
         }
         
