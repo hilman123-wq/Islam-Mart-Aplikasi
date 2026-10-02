@@ -5177,7 +5177,7 @@
             // Pertahankan harga/stok lama jika di file yang baru tidak ada datanya (misal hanya upload file jual)
             var finalHB = (r.harga_beli > 0) ? r.harga_beli : (matchObj ? matchObj.harga_beli : 0);
             var finalHJ = (r.harga_jual > 0) ? r.harga_jual : (matchObj ? matchObj.harga_jual : 0);
-            var finalQty = (r.qty !== undefined && fileBeli) ? r.qty : (matchObj ? matchObj.qty : 0); // Stok hanya diupdate jika file beli dilampirkan
+            var finalQty = (r.qty !== undefined && (fileBeli || fileStandar)) ? r.qty : (matchObj ? matchObj.qty : 0); // Stok diupdate dari File Beli Zahir atau Excel Standar
 
             var payload = {
               barcode: r.barcode || (matchObj ? matchObj.barcode : ''), 
@@ -5544,7 +5544,7 @@
           var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
           var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
        var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
-       var matchKat = (cat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
+       var matchKat = (kat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
           var matchQ = !q || (it.nama || '').toLowerCase().includes(q) || (it.barcode || '').toLowerCase().includes(q);
           // Jika Wali Santri yang mengetik nama anaknya di kolom #orderSupplier, jangan filter barang berdasarkan supplier
           var matchSup = isWali ? true : (!sup || (it.supplier || '').toLowerCase().includes(sup));
