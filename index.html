@@ -5865,8 +5865,9 @@
         if (!container) return;
 
         var isWali = isWaliSantri(currentUser);
+        // Hanya tampilkan barang yang bersih (tanpa stempel Banned/Karmin/Discontinue) untuk Wali Santri
         var sourceList = isWali
-          ? window.filteredPoItems.filter(it => getItemSpecialStamp(it) !== 'BANNED')
+          ? window.filteredPoItems.filter(it => getItemSpecialStamp(it) === '')
           : window.filteredPoItems;
 
         var totalItems = sourceList.length;
