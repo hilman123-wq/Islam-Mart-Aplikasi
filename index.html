@@ -3795,7 +3795,7 @@
           if (btmBazarKasir) btmBazarKasir.style.display = 'flex';
           if (btmBazarNota) btmBazarNota.style.display = 'flex';
           if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'flex';
-
+          
           if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip
         }
         
@@ -8596,9 +8596,6 @@
           if (dashGrid) dashGrid.style.display = 'block';
           if (titleHeader) titleHeader.innerText = 'Dashboard Operasional Bazar';
           if (selJenis) selJenis.value = 'ALL';
-        } else if (subMenu === 'STOK') {
-          if (secStok) secStok.style.display = 'block';
-          if (titleHeader) titleHeader.innerText = 'Stok Bazar (Master Barang)';
         } else if (subMenu === 'RIWAYAT_PENJUALAN') {
           if (secRiw) secRiw.style.display = 'block';
           if (selJenis) { selJenis.style.display = 'block'; selJenis.value = 'ALL'; }
@@ -8611,29 +8608,7 @@
             btnQuick.onclick = function() { openBazarTransModal('KERUGIAN'); };
           }
         }
-        } else if (subMenu === 'RIWAYAT_NOTA') {
-          if (secRiw) secRiw.style.display = 'block';
-          if (selJenis) selJenis.value = 'NOTA_PEMBELIAN';
-          if (titleHeader) titleHeader.innerText = 'Riwayat Nota Pembelian Bazar';
-          if (riwTitle) riwTitle.innerHTML = '<i class="fa-solid fa-file-invoice-dollar text-blue-600"></i><span>Riwayat Input Nota Pembelian</span>';
-          if (riwDesc) riwDesc.innerText = 'Daftar histori nota belanja stok barang bazar.';
-          if (btnQuick) {
-            btnQuick.className = 'px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition';
-            btnQuick.innerHTML = '<i class="fa-solid fa-file-invoice-dollar"></i><span>+ Input Nota Pembelian</span>';
-            btnQuick.onclick = function() { openBazarTransModal('NOTA_PEMBELIAN'); };
-          }
-        } else if (subMenu === 'RIWAYAT_KERUGIAN') {
-          if (secRiw) secRiw.style.display = 'block';
-          if (selJenis) selJenis.value = 'KERUGIAN';
-          if (titleHeader) titleHeader.innerText = 'Riwayat Catatan Kerugian Bazar';
-          if (riwTitle) riwTitle.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-600"></i><span>Riwayat Catatan Kerugian / Barang Rusak</span>';
-          if (riwDesc) riwDesc.innerText = 'Daftar histori barang rusak, basi, atau hilang.';
-          if (btnQuick) {
-            btnQuick.className = 'px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition';
-            btnQuick.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>+ Catat Barang Rusak</span>';
-            btnQuick.onclick = function() { openBazarTransModal('KERUGIAN'); };
-          }
-        }
+        
         renderAllBazarData();
         window.scrollTo(0, 0);
       }
