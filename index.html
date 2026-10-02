@@ -1827,7 +1827,7 @@
         <section id="tab-bazar-management" style="display: none;" class="space-y-6">
           
           <!-- HEADER UTAMA & FILTER PERIODE BAZAR -->
-          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
+          <div id="bazarTopDashboardPanel" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
               <div>
                 <div class="flex items-center gap-2">
@@ -1904,23 +1904,46 @@
           </div>
 
           <!-- ================= TAMPILAN 2: HALAMAN STOK BAZAR (MASTER BARANG) ================= -->
-          <div id="bazarSectionStok" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+          <div id="bazarSectionStok" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 w-full overflow-hidden">
+            
+            <!-- 1. Header & Tombol Aksi -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4">
               <div>
-                <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                  <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
-                  <span>Stok Bazar (Master Barang & Harga)</span>
-                </h3>
-                <p class="text-[11px] text-slate-500">Kelola master barang bazar, stok fisik, harga beli (modal), dan harga jual.</p>
+                <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-barcode text-amber-600"></i>
+                  <span>Master Barang Bazar</span>
+                </h2>
+                <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Kelola daftar produk, stok fisik, harga modal, dan harga jual khusus Bazar.</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="openBazarItemModal()" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition">
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="openBazarItemModal()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
                   <i class="fa-solid fa-plus"></i>
-                  <span>+ Tambah Barang Baru</span>
+                  <span>Tambah Barang Baru</span>
                 </button>
               </div>
             </div>
 
+            <!-- 2. Filter & Pencarian -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="filterBazarStokSearch" oninput="renderAllBazarData()"
+                  placeholder="Cari nama barang bazar..."
+                  class="w-full pl-8 pr-3 py-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-600">
+              </div>
+              <div>
+                <select id="filterBazarStokIM" onchange="renderAllBazarData()"
+                  class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
+                  <option value="ALL">Semua Unit (Banin & Banat)</option>
+                  <option value="Banin">Khusus Bazar Banin</option>
+                  <option value="Banat">Khusus Bazar Banat</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 3. Tabel -->
             <div class="overflow-x-auto rounded-2xl border border-slate-100">
               <table class="w-full text-left text-xs min-w-[750px]">
                 <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
@@ -1932,7 +1955,7 @@
                     <th class="py-3 px-3 text-right">Harga Jual</th>
                     <th class="py-3 px-3 text-right">Untung / Pcs</th>
                     <th class="py-3 px-3 text-center">Sisa Stok</th>
-                    <th class="py-3 px-4 text-center">Aksi Cepat</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="bazarStokTableBody" class="divide-y divide-slate-100 text-slate-700">
@@ -8584,6 +8607,7 @@
 
       function switchBazarSubMenu(subMenu) {
         window.activeBazarSubMenu = subMenu || 'DASHBOARD';
+        var topDash = document.getElementById('bazarTopDashboardPanel');
         var dashGrid = document.getElementById('bazarDashboardMenuGrid');
         var secStok = document.getElementById('bazarSectionStok');
         var secRiw = document.getElementById('bazarSectionRiwayat');
@@ -8594,6 +8618,9 @@
         var riwDesc = document.getElementById('bazarRiwayatSectionDesc');
         var btnQuick = document.getElementById('btnBazarRiwayatQuickAdd');
 
+        // Sembunyikan Panel Dashboard Atas jika sedang di Master Barang
+        if (topDash) topDash.style.display = (subMenu === 'STOK') ? 'none' : 'block';
+
         if (dashGrid) dashGrid.style.display = 'none';
         if (secStok) secStok.style.display = 'none';
         if (secRiw) secRiw.style.display = 'none';
@@ -8603,6 +8630,8 @@
           if (dashGrid) dashGrid.style.display = 'block';
           if (titleHeader) titleHeader.innerText = 'Dashboard Operasional Bazar';
           if (selJenis) selJenis.value = 'ALL';
+        } else if (subMenu === 'STOK') {
+          if (secStok) secStok.style.display = 'block';
         } else if (subMenu === 'RIWAYAT_PENJUALAN') {
           if (secRiw) secRiw.style.display = 'block';
           if (selJenis) { selJenis.style.display = 'block'; selJenis.value = 'ALL'; }
@@ -8670,11 +8699,15 @@
         var q = (document.getElementById('filterBazarSearch') ? document.getElementById('filterBazarSearch').value : '').trim().toLowerCase();
         var jenisFilter = document.getElementById('filterBazarJenisTrans') ? document.getElementById('filterBazarJenisTrans').value : 'ALL';
 
+        // Filter Khusus untuk Master Barang Bazar (Berbeda dari Dashboard)
+        var unitStok = document.getElementById('filterBazarStokIM') ? document.getElementById('filterBazarStokIM').value : 'ALL';
+        var qStok = (document.getElementById('filterBazarStokSearch') ? document.getElementById('filterBazarStokSearch').value : '').trim().toLowerCase();
+
         // 1. Render Tabel Stok Barang Bazar
         var tbStok = document.getElementById('bazarStokTableBody');
         var filteredStok = cachedBazarBarang.filter(b => {
-          var matchIM = (unit === 'ALL') || (b.im === unit);
-          var matchQ = !q || (b.nama_barang || '').toLowerCase().includes(q);
+          var matchIM = (unitStok === 'ALL') || (b.im === unitStok);
+          var matchQ = !qStok || (b.nama_barang || '').toLowerCase().includes(qStok);
           return matchIM && matchQ;
         });
 
