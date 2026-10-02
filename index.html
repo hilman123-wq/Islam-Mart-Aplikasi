@@ -5541,15 +5541,18 @@
         var isWali = isWaliSantri(currentUser);
 
         window.filteredPoItems = cachedMasterBarang.filter(it => {
-          var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
-          var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-       var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
-       var matchKat = (cat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
-          var matchQ = !q || (it.nama || '').toLowerCase().includes(q) || (it.barcode || '').toLowerCase().includes(q);
-          // Jika Wali Santri yang mengetik nama anaknya di kolom #orderSupplier, jangan filter barang berdasarkan supplier
-          var matchSup = isWali ? true : (!sup || (it.supplier || '').toLowerCase().includes(sup));
-          return matchIM && matchKat && matchQ && matchSup;
-        });
+            var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
+            
+            // PERBAIKAN: Menggunakan 'cat' (huruf C) khusus untuk halaman Order PO
+            var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            var targetKat = String(cat).toLowerCase().replace(/[^a-z0-9]/g, '');
+            var matchKat = (cat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
+            
+            var matchQ = !q || (it.nama || '').toLowerCase().includes(q) || (it.barcode || '').toLowerCase().includes(q);
+            var matchSup = isWali ? true : (!sup || (it.supplier || '').toLowerCase().includes(sup));
+            
+            return matchIM && matchKat && matchQ && matchSup;
+          });
 
         window.filteredPoItems.sort((a, b) => {
           var priceA = isWali ? (a.harga_jual || a.hargaJual || 0) : (a.harga_beli || a.hargaBeli || 0);
