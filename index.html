@@ -5544,7 +5544,7 @@
           var matchIM = (!it.im || it.im.toLowerCase() === selectedIM.toLowerCase() || it.im.toLowerCase() === 'all');
           var itemKat = String(it.kategori || '').toLowerCase().replace(/[^a-z0-9]/g, '');
        var targetKat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
-       var matchKat = (kat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
+       var matchKat = (cat === 'ALL') || (itemKat === targetKat) || (targetKat === 'pembersih' && (itemKat.includes('pembersih') || itemKat.includes('sabun')));
           var matchQ = !q || (it.nama || '').toLowerCase().includes(q) || (it.barcode || '').toLowerCase().includes(q);
           // Jika Wali Santri yang mengetik nama anaknya di kolom #orderSupplier, jangan filter barang berdasarkan supplier
           var matchSup = isWali ? true : (!sup || (it.supplier || '').toLowerCase().includes(sup));
