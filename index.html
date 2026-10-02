@@ -255,7 +255,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
+  <!-- ========================================================================= !-- ================= TAMPILAN 1: MENU UTAMA DI DASHBOARD BAZAR (7 MENU TERPISAH) ================= -->
   <!-- APLIKASI UTAMA (MAIN APP SHELL) -->
   <!-- ========================================================================= -->
   <div id="mainApp" style="display: none;" class="min-h-screen flex flex-col sm:flex-row bg-slate-100">
@@ -1903,102 +1903,6 @@
             </div>
           </div>
 
-          <!-- ================= TAMPILAN 1: MENU UTAMA DI DASHBOARD BAZAR (7 MENU TERPISAH) ================= -->
-          <div id="bazarDashboardMenuGrid" class="space-y-5">
-            
-            <!-- Kelompok 1: Menu Input & Operasional Harian -->
-            <div class="space-y-3">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2 px-1">
-                <i class="fa-solid fa-bolt text-amber-500"></i>
-                <span>Menu Input & Operasional Bazar</span>
-              </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                
-                <!-- 1. Kasir (Catat Pembeli) -->
-                <div onclick="openBazarTransModal('PENJUALAN')" class="bg-gradient-to-br from-emerald-600 to-teal-800 p-5 rounded-3xl text-white shadow-lg hover:shadow-emerald-900/30 hover:-translate-y-1 transition duration-300 cursor-pointer group">
-                  <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-cash-register"></i>
-                  </div>
-                  <h4 class="text-sm font-black">1. Kasir (Catat Pembeli)</h4>
-                  <p class="text-[11px] text-emerald-100 mt-1">Input transaksi pembeli bazar & potong stok otomatis.</p>
-                </div>
-
-                <!-- 2. Stok Bazar (Master Barang) -->
-                <div onclick="switchBazarSubMenu('STOK')" class="bg-gradient-to-br from-amber-500 to-orange-700 p-5 rounded-3xl text-white shadow-lg hover:shadow-amber-900/30 hover:-translate-y-1 transition duration-300 cursor-pointer group">
-                  <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-boxes-stacked"></i>
-                  </div>
-                  <h4 class="text-sm font-black">2. Stok Bazar (Master Barang)</h4>
-                  <p class="text-[11px] text-amber-100 mt-1">Kelola daftar barang bazar, tambah produk, harga modal & jual.</p>
-                </div>
-
-                <!-- 3. Input Nota Pembelian -->
-                <div onclick="openBazarTransModal('NOTA_PEMBELIAN')" class="bg-gradient-to-br from-blue-600 to-indigo-800 p-5 rounded-3xl text-white shadow-lg hover:shadow-blue-900/30 hover:-translate-y-1 transition duration-300 cursor-pointer group">
-                  <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-file-invoice-dollar"></i>
-                  </div>
-                  <h4 class="text-sm font-black">3. Input Nota Pembelian</h4>
-                  <p class="text-[11px] text-blue-100 mt-1">Catat nota belanja barang masuk & tambah stok bazar.</p>
-                </div>
-
-                <!-- 4. Catat Barang Rusak -->
-                <div onclick="openBazarTransModal('KERUGIAN')" class="bg-gradient-to-br from-rose-600 to-red-800 p-5 rounded-3xl text-white shadow-lg hover:shadow-rose-900/30 hover:-translate-y-1 transition duration-300 cursor-pointer group">
-                  <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                  </div>
-                  <h4 class="text-sm font-black">4. Catat Barang Rusak</h4>
-                  <p class="text-[11px] text-rose-100 mt-1">Input barang basi, rusak, atau hilang sebagai kerugian.</p>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Kelompok 2: Menu Data Riwayat Terpisah -->
-            <div class="space-y-3 pt-2">
-              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2 px-1">
-                <i class="fa-solid fa-clock-rotate-left text-teal-600"></i>
-                <span>Menu Laporan & Riwayat Transaksi Bazar</span>
-              </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-
-                <!-- 5. Riwayat Penjualan -->
-                <div onclick="switchBazarSubMenu('RIWAYAT_PENJUALAN')" class="bg-white p-5 rounded-3xl border-2 border-emerald-100 hover:border-emerald-500 shadow-xs hover:shadow-lg transition cursor-pointer flex items-center gap-4 group">
-                  <div class="w-13 h-13 rounded-2xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-xl shrink-0 transition">
-                    <i class="fa-solid fa-receipt"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-black text-slate-800">5. Riwayat Penjualan</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Daftar histori transaksi pembeli & keuntungan penjualan.</p>
-                  </div>
-                </div>
-
-                <!-- 6. Riwayat Nota Pembelian -->
-                <div onclick="switchBazarSubMenu('RIWAYAT_NOTA')" class="bg-white p-5 rounded-3xl border-2 border-blue-100 hover:border-blue-500 shadow-xs hover:shadow-lg transition cursor-pointer flex items-center gap-4 group">
-                  <div class="w-13 h-13 rounded-2xl bg-blue-100 text-blue-700 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-xl shrink-0 transition">
-                    <i class="fa-solid fa-file-lines"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-black text-slate-800">6. Nota Pembelian</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Daftar histori nota kulakan / belanja stok barang bazar.</p>
-                  </div>
-                </div>
-
-                <!-- 7. Riwayat Catatan Kerugian -->
-                <div onclick="switchBazarSubMenu('RIWAYAT_KERUGIAN')" class="bg-white p-5 rounded-3xl border-2 border-rose-100 hover:border-rose-500 shadow-xs hover:shadow-lg transition cursor-pointer flex items-center gap-4 group">
-                  <div class="w-13 h-13 rounded-2xl bg-rose-100 text-rose-700 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center text-xl shrink-0 transition">
-                    <i class="fa-solid fa-heart-crack"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-black text-slate-800">7. Catatan Kerugian</h4>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Daftar histori barang rusak, basi, atau selisih stok.</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-
           <!-- ================= TAMPILAN 2: HALAMAN STOK BAZAR (MASTER BARANG) ================= -->
           <div id="bazarSectionStok" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
@@ -2556,11 +2460,25 @@
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat Pesanan</span>
       </button>
 
-      <button id="btnNavBtmBazar" onclick="switchTab('bazar-management')" style="display: none;"
-        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
-        <i class="fa-solid fa-store text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kasir & Stok Bazar</span>
+      <!-- MENU BAWAH KHUSUS BAZAR -->
+      <button id="btnNavBtmBazarKasir" onclick="openBazarTransModal('PENJUALAN')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-solid fa-cash-register text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kasir</span>
       </button>
+
+      <button id="btnNavBtmBazarNota" onclick="openBazarTransModal('NOTA_PEMBELIAN')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-blue-600 focus:text-blue-600 transition-colors">
+        <i class="fa-solid fa-file-invoice-dollar text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Nota Beli</span>
+      </button>
+
+      <button id="btnNavBtmBazarRiwayat" onclick="switchTab('bazar-management'); switchBazarSubMenu('RIWAYAT_PENJUALAN');" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+        <i class="fa-solid fa-clock-rotate-left text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
+      </button>
+      <!-- END MENU BAWAH KHUSUS BAZAR -->
 
       <button id="btnNavBtmBarang" onclick="switchTab('master-barang')"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
@@ -3847,7 +3765,9 @@
         var btmMenu = document.getElementById('btnNavBtmMenu');
         var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
         var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
-        var btmBazar = document.getElementById('btnNavBtmBazar');
+        var btmBazarKasir = document.getElementById('btnNavBtmBazarKasir');
+        var btmBazarNota = document.getElementById('btnNavBtmBazarNota');
+        var btmBazarRiwayat = document.getElementById('btnNavBtmBazarRiwayat');
         var btmStaf = document.getElementById('btnNavBtmStaf');
         var btmSantri = document.getElementById('btnNavBtmSantri');
 
@@ -3860,7 +3780,9 @@
         if (btmMenu) btmMenu.style.display = 'none';
         if (btmLapMingguan) btmLapMingguan.style.display = 'none';
         if (btmLapBulanan) btmLapBulanan.style.display = 'none';
-        if (btmBazar) btmBazar.style.display = 'none';
+        if (btmBazarKasir) btmBazarKasir.style.display = 'none';
+        if (btmBazarNota) btmBazarNota.style.display = 'none';
+        if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'none';
         if (btmStaf) btmStaf.style.display = 'none';
         if (btmSantri) btmSantri.style.display = 'none';
 
@@ -3870,13 +3792,13 @@
             btmBeranda.style.display = 'flex';
             btmBeranda.onclick = function() { switchBazarSubMenu('DASHBOARD'); };
           }
-          if (btmBazar) {
-            btmBazar.style.display = 'flex';
-            btmBazar.querySelector('span').innerText = 'Stok Bazar';
-            btmBazar.onclick = function() { switchBazarSubMenu('STOK'); };
-          }
+          if (btmBazarKasir) btmBazarKasir.style.display = 'flex';
+          if (btmBazarNota) btmBazarNota.style.display = 'flex';
+          if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'flex';
+
           if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip
         }
+        
         // ATURAN KHUSUS WALI SANTRI (Sembunyikan Bottom Bar, Logo Header, & tampilkan Ikon Riwayat di atas)
         else if (isWali) {
           if (btmBeranda) btmBeranda.style.display = 'none';
@@ -8679,15 +8601,16 @@
           if (titleHeader) titleHeader.innerText = 'Stok Bazar (Master Barang)';
         } else if (subMenu === 'RIWAYAT_PENJUALAN') {
           if (secRiw) secRiw.style.display = 'block';
-          if (selJenis) selJenis.value = 'PENJUALAN';
-          if (titleHeader) titleHeader.innerText = 'Riwayat Penjualan Bazar';
-          if (riwTitle) riwTitle.innerHTML = '<i class="fa-solid fa-receipt text-emerald-600"></i><span>Riwayat Penjualan (Pembeli)</span>';
-          if (riwDesc) riwDesc.innerText = 'Daftar seluruh barang bazar yang terjual beserta rincian keuntungan.';
+          if (selJenis) { selJenis.style.display = 'block'; selJenis.value = 'ALL'; }
+          if (titleHeader) titleHeader.innerText = 'Buku Riwayat Transaksi';
+          if (riwTitle) riwTitle.innerHTML = '<i class="fa-solid fa-clock-rotate-left text-teal-600"></i><span>Seluruh Catatan Riwayat</span>';
+          if (riwDesc) riwDesc.innerText = 'Pilih filter jenis catatan di ujung kanan atas untuk memisahkan data.';
           if (btnQuick) {
-            btnQuick.className = 'px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition';
-            btnQuick.innerHTML = '<i class="fa-solid fa-cash-register"></i><span>+ Catat Pembeli</span>';
-            btnQuick.onclick = function() { openBazarTransModal('PENJUALAN'); };
+            btnQuick.className = 'px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow active:scale-95 transition';
+            btnQuick.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>+ Catat Kerugian</span>';
+            btnQuick.onclick = function() { openBazarTransModal('KERUGIAN'); };
           }
+        }
         } else if (subMenu === 'RIWAYAT_NOTA') {
           if (secRiw) secRiw.style.display = 'block';
           if (selJenis) selJenis.value = 'NOTA_PEMBELIAN';
