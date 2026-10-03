@@ -3637,16 +3637,11 @@
         <div id="posKetikWrapper" style="display: none;" class="mb-4">
           <div class="relative">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400"><i class="fa-solid fa-barcode text-lg"></i></span>
-            <input type="text" id="posInputBarcode" onkeypress="handlePosBarcodeEnter(event)" placeholder="Ketik Barcode lalu tekan Enter/Go" class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 transition">
+            <input type="text" id="posInputBarcode" onkeypress="handlePosBarcodeEnter(event)" placeholder="Ketik / Scan Barcode..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 transition">
           </div>
         </div>
 
-        <!-- HINT BOX -->
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold text-center p-2 rounded-xl mb-4 flex items-center justify-center gap-1.5 shadow-sm">
-          👆 <span id="posHintText">Arahkan barcode barang ke kotak kamera di atas</span>
-        </div>
-
-        <!-- LANGKAH B: TOTAL & RINCIAN -->
+          <!-- LANGKAH B: TOTAL & RINCIAN -->
         <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3 flex-1 flex flex-col">
           <p class="text-[11px] font-black text-slate-800 uppercase tracking-wide">Langkah B: Total & Rincian Belanja</p>
           
@@ -9270,17 +9265,13 @@
         var btnKetik = document.getElementById('btnPosKetik');
         var wrapCam = document.getElementById('posCamWrapper');
         var wrapKetik = document.getElementById('posKetikWrapper');
-        var hint = document.getElementById('posHintText');
 
         if (mode === 'cam') {
-          // Desain Aktif Kamera
           btnCam.className = 'bg-emerald-600 text-white border-2 border-emerald-600 rounded-xl p-3 font-bold text-xs shadow-md transition flex flex-col items-center justify-center gap-1';
           btnKetik.className = 'bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300 rounded-xl p-3 font-bold text-xs shadow-sm transition flex flex-col items-center justify-center gap-1';
           wrapCam.style.display = 'block';
           wrapKetik.style.display = 'none';
-          hint.innerText = 'Arahkan barcode barang ke kotak kamera di atas';
 
-          // Nyalakan Kamera Scanner dengan Aman
           if (!window.posScanner && !window.isPosScannerStarting && typeof Html5Qrcode !== 'undefined') {
             window.isPosScannerStarting = true;
             window.posScanner = new Html5Qrcode("posReader");
@@ -9289,14 +9280,13 @@
               { fps: 10, qrbox: { width: 250, height: 250 } },
               function(decodedText) {
                 if (window.posScanner && window.posScanner.getState() === 2) {
-                   window.posScanner.pause(true); // Jeda kamera sebentar setelah berhasil baca barcode
+                   window.posScanner.pause(true); 
                    processPosBarcode(decodedText);
                    setTimeout(() => { if(window.posScanner && window.posScanner.getState() === 3) window.posScanner.resume(); }, 1500); 
                 }
               }
             ).then(() => {
               window.isPosScannerStarting = false;
-              // Jika saat kamera selesai loading ternyata user sudah klik "Ketik" atau "Tutup", segera matikan.
               if (wrapCam.style.display === 'none') stopScannerSafely();
             }).catch(err => {
               window.isPosScannerStarting = false;
@@ -9306,14 +9296,11 @@
             });
           }
         } else {
-          // Desain Aktif Ketik
           btnKetik.className = 'bg-emerald-600 text-white border-2 border-emerald-600 rounded-xl p-3 font-bold text-xs shadow-md transition flex flex-col items-center justify-center gap-1';
           btnCam.className = 'bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300 rounded-xl p-3 font-bold text-xs shadow-sm transition flex flex-col items-center justify-center gap-1';
           wrapCam.style.display = 'none';
           wrapKetik.style.display = 'block';
-          hint.innerText = 'Ketik barcode dengan keyboard lalu tekan Enter';
 
-          // Matikan Kamera dengan aman
           if (!window.isPosScannerStarting) {
             stopScannerSafely();
           }
@@ -9326,7 +9313,7 @@
           var code = e.target.value.trim();
           if (code) {
             processPosBarcode(code);
-            e.target.value = ''; // Kosongkan lagi setelah di-enter
+            e.target.value = ''; 
           }
         }
       }
@@ -9334,49 +9321,51 @@
       function processPosBarcode(code) {
         var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
         var activeUnit = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
-
-        // Cari barang di database lokal yang barcodenya cocok & unitnya sesuai
         var item = cachedBazarBarang.find(b => String(b.barcode).toLowerCase() === String(code).toLowerCase() && b.im === activeUnit);
 
         if (item) {
           addPosItemToCart(item);
         } else {
           showToast('Barcode ' + code + ' tidak terdaftar!', 'error');
-          if (navigator.vibrate) navigator.vibrate(300); // Getar error
+          if (navigator.vibrate) navigator.vibrate(300); 
         }
       }
 
       function addPosItemToCart(item) {
-        // Cek sisa stok (jangan sampai jualan melebihi stok yang ada)
+        var hBeli = Number(item.harga_beli) || 0;
+        var hJual = Number(item.harga_jual) || 0;
+
         if (item.id !== 'manual') {
-          var qtyInCart = window.posCartItems.filter(x => x.id === item.id).length;
-          if (qtyInCart + 1 > Number(item.stok)) {
+          var existingItem = window.posCartItems.find(x => x.id === item.id);
+          var currentQty = existingItem ? existingItem.qty : 0;
+          
+          if (currentQty + 1 > Number(item.stok)) {
             if (navigator.vibrate) navigator.vibrate(300);
             return showToast('Stok ' + item.nama_barang + ' habis!', 'error');
           }
         }
 
-        // Masukkan ke keranjang kasir
-        window.posCartItems.push({
-          id: item.id,
-          nama: item.nama_barang || item.nama,
-          hBeli: Number(item.harga_beli) || 0,
-          hJual: Number(item.harga_jual) || 0,
-          stokAwal: Number(item.stok) || 0
-        });
+        var existingInCart = window.posCartItems.find(x => x.id === item.id);
+        
+        if (existingInCart) {
+          // Jika barang sudah ada di keranjang, tambah Qty-nya
+          existingInCart.qty += 1;
+          existingInCart.subtotal += hJual;
+        } else {
+          // Jika belum ada, masukkan sebagai baris baru
+          window.posCartItems.push({
+            id: item.id,
+            nama: item.nama_barang || item.nama,
+            qty: 1,
+            hBeli: hBeli,
+            hJual: hJual,
+            subtotal: hJual,
+            stokAwal: Number(item.stok) || 0
+          });
+        }
 
         updatePosUI();
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Getar sukses tut-tut
-      }
-
-      function addPosManualPrice(amt) {
-        addPosItemToCart({
-          id: 'manual',
-          nama: 'Item Manual (Rp ' + (amt/1000) + 'k)',
-          harga_beli: 0,
-          harga_jual: amt,
-          stok: 9999
-        });
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
       }
 
       function resetPosCart() {
@@ -9388,14 +9377,15 @@
         var total = 0;
         var rincian = '';
         window.posCartItems.forEach((it, idx) => {
-          total += it.hJual;
-          rincian += (idx + 1) + ". " + it.nama + " - Rp" + it.hJual.toLocaleString('id-ID') + "\n";
+          total += it.subtotal;
+          // Format rincian menjadi: 1. [2x] DIMSUM - Rp6.000
+          rincian += (idx + 1) + ". [" + it.qty + "x] " + it.nama + " - Rp" + it.subtotal.toLocaleString('id-ID') + "\n";
         });
 
         document.getElementById('posTotalAmount').value = total.toLocaleString('id-ID');
         var ta = document.getElementById('posRincian');
         ta.value = rincian;
-        ta.scrollTop = ta.scrollHeight; // Otomatis gulir ke teks paling bawah
+        ta.scrollTop = ta.scrollHeight; 
       }
 
       async function submitPosKasir() {
@@ -9405,50 +9395,35 @@
         var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
         var unitIM = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
 
-        // Kelompokkan barang yang sama agar Database tidak terlalu penuh
         var groupedPayload = [];
         var updatesStockMap = {};
 
         window.posCartItems.forEach(c => {
-          // Siapkan data pemotongan stok
           if (c.id !== 'manual') {
-            if (!updatesStockMap[c.id]) {
-              updatesStockMap[c.id] = { id: c.id, stokAwal: c.stokAwal, qtyBerubah: 0 };
-            }
-            updatesStockMap[c.id].qtyBerubah -= 1;
+            updatesStockMap[c.id] = { id: c.id, stokAwal: c.stokAwal, qtyBerubah: -c.qty };
           }
 
-          // Gabungkan barang yang sama (Qty bertambah)
-          var existing = groupedPayload.find(x => x.barang_id === c.id && x.nama_barang === c.nama);
-          if (existing) {
-            existing.qty += 1;
-            existing.total_nominal += c.hJual;
-            existing.laba_rugi += (c.hJual - c.hBeli);
-          } else {
-            groupedPayload.push({
-              tanggal: tgl,
-              jenis: 'PENJUALAN',
-              im: unitIM,
-              barang_id: c.id === 'manual' ? null : c.id,
-              nama_barang: c.nama,
-              qty: 1,
-              harga_beli: c.hBeli,
-              harga_jual: c.hJual,
-              total_nominal: c.hJual,
-              laba_rugi: c.hJual - c.hBeli,
-              keterangan: 'Kasir Cepat',
-              petugas: currentUser ? currentUser.nama : 'Kasir'
-            });
-          }
+          groupedPayload.push({
+            tanggal: tgl,
+            jenis: 'PENJUALAN',
+            im: unitIM,
+            barang_id: c.id === 'manual' ? null : c.id,
+            nama_barang: c.nama,
+            qty: c.qty,
+            harga_beli: c.hBeli,
+            harga_jual: c.hJual,
+            total_nominal: c.subtotal,
+            laba_rugi: c.subtotal - (c.hBeli * c.qty),
+            keterangan: 'Kasir Scanner',
+            petugas: currentUser ? currentUser.nama : 'Kasir'
+          });
         });
 
         showLoading('Menyimpan Transaksi...');
         try {
-          // 1. Simpan Transaksi Penjualan
           const { error: err1 } = await supaClient.from('bazar_transaksi').insert(groupedPayload);
           if (err1) throw err1;
 
-          // 2. Potong Stok Barang Master
           for (let k in updatesStockMap) {
             const { error: err2 } = await supaClient.from('bazar_barang').update({
               stok: updatesStockMap[k].stokAwal + updatesStockMap[k].qtyBerubah
