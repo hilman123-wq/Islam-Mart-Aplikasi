@@ -3687,7 +3687,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-slate-500 mb-1">Tipe Pelanggan</label>
-              <select id="posTipePelanggan" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-500">
+              <select id="posTipePelanggan" onchange="togglePosPaymentOptions()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-500">
                 <option value="Santri">Santri</option>
                 <option value="Umum">Umum</option>
               </select>
@@ -3713,7 +3713,11 @@
             <label class="block font-bold text-slate-500 mb-1">Nama / Catatan (Opsional)</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-user-pen"></i></span>
-              <input type="text" id="posCatatan" placeholder="Contoh: Fulan / Uang Pas..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 outline-none focus:border-emerald-500">
+              <!-- Terdapat attribute list="posSantriDatalist" di bawah ini -->
+              <input type="text" id="posCatatan" list="posSantriDatalist" placeholder="Ketik / Pilih Nama Santri..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 outline-none focus:border-emerald-500">
+              
+              <!-- Wadah auto-complete nama santri dari database -->
+              <datalist id="posSantriDatalist"></datalist>
             </div>
           </div>
         </div>
@@ -9332,25 +9336,58 @@
         document.getElementById('posTotalAmount').value = '0';
         document.getElementById('posInputBarcode').value = '';
         
-        // Reset Langkah C (Pembayaran)
         if(document.getElementById('posTipePelanggan')) document.getElementById('posTipePelanggan').value = 'Santri';
         if(document.getElementById('posMetodeBayar')) document.getElementById('posMetodeBayar').value = 'Cash';
         if(document.getElementById('posNoEdc')) document.getElementById('posNoEdc').value = '';
         if(document.getElementById('posCatatan')) document.getElementById('posCatatan').value = '';
         if(typeof togglePosPaymentOptions === 'function') togglePosPaymentOptions();
 
+        // Tarik otomatis nama-nama santri dari database (jika belum ditarik)
+        if (typeof cachedSantriList !== 'undefined' && cachedSantriList.length === 0) {
+          supaClient.from('master_santri').select('nama_santri, kelas').order('nama_santri', { ascending: true })
+            .then(res => {
+              if(res.data) { cachedSantriList = res.data; buildPosSantriDatalist(); }
+            });
+        } else {
+          buildPosSantriDatalist();
+        }
+
         window.posCartItems = [];
-        
         openModal('bazarKasirPosModal');
         setTimeout(() => { switchPosInputMode('cam'); }, 300);
       }
 
       function togglePosPaymentOptions() {
+        var tipe = document.getElementById('posTipePelanggan').value;
         var method = document.getElementById('posMetodeBayar').value;
-        var wrap = document.getElementById('posWrapEdc');
-        if (wrap) {
-          wrap.style.display = (method === 'BRI') ? 'block' : 'none';
+        var wrapEdc = document.getElementById('posWrapEdc');
+        var inputCat = document.getElementById('posCatatan');
+        
+        if (wrapEdc) {
+          wrapEdc.style.display = (method === 'BRI') ? 'block' : 'none';
         }
+
+        if (inputCat) {
+          if (tipe === 'Santri') {
+            inputCat.placeholder = 'Ketik / Pilih Nama Santri...';
+            inputCat.setAttribute('list', 'posSantriDatalist');
+          } else {
+            inputCat.placeholder = 'Contoh: Hamba Allah / Uang Pas...';
+            inputCat.removeAttribute('list');
+          }
+        }
+      }
+
+      function buildPosSantriDatalist() {
+        var dl = document.getElementById('posSantriDatalist');
+        if (!dl) return;
+        var html = '';
+        (cachedSantriList || []).forEach(s => {
+          var info = s.nama_santri;
+          if (s.kelas) info += ' (' + s.kelas + ')';
+          html += '<option value="' + s.nama_santri + '">' + info + '</option>';
+        });
+        dl.innerHTML = html;
       }
 
       function closeKasirPos() {
