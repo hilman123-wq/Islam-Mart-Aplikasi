@@ -3645,7 +3645,9 @@
         <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3 flex-1 flex flex-col">
           <p class="text-[11px] font-black text-slate-800 uppercase tracking-wide">Langkah B: Total & Rincian Belanja</p>
           
-          <textarea id="posRincian" readonly rows="3" placeholder="Rincian barang (otomatis terisi saat scan produk / ketik manual)" class="w-full p-2.5 bg-white border border-emerald-200 rounded-xl text-[11px] font-semibold text-slate-600 outline-none resize-none shadow-inner custom-scrollbar"></textarea>
+          <div id="posRincianList" class="w-full h-32 sm:h-40 overflow-y-auto custom-scrollbar bg-white border border-emerald-200 rounded-xl p-2 space-y-2 shadow-inner">
+            <div class="text-center text-slate-400 text-[10px] mt-10 font-bold">Keranjang masih kosong</div>
+          </div>
           
           <div class="relative">
             <span class="absolute top-2 left-3 text-slate-400 font-bold text-sm">Rp</span>
@@ -9217,13 +9219,13 @@
       window.posScanner = null;
 
       function openBazarKasirPos() {
-        document.getElementById('posRincian').value = '';
+        var listEl = document.getElementById('posRincianList');
+        if (listEl) listEl.innerHTML = '<div class="text-center text-slate-400 text-[10px] mt-10 font-bold">Keranjang masih kosong</div>';
         document.getElementById('posTotalAmount').value = '0';
         document.getElementById('posInputBarcode').value = '';
         window.posCartItems = [];
-        
+
         openModal('bazarKasirPosModal');
-        // Beri jeda sedikit agar animasi modal selesai sebelum menyalakan kamera
         setTimeout(() => { switchPosInputMode('cam'); }, 300);
       }
 
@@ -9373,19 +9375,74 @@
         updatePosUI();
       }
 
+      function changePosItemQty(itemId, delta) {
+        var it = window.posCartItems.find(x => x.id === itemId);
+        if (!it) return;
+        
+        var newQty = it.qty + delta;
+        if (newQty > it.stokAwal) {
+          if (navigator.vibrate) navigator.vibrate(300);
+          return showToast('Stok ' + it.nama + ' sisa ' + it.stokAwal + '!', 'error');
+        }
+        
+        if (newQty <= 0) {
+          window.posCartItems = window.posCartItems.filter(x => x.id !== itemId);
+        } else {
+          it.qty = newQty;
+          it.subtotal = it.qty * it.hJual;
+        }
+        updatePosUI();
+      }
+
+      function setPosItemQtyExact(itemId, val) {
+        var newQty = parseInt(val, 10);
+        var it = window.posCartItems.find(x => x.id === itemId);
+        if (!it) return;
+        
+        if (isNaN(newQty) || newQty <= 0) {
+          window.posCartItems = window.posCartItems.filter(x => x.id !== itemId);
+        } else {
+          if (newQty > it.stokAwal) {
+            if (navigator.vibrate) navigator.vibrate(300);
+            showToast('Stok ' + it.nama + ' sisa ' + it.stokAwal + '!', 'error');
+            newQty = it.stokAwal; // Mentok di sisa stok maksimal
+          }
+          it.qty = newQty;
+          it.subtotal = it.qty * it.hJual;
+        }
+        updatePosUI();
+      }
+
       function updatePosUI() {
         var total = 0;
-        var rincian = '';
-        window.posCartItems.forEach((it, idx) => {
+        var listEl = document.getElementById('posRincianList');
+        var html = '';
+
+        if (window.posCartItems.length === 0) {
+          listEl.innerHTML = '<div class="text-center text-slate-400 text-[10px] mt-10 font-bold">Keranjang masih kosong</div>';
+          document.getElementById('posTotalAmount').value = '0';
+          return;
+        }
+
+        window.posCartItems.forEach((it) => {
           total += it.subtotal;
-          // Format rincian menjadi: 1. [2x] DIMSUM - Rp6.000
-          rincian += (idx + 1) + ". [" + it.qty + "x] " + it.nama + " - Rp" + it.subtotal.toLocaleString('id-ID') + "\n";
+          
+          html += '<div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg">' +
+            '<div class="flex-1 min-w-0 pr-2">' +
+              '<h4 class="font-bold text-slate-800 text-[11px] truncate">' + it.nama + '</h4>' +
+              '<p class="text-[10px] font-black text-emerald-600 mt-0.5">Rp ' + it.subtotal.toLocaleString('id-ID') + '</p>' +
+            '</div>' +
+            '<div class="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg p-1 shadow-2xs shrink-0">' +
+              '<button type="button" onclick="changePosItemQty(\'' + it.id + '\', -1)" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-black active:scale-90 transition">-</button>' +
+              '<input type="number" value="' + it.qty + '" onchange="setPosItemQtyExact(\'' + it.id + '\', this.value)" onclick="this.select()" class="w-8 text-center font-black text-xs text-slate-800 border-none outline-none hide-arrows p-0 m-0 bg-transparent">' +
+              '<button type="button" onclick="changePosItemQty(\'' + it.id + '\', 1)" class="w-6 h-6 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-black active:scale-90 transition">+</button>' +
+            '</div>' +
+          '</div>';
         });
 
+        listEl.innerHTML = html;
         document.getElementById('posTotalAmount').value = total.toLocaleString('id-ID');
-        var ta = document.getElementById('posRincian');
-        ta.value = rincian;
-        ta.scrollTop = ta.scrollHeight; 
+        listEl.scrollTop = listEl.scrollHeight; // Otomatis gulir ke barang terbaru
       }
 
       async function submitPosKasir() {
