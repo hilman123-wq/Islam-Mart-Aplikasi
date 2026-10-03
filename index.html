@@ -3657,14 +3657,10 @@
             <input type="text" id="posTotalAmount" readonly value="0" class="w-full pl-10 pr-4 py-2 sm:py-3 bg-white border border-slate-200 rounded-xl text-3xl sm:text-4xl font-black text-slate-600 outline-none shadow-inner tracking-tighter">
           </div>
 
-          <div>
-            <p class="text-[10px] font-bold text-slate-500 mb-1.5">Tombol Tambah Harga Manual (Tanpa Potong Stok):</p>
-            <div class="grid grid-cols-4 gap-1.5">
-              <button type="button" onclick="addPosManualPrice(2000)" class="bg-white border border-slate-300 rounded-lg py-2 text-[10px] font-black text-slate-700 shadow-sm active:scale-95 transition">+ 2.000</button>
-              <button type="button" onclick="addPosManualPrice(5000)" class="bg-white border border-slate-300 rounded-lg py-2 text-[10px] font-black text-slate-700 shadow-sm active:scale-95 transition">+ 5.000</button>
-              <button type="button" onclick="addPosManualPrice(10000)" class="bg-white border border-slate-300 rounded-lg py-2 text-[10px] font-black text-slate-700 shadow-sm active:scale-95 transition">+ 10.000</button>
-              <button type="button" onclick="resetPosCart()" class="bg-rose-50 border border-rose-200 rounded-lg py-2 text-[10px] font-black text-rose-600 shadow-sm active:scale-95 transition">Reset</button>
-            </div>
+          <div class="flex justify-end pt-1">
+            <button type="button" onclick="resetPosCart()" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-[11px] font-black text-rose-600 shadow-sm active:scale-95 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-trash-can"></i> Kosongkan Daftar
+            </button>
           </div>
         </div>
 
