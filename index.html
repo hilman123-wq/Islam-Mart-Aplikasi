@@ -1856,8 +1856,8 @@
               </div>
             </div>
 
-            <!-- Filter Unit & Bulan -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+            <!-- Filter Unit & Periode Waktu -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
               <div id="wrapFilterBazarIM">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Unit Bazar</label>
                 <select id="filterBazarIM" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
@@ -1867,8 +1867,16 @@
                 </select>
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filter Bulan Laporan</label>
-                <input type="month" id="filterBazarMonth" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipe Periode</label>
+                <select id="filterBazarTipeWaktu" onchange="changeBazarFilterType()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 cursor-pointer focus:ring-2 focus:ring-emerald-500 outline-none">
+                  <option value="bulan">Bulanan</option>
+                  <option value="hari">Harian</option>
+                  <option value="tahun">Tahunan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Waktu</label>
+                <input type="month" id="filterBazarWaktu" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
               </div>
             </div>
 
@@ -8894,9 +8902,35 @@
         window.scrollTo(0, 0);
       }
 
+      function changeBazarFilterType() {
+        var tipe = document.getElementById('filterBazarTipeWaktu').value;
+        var inputWaktu = document.getElementById('filterBazarWaktu');
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var dd = String(today.getDate()).padStart(2, '0');
+
+        if (tipe === 'hari') {
+          inputWaktu.type = 'date';
+          inputWaktu.value = yyyy + '-' + mm + '-' + dd;
+        } else if (tipe === 'bulan') {
+          inputWaktu.type = 'month';
+          inputWaktu.value = yyyy + '-' + mm;
+        } else if (tipe === 'tahun') {
+          inputWaktu.type = 'number';
+          inputWaktu.min = "2020";
+          inputWaktu.max = "2099";
+          inputWaktu.placeholder = 'Contoh: 2026';
+          inputWaktu.value = yyyy;
+        }
+        renderAllBazarData();
+      }
+
       function initBazarView(forceRefresh) {
-        var mInput = document.getElementById('filterBazarMonth');
-        if (mInput && !mInput.value) mInput.value = new Date().toISOString().substring(0, 7);
+        var mInput = document.getElementById('filterBazarWaktu');
+        if (mInput && !mInput.value) {
+          changeBazarFilterType(); // Otomatis atur form default saat dibuka
+        }
 
         var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
         var unameStr = String(currentUser ? currentUser.username : '').toLowerCase();
@@ -8940,7 +8974,7 @@
 
       function renderAllBazarData() {
         var unit = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
-        var month = document.getElementById('filterBazarMonth') ? document.getElementById('filterBazarMonth').value : '';
+        var waktuFilter = document.getElementById('filterBazarWaktu') ? document.getElementById('filterBazarWaktu').value : '';
         var jenisFilter = document.getElementById('filterBazarJenisTrans') ? document.getElementById('filterBazarJenisTrans').value : 'ALL';
 
         // Filter Khusus untuk Master Barang Bazar (Berbeda dari Dashboard)
@@ -8991,8 +9025,9 @@
 
         var transBulanIni = cachedBazarTrans.filter(t => {
           var matchIM = (unit === 'ALL') || (t.im === unit);
-          var matchMonth = !month || String(t.tanggal || '').startsWith(month);
-          return matchIM && matchMonth; 
+          // Berkat format tanggal standar di database, startWith otomatis mendeteksi Hari/Bulan/Tahun!
+          var matchWaktu = !waktuFilter || String(t.tanggal || '').startsWith(waktuFilter);
+          return matchIM && matchWaktu; 
         });
 
         transBulanIni.forEach(t => {
