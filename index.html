@@ -3661,6 +3661,44 @@
           </div>
         </div>
 
+        <!-- LANGKAH C: PEMBAYARAN & PELANGGAN -->
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3 flex flex-col mb-4 text-xs">
+          <p class="text-[11px] font-black text-slate-800 uppercase tracking-wide">Langkah C: Tipe Pembayaran</p>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-500 mb-1">Tipe Pelanggan</label>
+              <select id="posTipePelanggan" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-500">
+                <option value="Santri">Santri</option>
+                <option value="Umum">Umum</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-500 mb-1">Metode Bayar</label>
+              <select id="posMetodeBayar" onchange="togglePosPaymentOptions()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-500 cursor-pointer">
+                <option value="Cash">Tunai (Cash)</option>
+                <option value="BRI">EDC BRI (Gesek)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="posWrapEdc" style="display: none;">
+            <label class="block font-bold text-slate-500 mb-1">Nomor Struk / Referensi EDC *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-receipt"></i></span>
+              <input type="text" id="posNoEdc" placeholder="Ketik nomor struk EDC..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-mono font-bold text-slate-800 outline-none focus:border-emerald-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-500 mb-1">Nama / Catatan (Opsional)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-user-pen"></i></span>
+              <input type="text" id="posCatatan" placeholder="Contoh: Fulan / Uang Pas..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 outline-none focus:border-emerald-500">
+            </div>
+          </div>
+        </div>
+
         <!-- TOMBOL SUBMIT BESAR -->
         <button type="button" onclick="submitPosKasir()" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm sm:text-base py-3.5 sm:py-4 rounded-2xl shadow-[0_8px_20px_rgba(16,185,129,0.3)] active:scale-95 transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-square-check text-xl"></i> 
@@ -9223,10 +9261,26 @@
         if (listEl) listEl.innerHTML = '<div class="text-center text-slate-400 text-[10px] mt-10 font-bold">Keranjang masih kosong</div>';
         document.getElementById('posTotalAmount').value = '0';
         document.getElementById('posInputBarcode').value = '';
-        window.posCartItems = [];
+        
+        // Reset Langkah C (Pembayaran)
+        if(document.getElementById('posTipePelanggan')) document.getElementById('posTipePelanggan').value = 'Santri';
+        if(document.getElementById('posMetodeBayar')) document.getElementById('posMetodeBayar').value = 'Cash';
+        if(document.getElementById('posNoEdc')) document.getElementById('posNoEdc').value = '';
+        if(document.getElementById('posCatatan')) document.getElementById('posCatatan').value = '';
+        if(typeof togglePosPaymentOptions === 'function') togglePosPaymentOptions();
 
+        window.posCartItems = [];
+        
         openModal('bazarKasirPosModal');
         setTimeout(() => { switchPosInputMode('cam'); }, 300);
+      }
+
+      function togglePosPaymentOptions() {
+        var method = document.getElementById('posMetodeBayar').value;
+        var wrap = document.getElementById('posWrapEdc');
+        if (wrap) {
+          wrap.style.display = (method === 'BRI') ? 'block' : 'none';
+        }
       }
 
       function closeKasirPos() {
@@ -9448,6 +9502,23 @@
       async function submitPosKasir() {
         if (window.posCartItems.length === 0) return showToast('Keranjang masih kosong!', 'error');
 
+        // Ambil Data Pembayaran
+        var tipe = document.getElementById('posTipePelanggan').value;
+        var method = document.getElementById('posMetodeBayar').value;
+        var noEdc = document.getElementById('posNoEdc').value.trim();
+        var ctt = document.getElementById('posCatatan').value.trim();
+
+        // Cegah simpan jika pilih BRI tapi lupa isi struk EDC
+        if (method === 'BRI' && !noEdc) {
+          return showToast('Nomor Struk EDC wajib diisi!', 'error');
+        }
+
+        // Format tulisan untuk disimpan di Database (Contoh: "[SANTRI - EDC BRI No.12345] Fulan")
+        var finalKeterangan = '[' + tipe.toUpperCase() + ' - ' + method.toUpperCase();
+        if (method === 'BRI') finalKeterangan += ' No.' + noEdc;
+        finalKeterangan += ']';
+        if (ctt) finalKeterangan += ' ' + ctt;
+
         var tgl = new Date().toISOString().split('T')[0];
         var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
         var unitIM = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
@@ -9471,7 +9542,7 @@
             harga_jual: c.hJual,
             total_nominal: c.subtotal,
             laba_rugi: c.subtotal - (c.hBeli * c.qty),
-            keterangan: 'Kasir Scanner',
+            keterangan: finalKeterangan, // Masukkan Keterangan Lengkap Disini
             petugas: currentUser ? currentUser.nama : 'Kasir'
           });
         });
