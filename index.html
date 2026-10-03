@@ -9116,9 +9116,17 @@
               
               var htmlTr = '';
               displayTrans.forEach(t => {
+                // Default ke Penjualan
                 var badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">PENJUALAN</span>';
                 var lrText = '<span class="font-bold text-emerald-600">+Rp ' + Number(t.laba_rugi || 0).toLocaleString('id-ID') + '</span>';
-                if (t.jenis === 'KERUGIAN') {
+                
+                // Jika jenisnya adalah Pembelian / Nota Beli
+                if (t.jenis === 'NOTA_PEMBELIAN') {
+                  badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">PEMBELIAN</span>';
+                  lrText = '<span class="font-bold text-blue-600">Stok +' + t.qty + '</span>';
+                } 
+                // Jika jenisnya adalah Kerugian / Rusak
+                else if (t.jenis === 'KERUGIAN') {
                   badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">KERUGIAN</span>';
                   lrText = '<span class="font-bold text-rose-600">-Rp ' + Math.abs(Number(t.laba_rugi || t.total_nominal || 0)).toLocaleString('id-ID') + '</span>';
                 }
