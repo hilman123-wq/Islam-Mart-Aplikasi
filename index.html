@@ -1919,8 +1919,9 @@
                 <span class="text-[10px] font-bold uppercase text-blue-700 block mb-0.5"><i class="fa-solid fa-credit-card mr-1"></i> Laporan Mesin EDC (BRI)</span>
                 <h3 id="bazarStatBri" class="text-xl sm:text-2xl font-black text-blue-900 mt-1">Rp 0</h3>
               </div>
-              <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200 shadow-sm">
-                <span class="text-[10px] font-bold uppercase text-purple-700 block mb-0.5"><i class="fa-solid fa-user-graduate mr-1"></i> Total Belanja Santri</span>
+              <div onclick="openBazarSantriReport()" class="p-4 rounded-2xl bg-purple-50 border border-purple-200 shadow-sm cursor-pointer hover:shadow-md hover:border-purple-400 transition group relative overflow-hidden">
+             <div class="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-purple-200/50 to-transparent flex items-center justify-end pr-3 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-chevron-right text-purple-400"></i></div>
+             <span class="text-[10px] font-bold uppercase text-purple-700 block mb-0.5"><i class="fa-solid fa-user-graduate mr-1"></i> Total Belanja Santri</span>
                 <h3 id="bazarStatSantri" class="text-xl sm:text-2xl font-black text-purple-900 mt-1">Rp 0</h3>
               </div>
             </div>
@@ -3612,6 +3613,60 @@
             <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow">Mulai Import</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL: LAPORAN REKAP JAJAN PER SANTRI -->
+    <!-- ========================================================================= -->
+    <div id="bazarSantriReportModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[130] flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        
+        <div class="p-4 sm:p-5 border-b flex items-center justify-between bg-purple-50/50 shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-200 text-purple-800 flex items-center justify-center font-bold text-lg shadow-inner">
+              <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-black text-slate-800">Laporan Jajan Santri</h3>
+              <p id="lblBazarSantriReportPeriode" class="text-[11px] text-slate-500 font-semibold">Periode: Semua Waktu</p>
+            </div>
+          </div>
+          <button onclick="closeModal('bazarSantriReportModal')" class="text-slate-400 hover:text-rose-500 p-2 transition">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <div class="p-4 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
+          <div class="relative w-2/3">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+            <input type="text" id="searchBazarSantriReport" oninput="renderBazarSantriReportTable()" placeholder="Cari nama santri..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-purple-500">
+          </div>
+          <button type="button" onclick="exportBazarSantriReportToExcel()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+            <i class="fa-solid fa-file-excel"></i> Ekspor
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 p-4">
+          <table class="w-full text-left text-xs bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200">
+            <thead class="bg-purple-100 text-purple-900 font-bold uppercase border-b border-purple-200">
+              <tr>
+                <th class="py-2.5 px-3 w-10 text-center">No</th>
+                <th class="py-2.5 px-3">Nama Santri</th>
+                <th class="py-2.5 px-3 text-right">Total Jajan (Rp)</th>
+              </tr>
+            </thead>
+            <tbody id="bazarSantriReportBody" class="divide-y divide-slate-100 text-slate-700">
+              <!-- JS Injects here -->
+            </tbody>
+            <tfoot class="bg-slate-100 font-black text-slate-800 border-t border-slate-300">
+              <tr>
+                <td colspan="2" class="py-3 px-3 text-right uppercase">Total Keseluruhan:</td>
+                <td id="valBazarSantriReportTotal" class="py-3 px-3 text-right text-purple-700">Rp 0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -9152,6 +9207,104 @@
             }
           }
         }
+      }
+
+      // Variabel global penyimpan data jajan santri agar mudah diekspor
+      window.bazarSantriReportData = [];
+
+      function openBazarSantriReport() {
+        var unit = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
+        var waktuFilter = document.getElementById('filterBazarWaktu') ? document.getElementById('filterBazarWaktu').value : '';
+        var tipeWaktu = document.getElementById('filterBazarTipeWaktu') ? document.getElementById('filterBazarTipeWaktu').options[document.getElementById('filterBazarTipeWaktu').selectedIndex].text : '';
+
+        // Saring transaksi berdasarkan Unit dan Waktu
+        var transBulanIni = cachedBazarTrans.filter(t => {
+          var matchIM = (unit === 'ALL') || (t.im === unit);
+          var matchWaktu = !waktuFilter || String(t.tanggal || '').startsWith(waktuFilter);
+          return matchIM && matchWaktu; 
+        });
+
+        // Kelompokkan khusus yang mengandung tulisan SANTRI
+        var grouped = {};
+        transBulanIni.forEach(t => {
+          if (t.jenis === 'PENJUALAN' && String(t.keterangan || '').toUpperCase().includes('SANTRI')) {
+             // Ekstrak nama dengan membuang kurung siku [SANTRI - CASH]
+             var namaSantri = String(t.keterangan || '').replace(/^\[.*?\]\s*/, '').trim();
+             if(!namaSantri) namaSantri = "Tanpa Nama / Anonim";
+
+             if(!grouped[namaSantri]) grouped[namaSantri] = 0;
+             grouped[namaSantri] += Number(t.total_nominal || 0);
+          }
+        });
+
+        // Ubah jadi Array agar bisa diurutkan
+        window.bazarSantriReportData = Object.keys(grouped).map(name => ({
+          nama: name,
+          total: grouped[name]
+        }));
+
+        // Urutkan dari jajan terbanyak ke terdikit
+        window.bazarSantriReportData.sort((a,b) => b.total - a.total);
+
+        // Atur label periode
+        var lblPeriode = "Semua Waktu";
+        if (waktuFilter) lblPeriode = tipeWaktu + " (" + waktuFilter + ")";
+        if (unit !== 'ALL') lblPeriode += " • IM " + unit;
+        document.getElementById('lblBazarSantriReportPeriode').innerText = 'Periode: ' + lblPeriode;
+
+        document.getElementById('searchBazarSantriReport').value = '';
+        renderBazarSantriReportTable();
+        
+        openModal('bazarSantriReportModal');
+      }
+
+      function renderBazarSantriReportTable() {
+        var tbody = document.getElementById('bazarSantriReportBody');
+        var lblTotal = document.getElementById('valBazarSantriReportTotal');
+        var q = document.getElementById('searchBazarSantriReport').value.toLowerCase().trim();
+
+        var filteredData = window.bazarSantriReportData.filter(d => d.nama.toLowerCase().includes(q));
+        
+        var html = '';
+        var grandTotal = 0;
+
+        if (filteredData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-slate-400 font-bold">Tidak ada data santri ditemukan.</td></tr>';
+          lblTotal.innerText = 'Rp 0';
+          return;
+        }
+
+        filteredData.forEach((d, idx) => {
+          grandTotal += d.total;
+          html += '<tr class="hover:bg-purple-50 transition">' +
+            '<td class="py-2.5 px-3 text-center text-slate-500 font-bold">' + (idx + 1) + '</td>' +
+            '<td class="py-2.5 px-3 font-bold text-slate-800">' + d.nama + '</td>' +
+            '<td class="py-2.5 px-3 text-right font-mono font-black text-purple-700">Rp ' + d.total.toLocaleString('id-ID') + '</td>' +
+          '</tr>';
+        });
+
+        tbody.innerHTML = html;
+        lblTotal.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
+      }
+
+      function exportBazarSantriReportToExcel() {
+        if (!window.bazarSantriReportData || window.bazarSantriReportData.length === 0) {
+          return showToast('Tidak ada data jajan santri untuk diekspor!', 'error');
+        }
+        
+        var rows = window.bazarSantriReportData.map((d, i) => ({
+          "No": i + 1,
+          "Nama Santri": d.nama,
+          "Total Jajan (Rp)": d.total
+        }));
+
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = [{wch: 5}, {wch: 40}, {wch: 20}]; // Atur lebar kolom
+        
+        XLSX.utils.book_append_sheet(wb, ws, "Rekap Santri");
+        var tgl = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, "Rekap_Jajan_Santri_" + tgl + ".xlsx");
       }
 
       function openBazarItemModal() {
