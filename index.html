@@ -9151,35 +9151,22 @@
           });
         });
 
-        // Susun data untuk Supabase Upsert
-        for (let k in updatesStockMap) {
-          itemsToUpdate.push({
-            id: k,
-            stok: updatesStockMap[k].stokAwal + updatesStockMap[k].qtyBerubah,
-            harga_beli: updatesStockMap[k].hBeli,
-            harga_jual: updatesStockMap[k].hJual
-          });
-        }
-
         showLoading('Menyimpan ' + payloadTrans.length + ' transaksi sekaligus...');
         try {
           // 1. Simpan Transaksi Batch
           const { error: err1 } = await supaClient.from('bazar_transaksi').insert(payloadTrans);
           if (err1) throw err1;
 
-          // 2. Update Stok Batch
-          const { error: err2 } = await supaClient.from('bazar_barang').upsert(itemsToUpdate, { onConflict: 'id' });
-          if (err2) throw err2;
-
-          hideLoading();
-          showToast(payloadTrans.length + ' transaksi berhasil disimpan & stok diperbarui!', 'success');
-          closeModal('bazarTransModal');
-          loadBazarData(true);
-        } catch (err) {
-          hideLoading();
-          showToast('Gagal menyimpan: ' + err.message, 'error');
-        }
-      }
+          // 2. Update Stok Satu per Satu (Solusi Error 400 Bad Request)
+          for (let k in updatesStockMap) {
+            const { error: err2 } = await supaClient.from('bazar_barang').update({
+              stok: updatesStockMap[k].stokAwal + updatesStockMap[k].qtyBerubah,
+              harga_beli: updatesStockMap[k].hBeli,
+              harga_jual: updatesStockMap[k].hJual
+            }).eq('id', k);
+            
+            if (err2) throw err2;
+          }
 
       async function deleteBazarTrans(id) {
         if (!confirm('Hapus catatan transaksi bazar ini?')) return;
