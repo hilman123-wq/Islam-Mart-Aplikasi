@@ -1872,8 +1872,37 @@
               </div>
             </div>
 
-            <!-- RINGKASAN LAPORAN PEMBAYARAN KASIR -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- KARTU DASHBOARD (MUNCUL DI BERANDA) -->
+            <div id="bazarDashCards" class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div onclick="switchBazarSubMenu('RIWAYAT_PENJUALAN')" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 cursor-pointer hover:shadow-md transition">
+                <span class="text-[10px] font-bold uppercase text-emerald-700 block">Total Penjualan (Omzet)</span>
+                <h3 id="bazarStatOmzet" class="text-sm sm:text-base font-black text-emerald-900 mt-1">Rp 0</h3>
+                <p id="bazarStatQtyTerjual" class="text-[10px] text-emerald-600 mt-0.5">0 item terjual</p>
+              </div>
+              <div onclick="switchBazarSubMenu('RIWAYAT_NOTA')" class="p-4 rounded-2xl bg-blue-50 border border-blue-200 cursor-pointer hover:shadow-md transition">
+                <span class="text-[10px] font-bold uppercase text-blue-700 block">Total Nota Pembelian</span>
+                <h3 id="bazarStatBelanja" class="text-sm sm:text-base font-black text-blue-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-blue-600 mt-0.5">Modal belanja stok</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-teal-50 border border-teal-200">
+                <span class="text-[10px] font-bold uppercase text-teal-700 block">Keuntungan Penjualan</span>
+                <h3 id="bazarStatUntungKotor" class="text-sm sm:text-base font-black text-teal-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-teal-600 mt-0.5">(Harga Jual - Harga Beli)</p>
+              </div>
+              <div onclick="switchBazarSubMenu('RIWAYAT_KERUGIAN')" class="p-4 rounded-2xl bg-rose-50 border border-rose-200 cursor-pointer hover:shadow-md transition">
+                <span class="text-[10px] font-bold uppercase text-rose-700 block">Total Kerugian / Rusak</span>
+                <h3 id="bazarStatRugi" class="text-sm sm:text-base font-black text-rose-900 mt-1">Rp 0</h3>
+                <p class="text-[10px] text-rose-600 mt-0.5">Barang rusak/hilang</p>
+              </div>
+              <div class="col-span-2 lg:col-span-1 p-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-md">
+                <span class="text-[10px] font-bold uppercase text-amber-400 block">Laba / Rugi Bersih</span>
+                <h3 id="bazarStatLabaBersih" class="text-sm sm:text-base font-black text-white mt-1">Rp 0</h3>
+                <p id="bazarStatStatusLaba" class="text-[10px] text-emerald-400 font-bold mt-0.5">Untung Bersih</p>
+              </div>
+            </div>
+
+            <!-- KARTU RIWAYAT (MUNCUL DI MENU RIWAYAT) -->
+            <div id="bazarRiwCards" style="display: none;" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm">
                 <span class="text-[10px] font-bold uppercase text-emerald-700 block mb-0.5"><i class="fa-solid fa-money-bill-wave mr-1"></i> Laporan Tunai (CASH)</span>
                 <h3 id="bazarStatTunai" class="text-xl sm:text-2xl font-black text-emerald-900 mt-1">Rp 0</h3>
@@ -1887,7 +1916,6 @@
                 <h3 id="bazarStatSantri" class="text-xl sm:text-2xl font-black text-purple-900 mt-1">Rp 0</h3>
               </div>
             </div>
-          </div>
 
           <!-- ================= TAMPILAN 2: HALAMAN STOK BAZAR (MASTER BARANG) ================= -->
           <div id="bazarSectionStok" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 w-full overflow-hidden">
@@ -8828,8 +8856,10 @@
         var riwTitle = document.getElementById('bazarRiwayatSectionTitle');
         var riwDesc = document.getElementById('bazarRiwayatSectionDesc');
         var btnQuick = document.getElementById('btnBazarRiwayatQuickAdd');
+        
+        var dashCards = document.getElementById('bazarDashCards');
+        var riwCards = document.getElementById('bazarRiwCards');
 
-        // Sembunyikan Panel Dashboard Atas jika sedang di Master Barang
         if (topDash) topDash.style.display = (subMenu === 'STOK') ? 'none' : 'block';
 
         if (dashGrid) dashGrid.style.display = 'none';
@@ -8839,12 +8869,16 @@
 
         if (subMenu === 'DASHBOARD') {
           if (dashGrid) dashGrid.style.display = 'block';
+          if (dashCards) dashCards.style.display = 'grid';
+          if (riwCards) riwCards.style.display = 'none';
           if (titleHeader) titleHeader.innerText = 'Dashboard Operasional Bazar';
           if (selJenis) selJenis.value = 'ALL';
         } else if (subMenu === 'STOK') {
           if (secStok) secStok.style.display = 'block';
         } else if (subMenu === 'RIWAYAT_PENJUALAN') {
           if (secRiw) secRiw.style.display = 'block';
+          if (dashCards) dashCards.style.display = 'none';
+          if (riwCards) riwCards.style.display = 'grid';
           if (selJenis) { selJenis.style.display = 'block'; selJenis.value = 'ALL'; }
           if (titleHeader) titleHeader.innerText = 'Buku Riwayat Transaksi';
           if (riwTitle) riwTitle.innerHTML = '<i class="fa-solid fa-clock-rotate-left text-teal-600"></i><span>Seluruh Catatan Riwayat</span>';
@@ -8951,35 +8985,54 @@
           }
         }
 
-        // 2. Hitung Laporan Pembayaran (Tunai, BRI, Santri) & Render Tabel Transaksi
+        // 2. Hitung Laporan Keuntungan & Kerugian (Beranda) SERTA Pembayaran (Riwayat)
+        var totalOmzet = 0, totalQtyTerjual = 0, totalBelanjaNota = 0, totalUntungPenjualan = 0, totalKerugian = 0;
         var totalTunai = 0, totalBRI = 0, totalSantri = 0;
 
         var transBulanIni = cachedBazarTrans.filter(t => {
           var matchIM = (unit === 'ALL') || (t.im === unit);
           var matchMonth = !month || String(t.tanggal || '').startsWith(month);
-          return matchIM && matchMonth; // Filter search Q dihapus dari sini
+          return matchIM && matchMonth; 
         });
 
         transBulanIni.forEach(t => {
           var nom = Number(t.total_nominal || 0);
+          var lr = Number(t.laba_rugi || 0);
+
           if (t.jenis === 'PENJUALAN') {
+            totalOmzet += nom;
+            totalQtyTerjual += Number(t.qty || 0);
+            totalUntungPenjualan += lr;
+
             var ket = String(t.keterangan || '').toUpperCase();
-            
-            // Hitung Tunai / Cash
-            if (ket.includes('CASH') || ket.includes('TUNAI')) {
-              totalTunai += nom;
-            }
-            // Hitung EDC / BRI
-            if (ket.includes('BRI') || ket.includes('EDC')) {
-              totalBRI += nom;
-            }
-            // Hitung Total Belanja Santri
-            if (ket.includes('SANTRI')) {
-              totalSantri += nom;
-            }
+            if (ket.includes('CASH') || ket.includes('TUNAI')) totalTunai += nom;
+            if (ket.includes('BRI') || ket.includes('EDC')) totalBRI += nom;
+            if (ket.includes('SANTRI')) totalSantri += nom;
+
+          } else if (t.jenis === 'NOTA_PEMBELIAN') {
+            totalBelanjaNota += nom;
+          } else if (t.jenis === 'KERUGIAN') {
+            totalKerugian += Math.abs(lr || nom);
           }
         });
 
+        var labaBersih = totalUntungPenjualan - totalKerugian;
+
+        // Update Kartu Beranda (Laba / Rugi)
+        if (document.getElementById('bazarStatOmzet')) document.getElementById('bazarStatOmzet').innerText = 'Rp ' + totalOmzet.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatQtyTerjual')) document.getElementById('bazarStatQtyTerjual').innerText = totalQtyTerjual + ' item terjual';
+        if (document.getElementById('bazarStatBelanja')) document.getElementById('bazarStatBelanja').innerText = 'Rp ' + totalBelanjaNota.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatUntungKotor')) document.getElementById('bazarStatUntungKotor').innerText = 'Rp ' + totalUntungPenjualan.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatRugi')) document.getElementById('bazarStatRugi').innerText = 'Rp ' + totalKerugian.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatLabaBersih')) document.getElementById('bazarStatLabaBersih').innerText = (labaBersih < 0 ? '-Rp ' : 'Rp ') + Math.abs(labaBersih).toLocaleString('id-ID');
+        
+        var elSt = document.getElementById('bazarStatStatusLaba');
+        if (elSt) {
+          elSt.innerText = labaBersih >= 0 ? '✔ Status: Untung Bersih' : '⚠ Status: Mengalami Kerugian';
+          elSt.className = 'text-[10px] font-bold mt-0.5 ' + (labaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400');
+        }
+
+        // Update Kartu Riwayat (Pembayaran Kasir)
         if (document.getElementById('bazarStatTunai')) document.getElementById('bazarStatTunai').innerText = 'Rp ' + totalTunai.toLocaleString('id-ID');
         if (document.getElementById('bazarStatBri')) document.getElementById('bazarStatBri').innerText = 'Rp ' + totalBRI.toLocaleString('id-ID');
         if (document.getElementById('bazarStatSantri')) document.getElementById('bazarStatSantri').innerText = 'Rp ' + totalSantri.toLocaleString('id-ID');
