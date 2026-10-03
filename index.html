@@ -9167,6 +9167,15 @@
             
             if (err2) throw err2;
           }
+
+          hideLoading();
+          showToast(payloadTrans.length + ' transaksi berhasil disimpan & stok diperbarui!', 'success');
+          closeModal('bazarTransModal');
+          loadBazarData(true);
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menyimpan: ' + err.message, 'error');
+        }
       }
 
       async function deleteBazarTrans(id) {
