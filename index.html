@@ -9226,6 +9226,32 @@
         closeModal('bazarKasirPosModal');
       }
 
+      window.isPosScannerStarting = false; // Mencegah bentrok saat kamera sedang loading
+
+      function stopScannerSafely() {
+        if (window.posScanner) {
+          try {
+            var state = window.posScanner.getState();
+            if (state === 2 || state === 3) { // 2 = SCANNING, 3 = PAUSED
+              window.posScanner.stop().then(() => {
+                window.posScanner.clear();
+                window.posScanner = null;
+              }).catch(() => { window.posScanner = null; });
+            } else {
+              window.posScanner.clear();
+              window.posScanner = null;
+            }
+          } catch(err) {
+            window.posScanner = null;
+          }
+        }
+      }
+
+      function closeKasirPos() {
+        stopScannerSafely();
+        closeModal('bazarKasirPosModal');
+      }
+
       function switchPosInputMode(mode) {
         var btnCam = document.getElementById('btnPosCam');
         var btnKetik = document.getElementById('btnPosKetik');
@@ -9241,20 +9267,28 @@
           wrapKetik.style.display = 'none';
           hint.innerText = 'Arahkan barcode barang ke kotak kamera di atas';
 
-          // Nyalakan Kamera Scanner
-          if (!window.posScanner && typeof Html5Qrcode !== 'undefined') {
+          // Nyalakan Kamera Scanner dengan Aman
+          if (!window.posScanner && !window.isPosScannerStarting && typeof Html5Qrcode !== 'undefined') {
+            window.isPosScannerStarting = true;
             window.posScanner = new Html5Qrcode("posReader");
             window.posScanner.start(
               { facingMode: "environment" }, 
               { fps: 10, qrbox: { width: 250, height: 250 } },
               function(decodedText) {
-                // Berhasil scan! Matikan sementara agar tidak scan dobel
-                window.posScanner.pause(true);
-                processPosBarcode(decodedText);
-                setTimeout(() => { if(window.posScanner) window.posScanner.resume(); }, 1200); // Jeda 1.2 detik
+                if (window.posScanner && window.posScanner.getState() === 2) {
+                   window.posScanner.pause(true); // Jeda kamera sebentar setelah berhasil baca barcode
+                   processPosBarcode(decodedText);
+                   setTimeout(() => { if(window.posScanner && window.posScanner.getState() === 3) window.posScanner.resume(); }, 1500); 
+                }
               }
-            ).catch(err => {
-              showToast('Kamera tidak diizinkan atau tidak ditemukan di perangkat ini.', 'error');
+            ).then(() => {
+              window.isPosScannerStarting = false;
+              // Jika saat kamera selesai loading ternyata user sudah klik "Ketik" atau "Tutup", segera matikan.
+              if (wrapCam.style.display === 'none') stopScannerSafely();
+            }).catch(err => {
+              window.isPosScannerStarting = false;
+              window.posScanner = null;
+              showToast('Kamera tidak diizinkan atau tidak ditemukan.', 'error');
               switchPosInputMode('ketik');
             });
           }
@@ -9266,11 +9300,11 @@
           wrapKetik.style.display = 'block';
           hint.innerText = 'Ketik barcode dengan keyboard lalu tekan Enter';
 
-          // Matikan Kamera
-          if (window.posScanner) {
-            window.posScanner.stop().then(() => { window.posScanner = null; }).catch(e => {});
+          // Matikan Kamera dengan aman
+          if (!window.isPosScannerStarting) {
+            stopScannerSafely();
           }
-          setTimeout(() => { document.getElementById('posInputBarcode').focus(); }, 100);
+          setTimeout(() => { var inp = document.getElementById('posInputBarcode'); if(inp) inp.focus(); }, 100);
         }
       }
 
