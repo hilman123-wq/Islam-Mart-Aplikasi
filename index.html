@@ -3644,7 +3644,7 @@
             <i class="fa-solid fa-camera text-xl"></i> Kamera Scan
           </button>
           <button id="btnPosKetik" onclick="switchPosInputMode('ketik')" class="bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300 rounded-xl p-3 font-bold text-xs shadow-sm transition flex flex-col items-center justify-center gap-1">
-            <i class="fa-solid fa-keyboard text-xl"></i> Ketik Barcode
+            <i class="fa-solid fa-keyboard text-xl"></i> Ketik Barcode / Nama
           </button>
         </div>
 
@@ -3656,7 +3656,8 @@
         <div id="posKetikWrapper" style="display: none;" class="mb-4">
           <div class="relative">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400"><i class="fa-solid fa-barcode text-lg"></i></span>
-            <input type="text" id="posInputBarcode" onkeypress="handlePosBarcodeEnter(event)" placeholder="Ketik / Scan Barcode..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 transition">
+            <input type="text" id="posInputBarcode" list="posKetikDatalist" onkeypress="handlePosBarcodeEnter(event)" onchange="handlePosBarcodeChange(event)" placeholder="Ketik Barcode / Nama Barang..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 transition">
+            <datalist id="posKetikDatalist"></datalist>
           </div>
         </div>
 
@@ -9342,7 +9343,7 @@
         if(document.getElementById('posCatatan')) document.getElementById('posCatatan').value = '';
         if(typeof togglePosPaymentOptions === 'function') togglePosPaymentOptions();
 
-        // Tarik otomatis nama-nama santri dari database (jika belum ditarik)
+        // Tarik otomatis nama-nama santri dari database
         if (typeof cachedSantriList !== 'undefined' && cachedSantriList.length === 0) {
           supaClient.from('master_santri').select('nama_santri, kelas').order('nama_santri', { ascending: true })
             .then(res => {
@@ -9352,9 +9353,27 @@
           buildPosSantriDatalist();
         }
 
+        // Siapkan Datalist Auto-Complete Nama Barang untuk Kasir
+        buildPosItemDatalist();
+
         window.posCartItems = [];
         openModal('bazarKasirPosModal');
         setTimeout(() => { switchPosInputMode('cam'); }, 300);
+      }
+
+      function buildPosItemDatalist() {
+        var dl = document.getElementById('posKetikDatalist');
+        if (!dl) return;
+        var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
+        var activeUnit = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
+        
+        var html = '';
+        (cachedBazarBarang || []).forEach(b => {
+          if (b.im === activeUnit) {
+            html += '<option value="' + b.nama_barang + '"></option>';
+          }
+        });
+        dl.innerHTML = html;
       }
 
       function togglePosPaymentOptions() {
@@ -9481,15 +9500,37 @@
         }
       }
 
+      function handlePosBarcodeChange(e) {
+        var code = e.target.value.trim();
+        if (!code) return;
+        
+        var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
+        var activeUnit = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
+        
+        // Auto-masukkan ke keranjang JIKA yang diketik/dipilih benar-benar sama persis dengan nama barang
+        var itemByName = cachedBazarBarang.find(b => b.im === activeUnit && String(b.nama_barang).toLowerCase() === String(code).toLowerCase());
+        
+        if (itemByName) {
+          processPosBarcode(code);
+          e.target.value = ''; 
+        }
+      }
+
       function processPosBarcode(code) {
         var unitFilter = document.getElementById('filterBazarIM') ? document.getElementById('filterBazarIM').value : 'ALL';
         var activeUnit = unitFilter === 'ALL' ? (currentUser.im || 'Banin') : unitFilter;
-        var item = cachedBazarBarang.find(b => String(b.barcode).toLowerCase() === String(code).toLowerCase() && b.im === activeUnit);
+        
+        // CARI CERDAS: Bisa pakai Barcode ATAU Nama Barang
+        var item = cachedBazarBarang.find(b => 
+          b.im === activeUnit && 
+          (String(b.barcode).toLowerCase() === String(code).toLowerCase() || 
+           String(b.nama_barang).toLowerCase() === String(code).toLowerCase())
+        );
 
         if (item) {
           addPosItemToCart(item);
         } else {
-          showToast('Barcode ' + code + ' tidak terdaftar!', 'error');
+          showToast('Barcode / Barang "' + code + '" tidak terdaftar!', 'error');
           if (navigator.vibrate) navigator.vibrate(300); 
         }
       }
