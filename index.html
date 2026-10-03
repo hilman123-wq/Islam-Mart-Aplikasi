@@ -1910,23 +1910,35 @@
             </div>
 
             <!-- KARTU RIWAYAT (MUNCUL DI MENU RIWAYAT) -->
-            <div id="bazarRiwCards" style="display: none;" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div id="bazarRiwCards" style="display: none;" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              
+              <!-- 1. Tunai Santri -->
               <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm">
-                <span class="text-[10px] font-bold uppercase text-emerald-700 block mb-0.5"><i class="fa-solid fa-money-bill-wave mr-1"></i> Laporan Tunai (CASH)</span>
-                <h3 id="bazarStatTunai" class="text-xl sm:text-2xl font-black text-emerald-900 mt-1">Rp 0</h3>
+                <span class="text-[10px] font-bold uppercase text-emerald-700 block mb-0.5"><i class="fa-solid fa-money-bill-wave mr-1"></i> Tunai Cash (SANTRI)</span>
+                <h3 id="bazarStatTunaiSantri" class="text-xl sm:text-2xl font-black text-emerald-900 mt-1">Rp 0</h3>
               </div>
+              
+              <!-- 2. Tunai Umum -->
+              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
+                <span class="text-[10px] font-bold uppercase text-amber-700 block mb-0.5"><i class="fa-solid fa-wallet mr-1"></i> Tunai Cash (UMUM)</span>
+                <h3 id="bazarStatTunaiUmum" class="text-xl sm:text-2xl font-black text-amber-900 mt-1">Rp 0</h3>
+              </div>
+              
+              <!-- 3. EDC BRI -->
               <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm">
                 <span class="text-[10px] font-bold uppercase text-blue-700 block mb-0.5"><i class="fa-solid fa-credit-card mr-1"></i> Laporan Mesin EDC (BRI)</span>
                 <h3 id="bazarStatBri" class="text-xl sm:text-2xl font-black text-blue-900 mt-1">Rp 0</h3>
               </div>
+              
+              <!-- 4. Total Santri (Bisa Diklik) -->
               <div onclick="openBazarSantriReport()" class="p-4 rounded-2xl bg-purple-50 border border-purple-200 shadow-sm cursor-pointer hover:shadow-md hover:border-purple-400 transition group relative overflow-hidden">
-             <div class="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-purple-200/50 to-transparent flex items-center justify-end pr-3 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-chevron-right text-purple-400"></i></div>
-             <span class="text-[10px] font-bold uppercase text-purple-700 block mb-0.5"><i class="fa-solid fa-user-graduate mr-1"></i> Total Belanja Santri</span>
+                <div class="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-purple-200/50 to-transparent flex items-center justify-end pr-3 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-chevron-right text-purple-400"></i></div>
+                <span class="text-[10px] font-bold uppercase text-purple-700 block mb-0.5"><i class="fa-solid fa-user-graduate mr-1"></i> Total Belanja Santri</span>
                 <h3 id="bazarStatSantri" class="text-xl sm:text-2xl font-black text-purple-900 mt-1">Rp 0</h3>
               </div>
+
             </div>
-            </div>
-            
+
           <!-- ================= TAMPILAN 2: HALAMAN STOK BAZAR (MASTER BARANG) ================= -->
           <div id="bazarSectionStok" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 w-full overflow-hidden">
             
@@ -9082,11 +9094,10 @@
 
         // 2. Hitung Laporan Keuntungan & Kerugian (Beranda) SERTA Pembayaran (Riwayat)
         var totalOmzet = 0, totalQtyTerjual = 0, totalBelanjaNota = 0, totalUntungPenjualan = 0, totalKerugian = 0;
-        var totalTunai = 0, totalBRI = 0, totalSantri = 0;
+        var totalTunaiSantri = 0, totalTunaiUmum = 0, totalBRI = 0, totalSantri = 0;
 
         var transBulanIni = cachedBazarTrans.filter(t => {
           var matchIM = (unit === 'ALL') || (t.im === unit);
-          // Berkat format tanggal standar di database, startWith otomatis mendeteksi Hari/Bulan/Tahun!
           var matchWaktu = !waktuFilter || String(t.tanggal || '').startsWith(waktuFilter);
           return matchIM && matchWaktu; 
         });
@@ -9101,7 +9112,17 @@
             totalUntungPenjualan += lr;
 
             var ket = String(t.keterangan || '').toUpperCase();
-            if (ket.includes('CASH') || ket.includes('TUNAI')) totalTunai += nom;
+            
+            // Logika Pemisahan Tunai Santri dan Tunai Umum
+            if (ket.includes('CASH') || ket.includes('TUNAI')) {
+              if (ket.includes('UMUM')) {
+                totalTunaiUmum += nom;
+              } else {
+                // Jika Cash tapi bukan Umum, masukkan ke Santri
+                totalTunaiSantri += nom;
+              }
+            }
+            
             if (ket.includes('BRI') || ket.includes('EDC')) totalBRI += nom;
             if (ket.includes('SANTRI')) totalSantri += nom;
 
@@ -9129,7 +9150,8 @@
         }
 
         // Update Kartu Riwayat (Pembayaran Kasir)
-        if (document.getElementById('bazarStatTunai')) document.getElementById('bazarStatTunai').innerText = 'Rp ' + totalTunai.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatTunaiSantri')) document.getElementById('bazarStatTunaiSantri').innerText = 'Rp ' + totalTunaiSantri.toLocaleString('id-ID');
+        if (document.getElementById('bazarStatTunaiUmum')) document.getElementById('bazarStatTunaiUmum').innerText = 'Rp ' + totalTunaiUmum.toLocaleString('id-ID');
         if (document.getElementById('bazarStatBri')) document.getElementById('bazarStatBri').innerText = 'Rp ' + totalBRI.toLocaleString('id-ID');
         if (document.getElementById('bazarStatSantri')) document.getElementById('bazarStatSantri').innerText = 'Rp ' + totalSantri.toLocaleString('id-ID');
 
