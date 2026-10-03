@@ -2084,109 +2084,97 @@
           </div>
         </div>
 
-        <!-- MODAL 2: CATAT PEMBELI / INPUT NOTA PEMBELIAN / CATAT KERUGIAN (MULTI-ITEM) -->
-        <div id="bazarTransModal" style="display: none;"
-          class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div class="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] sm:max-h-[95vh]">
+        <!-- MODAL 2: TAMPILAN ERP / SISTEM AKUNTANSI (INLINE GRID) -->
+        <div id="bazarTransModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex justify-center items-start pt-2 sm:pt-8 overflow-y-auto">
+          <div class="bg-[#f0f0f0] rounded-none sm:rounded-lg w-full max-w-6xl shadow-2xl flex flex-col border border-slate-300 mb-10">
             
-            <!-- HEADER (FIXED) -->
-            <div class="flex justify-between items-center p-4 sm:p-5 border-b border-slate-100 shrink-0">
-              <div>
-                <h3 id="bazarTransModalTitle" class="text-sm sm:text-base font-black text-slate-800">Catat Transaksi Bazar</h3>
-                <p id="bazarTransModalDesc" class="text-[10px] sm:text-[11px] text-slate-500">Mendukung input banyak barang sekaligus (Multi-Item)</p>
-              </div>
-              <button type="button" onclick="closeModal('bazarTransModal')" class="text-slate-400 hover:text-rose-500 transition bg-slate-50 hover:bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-xmark text-sm sm:text-base"></i>
+            <!-- HEADER MODAL -->
+            <div class="bg-white p-3 sm:p-4 border-b border-slate-300 flex justify-between items-center shrink-0">
+              <h2 id="bazarTransModalTitle" class="text-xl sm:text-2xl font-normal text-slate-800 font-sans tracking-wide">Pembelian</h2>
+              <button type="button" onclick="closeModal('bazarTransModal')" class="text-slate-400 hover:text-rose-500 transition px-2">
+                <i class="fa-solid fa-xmark text-2xl"></i>
               </button>
             </div>
-            
-            <!-- BODY (SCROLLABLE) & FOOTER (FIXED) -->
-            <form id="bazarTransForm" onsubmit="submitBazarTransForm(event)" class="flex flex-col flex-1 overflow-hidden">
-              <input type="hidden" id="bazarTransJenis" value="PENJUALAN">
+
+            <!-- ISI MODAL -->
+            <div class="flex-1 flex flex-col overflow-hidden">
               
-              <!-- BUNGKUSAN SCROLL (Isi Form) -->
-              <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 space-y-3 sm:space-y-4 text-xs">
-                
-                <!-- INFO NOTA -->
-                <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal *</label>
-                    <input type="date" id="bazarTransTanggal" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500 transition">
-                  </div>
-                  <div>
-                    <label class="block font-bold text-slate-700 uppercase mb-1">Unit Bazar *</label>
-                    <select id="bazarTransIM" onchange="populateBazarBarangDropdown()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition">
-                      <option value="Banin">Bazar Banin</option>
-                      <option value="Banat">Bazar Banat</option>
-                    </select>
-                  </div>
+              <!-- FORM INFO ATAS -->
+              <div class="p-4 grid grid-cols-1 sm:grid-cols-4 gap-4 bg-white text-xs sm:text-sm border-b border-slate-300 shrink-0">
+                <div class="col-span-1 sm:col-span-2">
+                  <label id="lblBazarTransKet" class="block text-slate-600 mb-1">Nama Pemasok :</label>
+                  <input type="hidden" id="bazarTransJenis" value="PENJUALAN">
+                  <input type="text" id="bazarTransKet" class="w-full p-1.5 bg-slate-100 border border-slate-300 focus:bg-white focus:border-[#0a729d] outline-none transition">
                 </div>
                 <div>
-                  <label id="lblBazarTransKet" class="block font-bold text-slate-700 uppercase mb-1">No. Nota / Keterangan *</label>
-                  <input type="text" id="bazarTransKet" placeholder="Contoh: Nota Toko Berkah / Pembeli Tunai" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold outline-none focus:ring-2 focus:ring-amber-500 transition">
+                  <label class="block text-slate-600 mb-1">Masuk ke Gudang :</label>
+                  <select id="bazarTransIM" class="w-full p-1.5 bg-slate-100 border border-slate-300 outline-none cursor-pointer">
+                    <option value="Banin">Head Quarter Banin</option>
+                    <option value="Banat">Head Quarter Banat</option>
+                  </select>
                 </div>
+                <div>
+                  <label class="block text-slate-600 mb-1">Tanggal Faktur :</label>
+                  <input type="date" id="bazarTransTanggal" class="w-full p-1.5 bg-white border border-slate-300 outline-none focus:border-[#0a729d]">
+                </div>
+              </div>
 
-                <!-- INPUT BARANG -->
-                <div class="p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
-                  <div>
-                    <label class="block font-bold text-amber-900 uppercase mb-1 text-[10px] sm:text-xs">1. Pilih Barang *</label>
-                    <select id="bazarTransBarangId" onchange="onBazarBarangSelectChange()" class="w-full p-2.5 bg-white border border-amber-300 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
-                      <option value="">-- Pilih Barang --</option>
-                    </select>
-                  </div>
-                  <div class="grid grid-cols-3 gap-2 sm:gap-3">
-                    <div>
-                      <label class="block font-bold text-amber-900 uppercase mb-1 text-[10px] sm:text-[11px] truncate">2. Qty</label>
-                      <input type="number" id="bazarTransQty" min="1" value="1" class="w-full p-2 sm:p-2.5 bg-white border border-amber-300 rounded-xl font-black text-center text-amber-800 outline-none focus:ring-2 focus:ring-amber-500 transition">
-                    </div>
-                    <div>
-                      <label class="block font-bold text-amber-900 uppercase mb-1 text-[10px] sm:text-[11px] truncate">Hrg Modal</label>
-                      <input type="number" id="bazarTransHargaBeli" min="0" class="w-full p-2 sm:p-2.5 bg-white border border-amber-300 rounded-xl font-mono font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500 transition">
-                    </div>
-                    <div>
-                      <label class="block font-bold text-amber-900 uppercase mb-1 text-[10px] sm:text-[11px] truncate">Hrg Jual</label>
-                      <input type="number" id="bazarTransHargaJual" min="0" class="w-full p-2 sm:p-2.5 bg-white border border-amber-300 rounded-xl font-mono font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-amber-500 transition">
-                    </div>
-                  </div>
-                  <button type="button" onclick="addBazarItemToCart()" class="w-full py-2.5 sm:py-3 bg-amber-200 hover:bg-amber-300 text-amber-900 font-black rounded-xl transition shadow-sm text-[11px] sm:text-xs active:scale-95 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-cart-arrow-down"></i> 3. Tambah ke Daftar Nota
+              <!-- TABEL INPUT SEBARIS (INLINE GRID) -->
+              <div class="bg-white p-4 overflow-x-auto min-h-[35vh]">
+                <table class="w-full text-left text-xs sm:text-sm border-collapse border-b border-slate-300 min-w-[850px]">
+                  <thead class="bg-[#0a729d] text-white">
+                    <tr>
+                      <th class="p-2 border-r border-slate-400 w-12 text-center">No.</th>
+                      <th class="p-2 border-r border-slate-400">Deskripsi Barang</th>
+                      <th class="p-2 border-r border-slate-400 w-24 text-center">Jumlah</th>
+                      <th class="p-2 border-r border-slate-400 w-32 text-right">Harga Beli</th>
+                      <th class="p-2 border-r border-slate-400 w-32 text-right">Harga Jual</th>
+                      <th class="p-2 border-r border-slate-400 w-40 text-right">Total</th>
+                      <th class="p-2 w-10 text-center"><i class="fa-solid fa-gear"></i></th>
+                    </tr>
+                  </thead>
+                  <tbody id="bazarTransInlineBody" class="bg-white divide-y divide-slate-200">
+                    <!-- Baris Tabel akan dimasukkan ke sini oleh JS -->
+                  </tbody>
+                </table>
+                
+                <div class="mt-2">
+                  <button type="button" onclick="addBazarInlineRow()" class="px-4 py-1.5 bg-[#0a729d] hover:bg-[#085a7d] text-white text-xs rounded shadow-sm transition">
+                    + Tambah Baris
                   </button>
                 </div>
+              </div>
 
-                <!-- DAFTAR KERANJANG TRANSAKSI -->
-                <div class="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col shadow-sm">
-                  <div class="max-h-32 sm:max-h-40 overflow-y-auto custom-scrollbar">
-                    <table class="w-full text-left text-[10px] sm:text-xs">
-                      <thead class="bg-slate-100 text-slate-600 sticky top-0 shadow-sm z-10">
-                        <tr>
-                          <th class="p-2.5 sm:p-3 font-bold">Nama Barang</th>
-                          <th class="p-2.5 sm:p-3 font-bold text-center">Qty</th>
-                          <th class="p-2.5 sm:p-3 font-bold text-right">Harga</th>
-                          <th class="p-2.5 sm:p-3 font-bold text-right">Subtotal</th>
-                          <th class="p-2.5 sm:p-3 text-center w-8"></th>
-                        </tr>
-                      </thead>
-                      <tbody id="bazarTransCartBody" class="divide-y divide-slate-100">
-                        <tr><td colspan="5" class="p-5 text-center text-slate-400 italic">Belum ada barang ditambahkan.</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <div class="bg-slate-800 text-white p-3 flex items-center justify-between shrink-0">
-                    <span id="lblBazarPreviewTotal" class="font-bold text-[11px] sm:text-xs">Total Transaksi:</span>
-                    <span id="valBazarPreviewTotal" class="font-black text-sm sm:text-base text-emerald-400">Rp 0</span>
-                  </div>
+              <!-- FOOTER & RINGKASAN HARGA -->
+              <div class="bg-white border-t border-slate-300 p-4 flex flex-col sm:flex-row justify-between items-end gap-4 shrink-0">
+                <div class="flex gap-2">
+                  <button type="button" class="px-4 py-1.5 bg-[#0a729d] text-white text-xs opacity-70 cursor-not-allowed">Hapus Baris</button>
+                  <button type="button" class="px-4 py-1.5 bg-[#0a729d] text-white text-xs opacity-70 cursor-not-allowed">Stock List</button>
+                </div>
+                
+                <div class="space-y-1.5 text-xs sm:text-sm text-slate-700 w-full sm:w-72">
+                   <div class="flex justify-between">
+                     <span>Biaya - Biaya Lain :</span>
+                     <span class="border-b border-slate-400 w-28 text-right">0.00</span>
+                   </div>
+                   <div class="flex justify-between mt-2">
+                     <span>Total Pajak :</span>
+                     <span class="border-b border-slate-400 w-28 text-right">0.00</span>
+                   </div>
+                   <div class="flex justify-between font-bold text-[#0a729d] text-base sm:text-lg mt-2 pt-1">
+                     <span id="lblBazarPreviewTotal">Total Akhir :</span>
+                     <span id="valBazarPreviewTotal" class="border-b-2 border-[#0a729d] w-36 text-right">0</span>
+                   </div>
                 </div>
               </div>
 
-              <!-- TOMBOL SUBMIT (FIXED FOOTER) -->
-              <div class="flex justify-end gap-2.5 p-4 sm:p-5 bg-white border-t border-slate-200 shrink-0">
-                <button type="button" onclick="closeModal('bazarTransModal')" class="px-5 py-2.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold text-slate-600 transition text-xs sm:text-sm">Batal</button>
-                <button type="submit" id="btnBazarTransSubmit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-1.5 text-xs sm:text-sm">
-                  <i class="fa-solid fa-check-double"></i> Simpan Transaksi
-                </button>
+              <!-- TOMBOL REKAM -->
+              <div class="bg-[#f0f0f0] p-4 flex justify-end gap-2 border-t border-slate-300 shrink-0">
+                <button type="button" onclick="closeModal('bazarTransModal')" class="px-6 py-2 bg-[#0a729d] text-white text-sm hover:bg-[#085a7d] transition">Batal</button>
+                <button type="button" onclick="submitBazarTransForm(event)" class="px-8 py-2 bg-[#0a729d] text-white font-bold text-sm hover:bg-[#085a7d] shadow-md transition">Rekam</button>
               </div>
-              
-            </form>
+
+            </div>
           </div>
         </div>
 
@@ -9022,7 +9010,6 @@
       }
 
       function openBazarTransModal(jenis, preselectedId) {
-        document.getElementById('bazarTransForm').reset();
         document.getElementById('bazarTransJenis').value = jenis;
         document.getElementById('bazarTransTanggal').value = new Date().toISOString().split('T')[0];
         document.getElementById('bazarTransKet').value = '';
@@ -9030,38 +9017,26 @@
         var activeUnit = document.getElementById('filterBazarIM').value;
         document.getElementById('bazarTransIM').value = (activeUnit === 'Banat') ? 'Banat' : 'Banin';
 
-        window.bazarCart = []; // Kosongkan daftar nota saat modal dibuka
-
         var titleEl = document.getElementById('bazarTransModalTitle');
         var lblKet = document.getElementById('lblBazarTransKet');
-        var btnSub = document.getElementById('btnBazarTransSubmit');
-        var cartTitle = document.getElementById('lblBazarPreviewTotal');
 
         if (jenis === 'PENJUALAN') {
-          titleEl.innerText = '🛒 Kasir Bazar (Multi-Item)';
-          lblKet.innerText = 'Nama Pembeli / Catatan (Opsional)';
-          btnSub.className = 'flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-1.5';
-          cartTitle.innerText = 'Total Pembayaran:';
+          titleEl.innerText = 'Penjualan';
+          lblKet.innerText = 'Nama Pelanggan :';
         } else if (jenis === 'NOTA_PEMBELIAN') {
-          titleEl.innerText = '🧾 Input Nota Beli (Multi-Item)';
-          lblKet.innerText = 'No. Nota / Nama Toko Supplier *';
-          btnSub.className = 'flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-1.5';
-          cartTitle.innerText = 'Total Nilai Nota:';
+          titleEl.innerText = 'Pembelian';
+          lblKet.innerText = 'Nama Pemasok :';
         } else {
-          titleEl.innerText = '⚠️ Catat Kerugian (Multi-Item)';
-          lblKet.innerText = 'Alasan Kerugian (Basi / Rusak / Hilang) *';
-          btnSub.className = 'flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-1.5';
-          cartTitle.innerText = 'Total Kerugian:';
+          titleEl.innerText = 'Pencatatan Kerugian';
+          lblKet.innerText = 'Alasan Kerugian :';
         }
 
-        populateBazarBarangDropdown(preselectedId);
-        renderBazarCart();
+        var tbody = document.getElementById('bazarTransInlineBody');
+        tbody.innerHTML = ''; // Kosongkan tabel
+        
+        addBazarInlineRow(preselectedId); // Tambah 1 baris kosong pertama
+        calcBazarInlineTotals();
         openModal('bazarTransModal');
-
-        // Jika dipanggil dari tombol hijau "Beli" di tabel, otomatis masukkan 1 Pcs ke keranjang
-        if (preselectedId) {
-          setTimeout(addBazarItemToCart, 100);
-        }
       }
 
       function quickSellBazarItem(barangId) {
@@ -9072,87 +9047,158 @@
         openBazarTransModal('PENJUALAN', barangId);
       }
 
-      function populateBazarBarangDropdown(selectedId) {
+      function addBazarInlineRow(selectedId) {
+        var tbody = document.getElementById('bazarTransInlineBody');
         var im = document.getElementById('bazarTransIM').value;
-        var sel = document.getElementById('bazarTransBarangId');
         var list = cachedBazarBarang.filter(b => b.im === im);
-        var html = '<option value="">-- Pilih Barang Bazar ' + im + ' --</option>';
+        
+        var optHtml = '<option value="">-- Klik untuk memilih --</option>';
         list.forEach(b => {
           var isSel = (selectedId && b.id === selectedId) ? 'selected' : '';
-          html += '<option value="' + b.id + '" ' + isSel + '>' + b.nama_barang + ' (Stok: ' + b.stok + ')</option>';
+          optHtml += '<option value="' + b.id + '" ' + isSel + '>' + b.nama_barang + ' (Stok: ' + b.stok + ')</option>';
         });
-        sel.innerHTML = html;
-        onBazarBarangSelectChange();
+
+        var trCount = tbody.children.length + 1;
+        var tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition group';
+        tr.innerHTML = `
+          <td class="p-1 border-r border-slate-300 text-center text-slate-400 font-bold row-num">${trCount}</td>
+          <td class="p-0 border-r border-slate-300">
+            <select onchange="updateBazarInlineRow(this)" class="row-barang w-full p-2 bg-transparent outline-none focus:bg-blue-50 text-sm text-slate-800 cursor-pointer">
+              ${optHtml}
+            </select>
+          </td>
+          <td class="p-0 border-r border-slate-300">
+            <input type="number" min="1" value="1" oninput="calcBazarInlineTotals()" class="row-qty w-full p-2 text-center bg-transparent outline-none focus:bg-blue-50 font-bold text-slate-800">
+          </td>
+          <td class="p-0 border-r border-slate-300">
+            <input type="number" min="0" value="0" oninput="calcBazarInlineTotals()" class="row-beli w-full p-2 text-right bg-transparent outline-none focus:bg-blue-50 text-slate-600">
+          </td>
+          <td class="p-0 border-r border-slate-300">
+            <input type="number" min="0" value="0" oninput="calcBazarInlineTotals()" class="row-jual w-full p-2 text-right bg-transparent outline-none focus:bg-blue-50 text-slate-600">
+          </td>
+          <td class="p-2 border-r border-slate-300 text-right font-black text-slate-800 row-subtotal">0</td>
+          <td class="p-2 text-center">
+            <button type="button" onclick="removeBazarInlineRow(this)" class="text-rose-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-xmark"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        
+        if (selectedId) updateBazarInlineRow(tr.querySelector('.row-barang'));
       }
 
-      function onBazarBarangSelectChange() {
-        var id = document.getElementById('bazarTransBarangId').value;
-        var item = cachedBazarBarang.find(b => b.id === id);
-        if (item) {
-          document.getElementById('bazarTransHargaBeli').value = item.harga_beli || 0;
-          document.getElementById('bazarTransHargaJual').value = item.harga_jual || 0;
+      function updateBazarInlineRow(selectEl) {
+        var tr = selectEl.closest('tr');
+        var id = selectEl.value;
+        if (id) {
+          var item = cachedBazarBarang.find(b => b.id === id);
+          if (item) {
+            tr.querySelector('.row-beli').value = item.harga_beli || 0;
+            tr.querySelector('.row-jual').value = item.harga_jual || 0;
+          }
+        } else {
+          tr.querySelector('.row-beli').value = 0;
+          tr.querySelector('.row-jual').value = 0;
         }
+        calcBazarInlineTotals();
+      }
+
+      function removeBazarInlineRow(btn) {
+        var tbody = document.getElementById('bazarTransInlineBody');
+        btn.closest('tr').remove();
+        
+        // Update nomor urut baris
+        Array.from(tbody.children).forEach((row, i) => {
+          row.querySelector('.row-num').innerText = i + 1;
+        });
+
+        if (tbody.children.length === 0) addBazarInlineRow(); // Jangan biarkan kosong melompong
+        calcBazarInlineTotals();
+      }
+
+      function calcBazarInlineTotals() {
+        var jenis = document.getElementById('bazarTransJenis').value;
+        var rows = document.querySelectorAll('#bazarTransInlineBody tr');
+        var grandTotal = 0;
+
+        rows.forEach(tr => {
+          var id = tr.querySelector('.row-barang').value;
+          if (id) {
+            var qty = Number(tr.querySelector('.row-qty').value) || 0;
+            var hBeli = Number(tr.querySelector('.row-beli').value) || 0;
+            var hJual = Number(tr.querySelector('.row-jual').value) || 0;
+            
+            var sub = (jenis === 'PENJUALAN') ? (qty * hJual) : (qty * hBeli);
+            tr.querySelector('.row-subtotal').innerText = sub.toLocaleString('id-ID');
+            grandTotal += sub;
+          } else {
+            tr.querySelector('.row-subtotal').innerText = '0';
+          }
+        });
+
+        document.getElementById('valBazarPreviewTotal').innerText = (jenis === 'KERUGIAN' ? '-' : '') + grandTotal.toLocaleString('id-ID');
       }
 
       async function submitBazarTransForm(e) {
-        e.preventDefault();
-        
-        // Smart Check: Jika daftar kosong tapi user sudah milih barang di dropdown, bantu tambahkan dulu
-        if (window.bazarCart.length === 0) {
-          var idTerpilih = document.getElementById('bazarTransBarangId').value;
-          if (idTerpilih) {
-            addBazarItemToCart();
-            if(window.bazarCart.length === 0) return; // Berhenti jika gagal tambah (misal stok habis)
-          } else {
-            return showToast('Daftar transaksi masih kosong!', 'error');
-          }
-        }
-
+        if(e) e.preventDefault();
         var jenis = document.getElementById('bazarTransJenis').value;
         var tgl = document.getElementById('bazarTransTanggal').value;
         var im = document.getElementById('bazarTransIM').value;
         var ket = document.getElementById('bazarTransKet').value.trim();
 
         if ((jenis === 'NOTA_PEMBELIAN' || jenis === 'KERUGIAN') && !ket) {
-          return showToast('No Nota / Keterangan wajib diisi!', 'error');
+          return showToast('Nama Pemasok / Keterangan wajib diisi!', 'error');
         }
 
+        var rows = document.querySelectorAll('#bazarTransInlineBody tr');
         var payloadTrans = [];
         var updatesStockMap = {}; 
-        var itemsToUpdate = [];
+        var adaError = false;
 
-        // Agregasi stok (jaga-jaga jika 1 barang dimasukkan ke daftar 2x)
-        window.bazarCart.forEach(c => {
-          if (!updatesStockMap[c.id]) {
-            updatesStockMap[c.id] = { id: c.id, hBeli: c.hBeli, hJual: c.hJual, stokAwal: c.stokAwal, qtyBerubah: 0 };
+        rows.forEach(tr => {
+          var id = tr.querySelector('.row-barang').value;
+          if (!id) return; // Lewati baris yang kosong
+
+          var masterItem = cachedBazarBarang.find(b => b.id === id);
+          var qty = Number(tr.querySelector('.row-qty').value) || 0;
+          var hBeli = Number(tr.querySelector('.row-beli').value) || 0;
+          var hJual = Number(tr.querySelector('.row-jual').value) || 0;
+
+          if (qty <= 0) {
+            showToast('Jumlah barang tidak boleh 0', 'error');
+            adaError = true;
+            return;
           }
-          updatesStockMap[c.id].hBeli = c.hBeli; 
-          updatesStockMap[c.id].hJual = c.hJual; 
 
-          var qty = c.qty;
-          var totalNom = (jenis === 'PENJUALAN') ? (qty * c.hJual) : (qty * c.hBeli);
+          if (!updatesStockMap[id]) {
+            updatesStockMap[id] = { id: id, nama: masterItem.nama_barang, hBeli: hBeli, hJual: hJual, stokAwal: Number(masterItem.stok), qtyBerubah: 0 };
+          }
+          updatesStockMap[id].hBeli = hBeli; 
+          updatesStockMap[id].hJual = hJual; 
+
+          var totalNom = (jenis === 'PENJUALAN') ? (qty * hJual) : (qty * hBeli);
           var labaRugi = 0;
 
           if (jenis === 'PENJUALAN') {
-            labaRugi = qty * (c.hJual - c.hBeli);
-            updatesStockMap[c.id].qtyBerubah -= qty;
+            labaRugi = qty * (hJual - hBeli);
+            updatesStockMap[id].qtyBerubah -= qty;
           } else if (jenis === 'NOTA_PEMBELIAN') {
             labaRugi = 0;
-            updatesStockMap[c.id].qtyBerubah += qty;
+            updatesStockMap[id].qtyBerubah += qty;
           } else if (jenis === 'KERUGIAN') {
-            labaRugi = -(qty * c.hBeli);
-            updatesStockMap[c.id].qtyBerubah -= qty;
+            labaRugi = -(qty * hBeli);
+            updatesStockMap[id].qtyBerubah -= qty;
           }
 
           payloadTrans.push({
             tanggal: tgl,
             jenis: jenis,
             im: im,
-            barang_id: c.id,
-            nama_barang: c.nama,
+            barang_id: id,
+            nama_barang: masterItem.nama_barang,
             qty: qty,
-            harga_beli: c.hBeli,
-            harga_jual: c.hJual,
+            harga_beli: hBeli,
+            harga_jual: hJual,
             total_nominal: totalNom,
             laba_rugi: labaRugi,
             keterangan: ket,
@@ -9160,30 +9206,37 @@
           });
         });
 
-        showLoading('Menyimpan ' + payloadTrans.length + ' transaksi sekaligus...');
+        if (adaError) return;
+        if (payloadTrans.length === 0) return showToast('Pilih minimal 1 barang pada tabel!', 'error');
+
+        // Validasi Stok sebelum dikirim ke database
+        for (let k in updatesStockMap) {
+          if ((jenis === 'PENJUALAN' || jenis === 'KERUGIAN') && (updatesStockMap[k].stokAwal + updatesStockMap[k].qtyBerubah < 0)) {
+            return showToast('Stok ' + updatesStockMap[k].nama + ' tidak cukup! (Sisa: ' + updatesStockMap[k].stokAwal + ')', 'error');
+          }
+        }
+
+        showLoading('Merekam ' + payloadTrans.length + ' baris transaksi...');
         try {
-          // 1. Simpan Transaksi Batch
           const { error: err1 } = await supaClient.from('bazar_transaksi').insert(payloadTrans);
           if (err1) throw err1;
 
-          // 2. Update Stok Satu per Satu (Solusi Error 400 Bad Request)
           for (let k in updatesStockMap) {
             const { error: err2 } = await supaClient.from('bazar_barang').update({
               stok: updatesStockMap[k].stokAwal + updatesStockMap[k].qtyBerubah,
               harga_beli: updatesStockMap[k].hBeli,
               harga_jual: updatesStockMap[k].hJual
             }).eq('id', k);
-            
             if (err2) throw err2;
           }
 
           hideLoading();
-          showToast(payloadTrans.length + ' transaksi berhasil disimpan & stok diperbarui!', 'success');
+          showToast('Transaksi berhasil direkam!', 'success');
           closeModal('bazarTransModal');
           loadBazarData(true);
         } catch (err) {
           hideLoading();
-          showToast('Gagal menyimpan: ' + err.message, 'error');
+          showToast('Gagal merekam: ' + err.message, 'error');
         }
       }
 
