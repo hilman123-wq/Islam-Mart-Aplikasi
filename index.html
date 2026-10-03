@@ -9605,27 +9605,57 @@
         showLoading('Mengimpor data barang bazar...');
         try {
           var batchInsert = [];
+
+          // Mesin pembersih angka (Membuang otomatis teks Rp, koma, huruf, dan titik)
+          var parseNum = function(val) {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            var clean = String(val).replace(/[^0-9]/g, ''); // Hanya ambil angka murni
+            var n = parseFloat(clean);
+            return isNaN(n) ? 0 : n;
+          };
+
+          // Mesin pencari judul kolom kebal spasi dan huruf besar/kecil
+          var getVal = function(rowObj, keywords) {
+            for (let key in rowObj) {
+              var lowerKey = key.toLowerCase();
+              if (keywords.some(kw => lowerKey.includes(kw))) {
+                return rowObj[key];
+              }
+            }
+            return '';
+          };
+
           raw.forEach(r => {
-            var nama = String(r['Nama Barang'] || r['Nama'] || r['nama_barang'] || '').trim();
+            var nama = String(getVal(r, ['nama']) || '').trim();
             if (nama) {
               batchInsert.push({
                 im: unitIM,
                 nama_barang: nama,
-                stok: Number(r['Stok'] || r['stok'] || r['Qty'] || r['qty'] || 0),
-                harga_beli: Number(r['Harga Beli'] || r['Harga Modal'] || r['harga_beli'] || 0),
-                harga_jual: Number(r['Harga Jual'] || r['harga_jual'] || 0)
+                stok: parseNum(getVal(r, ['stok', 'qty'])),
+                harga_beli: parseNum(getVal(r, ['beli', 'modal'])),
+                harga_jual: parseNum(getVal(r, ['jual']))
               });
             }
           });
-          if (batchInsert.length > 0) {
-            const { error } = await supaClient.from('bazar_barang').insert(batchInsert);
-            if (error) throw error;
+
+          if (batchInsert.length === 0) {
+            throw new Error("Format Excel tidak sesuai. Pastikan ada kolom berjudul 'Nama'.");
           }
+
+          // Proses kirim ke database
+          const { error } = await supaClient.from('bazar_barang').insert(batchInsert);
+          if (error) throw error;
+
           hideLoading();
           showToast('Berhasil mengimpor ' + batchInsert.length + ' barang bazar!', 'success');
           closeModal('importBazarModal');
           loadBazarData(true);
-        } catch (err) { hideLoading(); showToast('Gagal import: ' + err.message, 'error'); }
+        } catch (err) { 
+          hideLoading(); 
+          showToast('Gagal import: ' + err.message, 'error'); 
+          console.error("Detail Error Import:", err);
+        }
       }
 
     </script>
