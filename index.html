@@ -1961,6 +1961,7 @@
                   <tr>
                     <th class="py-3 px-3 w-10 text-center"><input type="checkbox" id="selectAllBazarCb" onchange="toggleSelectAllBazar(this)" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"></th>
                     <th class="py-3 px-3 w-10 text-center">No</th>
+                    <th class="py-3 px-3 w-32 font-mono">Barcode</th>
                     <th class="py-3 px-4">Nama Barang Bazar</th>
                     <th class="py-3 px-3 text-center">Unit Bazar</th>
                     <th class="py-3 px-3 text-right">Harga Beli (Modal)</th>
@@ -2059,11 +2060,20 @@
                     class="w-full p-2.5 bg-slate-50 border rounded-xl font-black text-center">
                 </div>
               </div>
-              <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Barang Bazar *</label>
-                <input type="text" id="bazarItemNama" required placeholder="Contoh: Sosis Bakar / Es Coklat / Buku"
-                  class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">Kode Barcode</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-barcode"></i></span>
+                <input type="text" id="bazarItemBarcode" placeholder="Scan/Ketik Barcode..." class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border rounded-xl font-mono font-semibold">
               </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 uppercase mb-1">Nama Barang Bazar *</label>
+              <input type="text" id="bazarItemNama" required placeholder="Sosis / Buku"
+                class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold">
+            </div>
+          </div>
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
                   <label class="block font-bold text-slate-700 uppercase mb-1">Harga Beli / Modal (Rp) *</label>
@@ -8894,13 +8904,15 @@
         var tbStok = document.getElementById('bazarStokTableBody');
         var filteredStok = cachedBazarBarang.filter(b => {
           var matchIM = (unitStok === 'ALL') || (b.im === unitStok);
-          var matchQ = !qStok || (b.nama_barang || '').toLowerCase().includes(qStok);
+          // Tambahan: Bisa mencari berdasarkan Barcode
+          var matchQ = !qStok || (b.nama_barang || '').toLowerCase().includes(qStok) || (b.barcode || '').toLowerCase().includes(qStok);
           return matchIM && matchQ;
         });
 
         if (tbStok) {
           if (filteredStok.length === 0) {
-            tbStok.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">Belum ada stok barang bazar. Klik "Tambah Barang Baru".</td></tr>';
+            // Ubah colspan="9" menjadi colspan="10"
+            tbStok.innerHTML = '<tr><td colspan="10" class="py-8 text-center text-slate-400">Belum ada stok barang bazar. Klik "Tambah Barang Baru".</td></tr>';
           } else {
             var htmlStok = '';
             filteredStok.forEach((b, idx) => {
@@ -8911,6 +8923,8 @@
               htmlStok += '<tr class="hover:bg-slate-50">' +
                 '<td class="py-3 px-3 text-center"><input type="checkbox" value="' + b.id + '" class="bazar-select-cb w-4 h-4 rounded text-amber-600 cursor-pointer"></td>' +
                 '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (idx + 1) + '</td>' +
+                // Tambahan: Kolom Barcode di tabel
+                '<td class="py-3 px-3 font-mono font-bold text-slate-500">' + (b.barcode || '-') + '</td>' +
                 '<td class="py-3 px-4 font-black text-slate-800">' + b.nama_barang + '</td>' +
                 '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (b.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">Bazar ' + b.im + '</span></td>' +
                 '<td class="py-3 px-3 text-right font-mono text-slate-600">Rp ' + hBeli.toLocaleString('id-ID') + '</td>' +
@@ -9037,6 +9051,7 @@
       function openBazarItemModal() {
         document.getElementById('bazarItemForm').reset();
         document.getElementById('bazarItemId').value = '';
+        if(document.getElementById('bazarItemBarcode')) document.getElementById('bazarItemBarcode').value = '';
         var activeUnit = document.getElementById('filterBazarIM').value;
         document.getElementById('bazarItemIM').value = (activeUnit === 'Banat') ? 'Banat' : 'Banin';
         document.getElementById('bazarItemModalTitle').innerText = 'Tambah Barang & Harga Bazar';
@@ -9045,6 +9060,7 @@
 
       function openEditBazarItemModal(b) {
         document.getElementById('bazarItemId').value = b.id;
+        if(document.getElementById('bazarItemBarcode')) document.getElementById('bazarItemBarcode').value = b.barcode || '';
         document.getElementById('bazarItemIM').value = b.im || 'Banin';
         document.getElementById('bazarItemStok').value = b.stok || 0;
         document.getElementById('bazarItemNama').value = b.nama_barang || '';
@@ -9058,6 +9074,7 @@
         e.preventDefault();
         var id = document.getElementById('bazarItemId').value.trim() || null;
         var payload = {
+          barcode: document.getElementById('bazarItemBarcode') ? document.getElementById('bazarItemBarcode').value.trim() : '',
           im: document.getElementById('bazarItemIM').value,
           stok: Number(document.getElementById('bazarItemStok').value) || 0,
           nama_barang: document.getElementById('bazarItemNama').value.trim(),
@@ -10051,7 +10068,7 @@
           harga_jual: b.harga_jual,
           id: b.id,
           im: b.im,
-          barcode: (b.id || '').substring(0, 8).toUpperCase()
+          barcode: b.barcode || (b.id || '').substring(0, 8).toUpperCase()
         }));
 
         renderShelfLabels(itemsToPrint);
@@ -10115,17 +10132,19 @@
           };
 
           raw.forEach(r => {
-            var nama = String(getVal(r, ['nama']) || '').trim();
-            if (nama) {
-              batchInsert.push({
-                im: unitIM,
-                nama_barang: nama,
-                stok: parseNum(getVal(r, ['stok', 'qty'])),
-                harga_beli: parseNum(getVal(r, ['beli', 'modal'])),
-                harga_jual: parseNum(getVal(r, ['jual']))
-              });
-            }
-          });
+          var nama = String(getVal(r, ['nama']) || '').trim();
+          var barcode = String(getVal(r, ['barcode', 'kode', 'sku']) || '').trim();
+          if (nama) {
+            batchInsert.push({
+              im: unitIM,
+              barcode: barcode,
+              nama_barang: nama,
+              stok: parseNum(getVal(r, ['stok', 'qty'])),
+              harga_beli: parseNum(getVal(r, ['beli', 'modal'])),
+              harga_jual: parseNum(getVal(r, ['jual']))
+            });
+          }
+        });
 
           if (batchInsert.length === 0) {
             throw new Error("Format Excel tidak sesuai. Pastikan ada kolom berjudul 'Nama'.");
