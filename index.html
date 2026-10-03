@@ -9232,16 +9232,35 @@
              var namaSantri = String(t.keterangan || '').replace(/^\[.*?\]\s*/, '').trim();
              if(!namaSantri) namaSantri = "Tanpa Nama / Anonim";
 
-             if(!grouped[namaSantri]) grouped[namaSantri] = 0;
-             grouped[namaSantri] += Number(t.total_nominal || 0);
+             if(!grouped[namaSantri]) {
+               grouped[namaSantri] = { total: 0, items: {} };
+             }
+             
+             // Tambah total Rp
+             grouped[namaSantri].total += Number(t.total_nominal || 0);
+             
+             // Rekap rincian kuantitas per barang (agar yang beli mie 2x digabung jadi 2x Mie)
+             var namaBrg = t.nama_barang || 'Barang Lainnya';
+             var qtyBrg = Number(t.qty || 1);
+             if(!grouped[namaSantri].items[namaBrg]) {
+               grouped[namaSantri].items[namaBrg] = 0;
+             }
+             grouped[namaSantri].items[namaBrg] += qtyBrg;
           }
         });
 
-        // Ubah jadi Array agar bisa diurutkan
-        window.bazarSantriReportData = Object.keys(grouped).map(name => ({
-          nama: name,
-          total: grouped[name]
-        }));
+        // Ubah jadi Array agar bisa diurutkan & buat Teks Rincian
+        window.bazarSantriReportData = Object.keys(grouped).map(name => {
+          var rincianArr = [];
+          for(var brg in grouped[name].items) {
+            rincianArr.push(grouped[name].items[brg] + "x " + brg);
+          }
+          return {
+            nama: name,
+            total: grouped[name].total,
+            rincianText: rincianArr.join(', ') // Contoh: "2x MIE SEDAAP, 1x DIMSUM"
+          };
+        });
 
         // Urutkan dari jajan terbanyak ke terdikit
         window.bazarSantriReportData.sort((a,b) => b.total - a.total);
@@ -9263,7 +9282,7 @@
         var lblTotal = document.getElementById('valBazarSantriReportTotal');
         var q = document.getElementById('searchBazarSantriReport').value.toLowerCase().trim();
 
-        var filteredData = window.bazarSantriReportData.filter(d => d.nama.toLowerCase().includes(q));
+        var filteredData = window.bazarSantriReportData.filter(d => d.nama.toLowerCase().includes(q) || d.rincianText.toLowerCase().includes(q));
         
         var html = '';
         var grandTotal = 0;
@@ -9277,9 +9296,12 @@
         filteredData.forEach((d, idx) => {
           grandTotal += d.total;
           html += '<tr class="hover:bg-purple-50 transition">' +
-            '<td class="py-2.5 px-3 text-center text-slate-500 font-bold">' + (idx + 1) + '</td>' +
-            '<td class="py-2.5 px-3 font-bold text-slate-800">' + d.nama + '</td>' +
-            '<td class="py-2.5 px-3 text-right font-mono font-black text-purple-700">Rp ' + d.total.toLocaleString('id-ID') + '</td>' +
+            '<td class="py-2.5 px-3 text-center text-slate-500 font-bold align-top">' + (idx + 1) + '</td>' +
+            '<td class="py-2.5 px-3 align-top">' +
+              '<div class="font-bold text-slate-800">' + d.nama + '</div>' +
+              '<div class="text-[10px] text-slate-500 mt-0.5 leading-snug">' + d.rincianText + '</div>' +
+            '</td>' +
+            '<td class="py-2.5 px-3 text-right font-mono font-black text-purple-700 align-top whitespace-nowrap">Rp ' + d.total.toLocaleString('id-ID') + '</td>' +
           '</tr>';
         });
 
@@ -9295,12 +9317,13 @@
         var rows = window.bazarSantriReportData.map((d, i) => ({
           "No": i + 1,
           "Nama Santri": d.nama,
+          "Rincian Barang": d.rincianText,
           "Total Jajan (Rp)": d.total
         }));
 
         var wb = XLSX.utils.book_new();
         var ws = XLSX.utils.json_to_sheet(rows);
-        ws['!cols'] = [{wch: 5}, {wch: 40}, {wch: 20}]; // Atur lebar kolom
+        ws['!cols'] = [{wch: 5}, {wch: 35}, {wch: 55}, {wch: 20}]; // Kolom rincian dibuat lebih lebar
         
         XLSX.utils.book_append_sheet(wb, ws, "Rekap Santri");
         var tgl = new Date().toISOString().split('T')[0];
