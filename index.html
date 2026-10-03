@@ -3505,6 +3505,45 @@
       </div>
     </div>
 
+    <!-- MODAL: PERINCIAN NOTA PENERIMAAN BARANG -->
+    <div id="bazarNotaDetailModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-2xl max-w-3xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <div class="bg-[#0a729d] p-3 sm:p-4 flex justify-between items-center text-white shrink-0">
+          <h2 class="text-lg font-normal tracking-wide">Perincian Penerimaan</h2>
+          <button onclick="closeModal('bazarNotaDetailModal')" class="hover:text-rose-300 transition px-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        
+        <div class="p-4 bg-[#f0f0f0] grid grid-cols-2 gap-4 border-b border-slate-300 text-sm shrink-0">
+          <div><span class="block text-slate-500 text-xs mb-1">Referensi / Suplier:</span><strong id="detNotaRef" class="text-slate-800 text-base"></strong></div>
+          <div><span class="block text-slate-500 text-xs mb-1">Tanggal:</span><strong id="detNotaTgl" class="text-slate-800 text-base"></strong></div>
+        </div>
+        
+        <div class="p-4 overflow-y-auto custom-scrollbar bg-white flex-1">
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead class="bg-[#0a729d] text-white">
+              <tr>
+                <th class="p-2 border-r border-slate-400 w-10 text-center">No</th>
+                <th class="p-2 border-r border-slate-400">Deskripsi Barang</th>
+                <th class="p-2 border-r border-slate-400 text-center w-20">Qty</th>
+                <th class="p-2 border-r border-slate-400 text-right">Harga Beli</th>
+                <th class="p-2 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="detNotaBody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+        
+        <div class="bg-slate-50 p-4 border-t border-slate-300 flex justify-end shrink-0">
+          <div class="text-right">
+            <span class="text-slate-500 text-sm mr-4">Total Nilai Penerimaan:</span>
+            <span id="detNotaTotal" class="text-xl font-black text-[#0a729d]">Rp 0</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- MODAL: IMPORT EXCEL BAZAR -->
     <div id="importBazarModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
@@ -8850,31 +8889,64 @@
           if (displayTrans.length === 0) {
             tbTrans.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">Belum ada catatan transaksi pada filter ini.</td></tr>';
           } else {
-            var htmlTr = '';
-            displayTrans.forEach(t => {
-              var badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">PENJUALAN</span>';
-              var lrText = '<span class="font-bold text-emerald-600">+Rp ' + Number(t.laba_rugi || 0).toLocaleString('id-ID') + '</span>';
-              if (t.jenis === 'NOTA_PEMBELIAN') {
-                badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">NOTA BELI</span>';
-                lrText = '<span class="text-slate-400">Stok +' + t.qty + '</span>';
-              } else if (t.jenis === 'KERUGIAN') {
-                badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">KERUGIAN</span>';
-                lrText = '<span class="font-bold text-rose-600">-Rp ' + Math.abs(Number(t.laba_rugi || t.total_nominal || 0)).toLocaleString('id-ID') + '</span>';
-              }
+            var theadRiw = tbTrans.parentElement.querySelector('thead');
+            
+            // JIKA FILTER ADALAH NOTA PEMBELIAN -> TAMPILAN GRUP ERP
+            if (jenisFilter === 'NOTA_PEMBELIAN') {
+              theadRiw.innerHTML = '<tr class="bg-[#0a729d] text-white"><th class="py-2.5 px-3 border-r border-slate-400 text-left w-32">Referensi</th><th class="py-2.5 px-3 border-r border-slate-400 text-left w-28">Tanggal</th><th class="py-2.5 px-3 border-r border-slate-400 text-left">Suplier</th><th class="py-2.5 px-3 border-r border-slate-400 text-center w-20">Kurs</th><th class="py-2.5 px-3 border-r border-slate-400 text-right w-40">Nilai</th><th class="py-2.5 px-2 text-center w-24">Aksi</th></tr>';
+              
+              var grouped = {};
+              displayTrans.forEach(t => {
+                var key = t.tanggal + '|' + t.keterangan;
+                if (!grouped[key]) grouped[key] = { tgl: t.tanggal, nota: t.keterangan, im: t.im, total: 0, items: [] };
+                grouped[key].total += Number(t.total_nominal);
+                grouped[key].items.push(t);
+              });
 
-              htmlTr += '<tr class="hover:bg-slate-50">' +
-                '<td class="py-3 px-3 font-mono">' + t.tanggal + '</td>' +
-                '<td class="py-3 px-3">' + badgeJenis + '</td>' +
-                '<td class="py-3 px-3 text-center font-bold">' + t.im + '</td>' +
-                '<td class="py-3 px-4 font-bold text-slate-800">' + t.nama_barang + '</td>' +
-                '<td class="py-3 px-2 text-center font-black">' + t.qty + '</td>' +
-                '<td class="py-3 px-3 text-right font-mono font-bold">Rp ' + Number(t.total_nominal || 0).toLocaleString('id-ID') + '</td>' +
-                '<td class="py-3 px-3 text-right font-mono">' + lrText + '</td>' +
-                '<td class="py-3 px-4 text-slate-600">' + (t.keterangan || '-') + ' <span class="text-[10px] text-slate-400">(' + (t.petugas || '') + ')</span></td>' +
-                '<td class="py-3 px-3 text-center"><button onclick="deleteBazarTrans(\'' + t.id + '\')" class="p-1.5 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>' +
-                '</tr>';
-            });
-            tbTrans.innerHTML = htmlTr;
+              var htmlTr = '';
+              // Urutkan dari yang terbaru
+              Object.values(grouped).sort((a,b) => new Date(b.tgl) - new Date(a.tgl)).forEach((g, idx) => {
+                var bgZebra = (idx % 2 === 0) ? 'bg-[#e2e8f0]/40' : 'bg-[#f1f5f9]/70';
+                var encData = encodeURIComponent(JSON.stringify(g));
+                
+                htmlTr += '<tr class="' + bgZebra + ' hover:bg-blue-50 transition border-b border-white">' +
+                  '<td class="py-2 px-3 text-slate-600">' + (g.nota.length > 12 ? g.nota.substring(0,12)+'...' : g.nota) + '</td>' +
+                  '<td class="py-2 px-3 text-slate-600">' + g.tgl.split('-').reverse().join('/') + '</td>' +
+                  '<td class="py-2 px-3 font-semibold text-slate-700">' + g.nota + ' <span class="text-[9px] bg-slate-200 px-1 ml-1 rounded">' + g.im + '</span></td>' +
+                  '<td class="py-2 px-3 text-center text-slate-500 text-xs">IDR</td>' +
+                  '<td class="py-2 px-3 text-right text-slate-700">Rp ' + g.total.toLocaleString('id-ID') + ',00 <i class="fa-solid fa-check text-slate-800 ml-1"></i></td>' +
+                  '<td class="py-2 px-2 text-center"><button onclick="viewBazarNotaDetail(\'' + encData + '\')" class="px-3 py-1 bg-[#0a729d] hover:bg-[#085a7d] text-white text-[10px] rounded transition shadow-sm">Perincian</button></td>' +
+                  '</tr>';
+              });
+              tbTrans.innerHTML = htmlTr;
+            } 
+            // TAMPILAN NORMAL JIKA SELAIN NOTA PEMBELIAN (PENJUALAN DLL)
+            else {
+              theadRiw.innerHTML = '<tr class="bg-slate-50 text-slate-600 font-bold uppercase border-b"><th class="py-3 px-3">Tanggal</th><th class="py-3 px-3">Jenis</th><th class="py-3 px-3 text-center">Unit</th><th class="py-3 px-4">Nama Barang</th><th class="py-3 px-2 text-center">Qty</th><th class="py-3 px-3 text-right">Total Nominal</th><th class="py-3 px-3 text-right">Untung / Rugi</th><th class="py-3 px-4">Keterangan / No. Nota / Pembeli</th><th class="py-3 px-3 text-center">Hapus</th></tr>';
+              
+              var htmlTr = '';
+              displayTrans.forEach(t => {
+                var badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">PENJUALAN</span>';
+                var lrText = '<span class="font-bold text-emerald-600">+Rp ' + Number(t.laba_rugi || 0).toLocaleString('id-ID') + '</span>';
+                if (t.jenis === 'KERUGIAN') {
+                  badgeJenis = '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">KERUGIAN</span>';
+                  lrText = '<span class="font-bold text-rose-600">-Rp ' + Math.abs(Number(t.laba_rugi || t.total_nominal || 0)).toLocaleString('id-ID') + '</span>';
+                }
+
+                htmlTr += '<tr class="hover:bg-slate-50">' +
+                  '<td class="py-3 px-3 font-mono">' + t.tanggal + '</td>' +
+                  '<td class="py-3 px-3">' + badgeJenis + '</td>' +
+                  '<td class="py-3 px-3 text-center font-bold">' + t.im + '</td>' +
+                  '<td class="py-3 px-4 font-bold text-slate-800">' + t.nama_barang + '</td>' +
+                  '<td class="py-3 px-2 text-center font-black">' + t.qty + '</td>' +
+                  '<td class="py-3 px-3 text-right font-mono font-bold">Rp ' + Number(t.total_nominal || 0).toLocaleString('id-ID') + '</td>' +
+                  '<td class="py-3 px-3 text-right font-mono">' + lrText + '</td>' +
+                  '<td class="py-3 px-4 text-slate-600">' + (t.keterangan || '-') + ' <span class="text-[10px] text-slate-400">(' + (t.petugas || '') + ')</span></td>' +
+                  '<td class="py-3 px-3 text-center"><button onclick="deleteBazarTrans(\'' + t.id + '\')" class="p-1.5 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>' +
+                  '</tr>';
+              });
+              tbTrans.innerHTML = htmlTr;
+            }
           }
         }
       }
@@ -9720,6 +9792,26 @@
           showToast('Gagal import: ' + err.message, 'error'); 
           console.error("Detail Error Import:", err);
         }
+      }
+
+      window.viewBazarNotaDetail = function(encData) {
+        var g = JSON.parse(decodeURIComponent(encData));
+        document.getElementById('detNotaRef').innerText = g.nota;
+        document.getElementById('detNotaTgl').innerText = g.tgl;
+        document.getElementById('detNotaTotal').innerText = 'Rp ' + g.total.toLocaleString('id-ID');
+        
+        var html = '';
+        g.items.forEach((it, idx) => {
+           html += '<tr class="hover:bg-slate-100 transition">' +
+             '<td class="p-2 border-r border-slate-200 text-center text-slate-400">' + (idx+1) + '</td>' +
+             '<td class="p-2 border-r border-slate-200 font-bold text-slate-700">' + it.nama_barang + '</td>' +
+             '<td class="p-2 border-r border-slate-200 text-center font-black">' + it.qty + '</td>' +
+             '<td class="p-2 border-r border-slate-200 text-right text-slate-600">Rp ' + Number(it.harga_beli).toLocaleString('id-ID') + '</td>' +
+             '<td class="p-2 text-right font-bold text-slate-800">Rp ' + Number(it.total_nominal).toLocaleString('id-ID') + '</td>' +
+           '</tr>';
+        });
+        document.getElementById('detNotaBody').innerHTML = html;
+        openModal('bazarNotaDetailModal');
       }
 
     </script>
