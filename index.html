@@ -4272,7 +4272,7 @@
       // AUTHENTICATION & SESSION
       // ==========================================
       function togglePasswordVisibility() {
-        var input = document.getElementById('loginPassword'), icon = document.getElementById('togglePwdIcon');
+        var input = document.getElementById('loginPassword'), icon = document.getElementById('eyeIcon');
         if (!input || !icon) return;
         if (input.type === 'password') { input.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
         else { input.type = 'password'; icon.className = 'fa-solid fa-eye'; }
@@ -4303,7 +4303,7 @@
           const { data: santriList, error: santriErr } = await supaClient
             .from('master_santri')
             .select('*')
-            .or(`nama_santri.ilike.${u},nis.eq.${u}`)
+            .or(`nama_santri.ilike."${u}",nis.eq."${u}"`)
             .eq('password', p)
             .limit(1);
 
