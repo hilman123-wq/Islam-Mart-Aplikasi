@@ -5926,17 +5926,36 @@
           var BATCH_SIZE = 500;
           if (itemsToInsert.length > 0) {
             for (let i = 0; i < itemsToInsert.length; i += BATCH_SIZE) {
-              const batch = itemsToInsert.slice(i, i + BATCH_SIZE);
+              const batch = itemsToInsert.slice(i, i + BATCH_SIZE).map(b => {
+                b.harga_beli = Number(b.harga_beli) || 0;
+                b.harga_jual = Number(b.harga_jual) || 0;
+                b.qty = Number(b.qty) || 0;
+                return b;
+              });
               const { error: insErr } = await supaClient.from('master_barang').insert(batch);
               if (insErr) throw insErr;
             }
           }
 
           if (itemsToUpdate.length > 0) {
-            for (let i = 0; i < itemsToUpdate.length; i += BATCH_SIZE) {
-              const batch = itemsToUpdate.slice(i, i + BATCH_SIZE);
-              const { error: updErr } = await supaClient.from('master_barang').upsert(batch, { onConflict: 'id' });
-              if (updErr) throw updErr;
+            // Ubah menjadi Update individual paralel agar database tidak kewalahan (Cegah Error 500)
+            var UPDATE_BATCH = 50; 
+            for (let i = 0; i < itemsToUpdate.length; i += UPDATE_BATCH) {
+              const batch = itemsToUpdate.slice(i, i + UPDATE_BATCH);
+              const updatePromises = batch.map(it => {
+                var updateId = it.id;
+                var payloadUpdate = Object.assign({}, it);
+                delete payloadUpdate.id; // Hapus ID agar tidak bentrok dengan aturan database
+                
+                // Pastikan angka valid dan bersih (mencegah error NaN)
+                payloadUpdate.harga_beli = Number(payloadUpdate.harga_beli) || 0;
+                payloadUpdate.harga_jual = Number(payloadUpdate.harga_jual) || 0;
+                payloadUpdate.qty = Number(payloadUpdate.qty) || 0;
+
+                return supaClient.from('master_barang').update(payloadUpdate).eq('id', updateId);
+              });
+              const results = await Promise.all(updatePromises);
+              results.forEach(res => { if (res.error) throw res.error; });
             }
           }
 
