@@ -10021,14 +10021,13 @@
         var trCount = tbody.children.length + 1;
         var tr = document.createElement('div');
 
-        // Cari nama barang untuk dimasukkan ke kotak pencarian (jika dilempar dari tombol lain)
+        // Cari nama barang untuk auto-complete jika ID sudah ada
         var valName = '';
         if (selectedId) {
           var f = cachedBazarBarang.find(x => String(x.id) === String(selectedId));
           if (f) valName = f.nama_barang;
         }
         
-        // CSS AJAIB: Di HP menjadi Kartu bersusun ke bawah, di Laptop menjadi 1 baris menyamping
         tr.className = 'inline-row flex flex-col sm:grid sm:grid-cols-[40px_1fr_80px_120px_120px_140px_40px] hover:bg-slate-50 transition group border sm:border-0 border-slate-300 rounded-lg sm:rounded-none bg-white sm:border-b last:border-b-0 overflow-hidden';
         tr.innerHTML = `
           <!-- Baris Atas Mobile / Kolom 1 & 2 Desktop -->
@@ -10081,7 +10080,6 @@
         if (namaInput) {
           var item = cachedBazarBarang.find(b => String(b.nama_barang).toLowerCase() === namaInput);
           if (item) {
-            // Pasang ID di belakang layar agar sistem tetap tahu barang yang dimaksud
             inputEl.setAttribute('data-id', item.id);
             tr.querySelector('.row-beli').value = item.harga_beli || 0;
             tr.querySelector('.row-jual').value = item.harga_jual || 0;
@@ -10100,12 +10098,12 @@
         var tbody = document.getElementById('bazarTransInlineBody');
         btn.closest('.inline-row').remove();
         
-        // Update nomor urut baris
+        // Update nomor urut
         Array.from(tbody.children).forEach((row, i) => {
           row.querySelector('.row-num').innerText = i + 1;
         });
 
-        if (tbody.children.length === 0) addBazarInlineRow(); // Jangan biarkan kosong melompong
+        if (tbody.children.length === 0) addBazarInlineRow();
         calcBazarInlineTotals();
       }
 
@@ -10115,7 +10113,7 @@
         var grandTotal = 0;
 
         rows.forEach(tr => {
-          var id = tr.querySelector('.row-barang').value;
+          var id = tr.querySelector('.row-barang').getAttribute('data-id');
           if (id) {
             var qty = Number(tr.querySelector('.row-qty').value) || 0;
             var hBeli = Number(tr.querySelector('.row-beli').value) || 0;
