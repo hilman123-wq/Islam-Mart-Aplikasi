@@ -6714,11 +6714,12 @@
             stampOverlayHtml = '<div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none"><div class="border-4 border-amber-500 bg-slate-900/95 text-amber-400 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl uppercase tracking-wider -rotate-12 shadow-xl flex items-center gap-1"><i class="fa-solid fa-circle-pause"></i><span>DISCONTINUE</span></div></div>';
           }
 
-          // === LOGIKA VARIAN MAKANAN BASAH ===
+         // === LOGIKA VARIAN MAKANAN BASAH ===
           var namaLower = String(it.nama || '').toLowerCase().trim();
           var isVariantItem = ["makanan basah 2.500", "makanan basah 3.000", "makanan basah 4.000", "makanan basah 5.000", "makanan basah 9.000", "tataboga 2.500"].includes(namaLower);
-          var encodedIt = encodeURIComponent(JSON.stringify(it));
-          var clickAction = isVariantItem ? "openVariantModal('" + encodedIt + "')" : "addItmToCart(" + safeIt + ")";
+          
+          var encodedIt = encodeURIComponent(JSON.stringify(it)).replace(/'/g, "%27");
+          var clickAction = isVariantItem ? "openVariantModal(&apos;" + encodedIt + "&apos;)" : "addItmToCart(" + safeIt + ")";
           var imgCursor = isVariantItem ? "cursor-pointer" : "";
 
           var qtyInCart = getCartQtyByItemId(it.id);
@@ -11605,8 +11606,10 @@
         var html = '';
         
         variants.forEach(function(vName) {
-          var safeVName = vName.replace(/'/g, "\\'");
-          html += '<div onclick="addVariantToCart(\\'' + safeVName + '\\')" class="bg-white rounded-2xl border-2 border-orange-100 overflow-hidden shadow-sm hover:shadow-md hover:border-orange-400 cursor-pointer transition active:scale-95 flex flex-col group">' +
+          // Menggunakan entity HTML agar kebal dari error copy-paste
+          var safeVName = vName.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+          
+          html += '<div onclick="addVariantToCart(&apos;' + safeVName + '&apos;)" class="bg-white rounded-2xl border-2 border-orange-100 overflow-hidden shadow-sm hover:shadow-md hover:border-orange-400 cursor-pointer transition active:scale-95 flex flex-col group">' +
             '<div class="w-full h-20 bg-orange-50 flex items-center justify-center text-orange-300 text-3xl group-hover:bg-orange-500 group-hover:text-white transition duration-300">' +
               '<i class="fa-solid fa-utensils"></i>' +
             '</div>' +
