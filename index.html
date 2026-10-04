@@ -6683,7 +6683,10 @@
         var html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 p-0">';
 
         itemsToRender.forEach(function (it) {
-          var safeIt = JSON.stringify(it).replace(/'/g, "&apos;");
+          // Memasang perisai &quot; pada JSON agar tidak memotong tag HTML onclick="..."
+          var safeIt = JSON.stringify(it).replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+          var encodedIt = encodeURIComponent(JSON.stringify(it)).replace(/'/g, "%27");
+          
           var placeholderImg = 'https://placehold.co/400x400/e2e8f0/64748b?text=IM';
           var errorImg = 'https://placehold.co/400x400/fee2e2/ef4444?text=ISLAM+MART';
           var rawImg = String(it.gambar || it.image || '').trim();
@@ -6714,12 +6717,11 @@
             stampOverlayHtml = '<div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none"><div class="border-4 border-amber-500 bg-slate-900/95 text-amber-400 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl uppercase tracking-wider -rotate-12 shadow-xl flex items-center gap-1"><i class="fa-solid fa-circle-pause"></i><span>DISCONTINUE</span></div></div>';
           }
 
-         // === LOGIKA VARIAN MAKANAN BASAH ===
+          // === LOGIKA VARIAN MAKANAN BASAH ===
           var namaLower = String(it.nama || '').toLowerCase().trim();
           var isVariantItem = ["makanan basah 2.500", "makanan basah 3.000", "makanan basah 4.000", "makanan basah 5.000", "makanan basah 9.000", "tataboga 2.500"].includes(namaLower);
           
-          var encodedIt = encodeURIComponent(JSON.stringify(it)).replace(/'/g, "%27");
-          var clickAction = isVariantItem ? "openVariantModal(&apos;" + encodedIt + "&apos;)" : "addItmToCart(" + safeIt + ")";
+          var clickAction = isVariantItem ? "openVariantModal(&quot;" + encodedIt + "&quot;)" : "addItmToCart(" + safeIt + ")";
           var imgCursor = isVariantItem ? "cursor-pointer" : "";
 
           var qtyInCart = getCartQtyByItemId(it.id);
