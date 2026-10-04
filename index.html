@@ -11572,31 +11572,8 @@
         XLSX.utils.book_append_sheet(wb, ws, "Produksi " + bulan);
         XLSX.writeFile(wb, "Laporan_Produksi_Permak_" + bulan + ".xlsx");
       }
-
-      <!-- MODAL: PILIH VARIAN MAKANAN BASAH -->
-    <div id="variantSelectionModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
-        <div class="p-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white flex items-center justify-between shrink-0">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-bowl-food"></i></div>
-            <div>
-              <h3 id="variantModalTitle" class="text-sm font-black uppercase tracking-wider">Pilih Varian</h3>
-              <p id="variantModalPrice" class="text-[11px] font-bold text-orange-100">Rp 0</p>
-            </div>
-          </div>
-          <button onclick="closeModal('variantSelectionModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        <div class="p-4 overflow-y-auto custom-scrollbar bg-slate-50 flex-1">
-          <div id="variantGridContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <!-- JS INJECTS VARIANTS HERE -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    // ==========================================
+      
+      // ==========================================
       // FITUR PILIH VARIAN MAKANAN BASAH
       // ==========================================
       var MAKANAN_BASAH_VARIANTS = {
@@ -11655,7 +11632,29 @@
         closeModal('variantSelectionModal');
         addItmToCart(variantItem);
       }
-
+      <!-- MODAL: PILIH VARIAN MAKANAN BASAH -->
+    <div id="variantSelectionModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-bowl-food"></i></div>
+            <div>
+              <h3 id="variantModalTitle" class="text-sm font-black uppercase tracking-wider">Pilih Varian</h3>
+              <p id="variantModalPrice" class="text-[11px] font-bold text-orange-100">Rp 0</p>
+            </div>
+          </div>
+          <button onclick="closeModal('variantSelectionModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scrollbar bg-slate-50 flex-1">
+          <div id="variantGridContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- JS INJECTS VARIANTS HERE -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
     </script>
     <!-- Register Service Worker PWA -->
     <script>
