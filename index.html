@@ -6346,6 +6346,37 @@
         renderPoCatalog();
       }
 
+      function populateTopSupplierDropdown() {
+        var sel = document.getElementById('stafTopSupplierSelect');
+        if (!sel) return;
+        var currentVal = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
+        var selectedIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
+
+        var uniqueSuppliers = [];
+        (cachedMasterBarang || []).forEach(it => {
+          var matchIM = !it.im || it.im.toLowerCase() === String(selectedIM).toLowerCase() || it.im.toLowerCase() === 'all';
+          var sup = String(it.supplier || '').trim();
+          if (matchIM && sup && !uniqueSuppliers.includes(sup)) {
+            uniqueSuppliers.push(sup);
+          }
+        });
+        uniqueSuppliers.sort((a, b) => a.localeCompare(b));
+
+        var html = '<option value="">-- Semua Distributor (' + uniqueSuppliers.length + ' Supplier) --</option>';
+        uniqueSuppliers.forEach(s => {
+          var isSel = (s === currentVal) ? 'selected' : '';
+          html += '<option value="' + s.replace(/"/g, '&quot;') + '" ' + isSel + '>' + s + '</option>';
+        });
+        sel.innerHTML = html;
+      }
+
+      function onTopSupplierDropdownChange(supName) {
+        var inpSup = document.getElementById('orderSupplier');
+        if (inpSup) inpSup.value = supName;
+        window.poCurrentPage = 1;
+        renderPoCatalog();
+      }
+
       // Aktifkan Tampilan Ala Shopee untuk SEMUA USER (Wali Santri & Kasir/Staf)
       function toggleWaliShopeeLayout() {
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
