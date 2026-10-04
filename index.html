@@ -3943,7 +3943,7 @@
         var today = new Date().toISOString().split('T')[0];
         var curMonth = today.substring(0, 7);
 
-        ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal'].forEach
+        ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal'].forEach(id => {
           if (document.getElementById(id)) document.getElementById(id).value = today;
         });
 
@@ -10747,3 +10747,5 @@
       }
     </script>
 </body>
+
+</html>
