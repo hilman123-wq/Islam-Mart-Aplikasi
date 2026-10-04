@@ -8620,9 +8620,14 @@
       function renderWeeklyReport(res) {
         document.getElementById('weeklyPrintTitle').innerText = 'LAPORAN MINGGUAN ' + res.meta.type;
         document.getElementById('weeklyMetaMonth').innerText = res.meta.month;
+        if (document.getElementById('weeklyMetaPeriod')) document.getElementById('weeklyMetaPeriod').innerText = 'Minggu ke-' + (res.meta.week || '-');
+        if (document.getElementById('weeklyMetaUnit')) document.getElementById('weeklyMetaUnit').innerText = res.meta.im;
 
-        var theadTr = document.querySelector('#tab-weekly-report table thead');
-        if (theadTr) {
+        if (document.getElementById('weeklyKepalaGudangSign')) {
+          document.getElementById('weeklyKepalaGudangSign').innerText = (res.meta.im === 'Banat') ? 'Muhammad Reza Al-Fanny' : 'Hilman Nurul Alfin, S.E';
+        }
+
+          var theadTr = document.querySelector('#tab-weekly-report table thead');
           var headHtml = '<tr><th class="py-2.5 px-2 border border-slate-300 w-10">No</th>' +
             '<th class="py-2.5 px-3 border border-slate-300 text-left">Nama Pegawai</th>' +
             '<th class="py-2.5 px-2 border border-slate-300 w-16">Unit</th>' +
@@ -8727,6 +8732,11 @@
       function renderMonthlyRaport(res) {
         document.getElementById('raportPrintTitle').innerText = 'RAPORT BULANAN ' + res.meta.type;
         document.getElementById('raportMetaMonth').innerText = res.meta.month;
+        if (document.getElementById('raportMetaUnit')) document.getElementById('raportMetaUnit').innerText = res.meta.im;
+
+        if (document.getElementById('raportKepalaGudangSign')) {
+          document.getElementById('raportKepalaGudangSign').innerText = (res.meta.im === 'Banat') ? 'Muhammad Reza Al-Fanny' : 'Hilman Nurul Alfin, S.E';
+        }
 
         var theadTr = document.querySelector('#tab-monthly-raport table thead');
         if (theadTr) {
