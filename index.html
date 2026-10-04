@@ -7444,6 +7444,85 @@
           if (!error && data) { cachedCriteria = data.data; buildChecklistForm('CLHK', cachedCriteria.CLHK); buildChecklistForm('CLHG', cachedCriteria.CLHG); buildChecklistForm('CLHKA', cachedCriteria.CLHKA); buildChecklistForm('CLHP', cachedCriteria.CLHP);}
         } catch (err) { }
       }
+      // AUTO-INJECT INDIKATOR PERMAK JIKA MASIH KOSONG
+          if (!cachedCriteria.CLHP || Object.keys(cachedCriteria.CLHP).length === 0) {
+            cachedCriteria.CLHP = {
+              cat1: {
+                name: "Membersihkan Area kerja",
+                items: [
+                  "Menyapu lantai area mesin jahit",
+                  "Mengepel lantai area mesin jahit",
+                  "Membersihkan mesin jahit dari sisa benang & debu",
+                  "Merapikan sisa-sisa kain perca/potongan",
+                  "Membuang sampah pada tempatnya"
+                ]
+              },
+              cat2: {
+                name: "Pelayanan",
+                items: [
+                  "Menerima orderan permak dengan ramah (senyum, salam, sapa)",
+                  "Menanyakan detail keinginan konsumen (ukuran, model potongan)",
+                  "Memberikan nota/tanda terima permak yang jelas",
+                  "Memberikan estimasi waktu selesai yang akurat",
+                  "Menghubungi konsumen jika permak sudah selesai"
+                ]
+              },
+              cat3: {
+                name: "Permak",
+                items: [
+                  "Memotong baju/celana sesuai ukuran yang diminta",
+                  "Menjahit dengan rapi dan kuat",
+                  "Mengobras pinggiran kain agar tidak mbrudul",
+                  "Memasang resleting/kancing dengan benar",
+                  "Mengecek kembali hasil jahitan sebelum diserahkan"
+                ]
+              },
+              cat4: {
+                name: "Produksi Stock",
+                items: [
+                  "Membuat pola untuk barang produksi (jika ada)",
+                  "Memotong kain sesuai pola produksi",
+                  "Menjahit barang produksi sesuai target harian",
+                  "Memastikan kualitas jahitan produksi rapi (QC)",
+                  "Merapikan dan mendata hasil produksi siap jual"
+                ]
+              },
+              cat5: {
+                name: "Kedisiplinan",
+                items: [
+                  "Hadir tepat waktu sesuai jadwal operasional",
+                  "Menggunakan seragam rapi dan ID Card",
+                  "Izin jika berhalangan hadir/meninggalkan area kerja",
+                  "Menyelesaikan target jahitan harian tepat waktu",
+                  "Mengisi laporan harian (Ceklis/Buku Laporan)"
+                ]
+              },
+              cat6: {
+                name: "Perawatan & Maintenance",
+                items: [
+                  "Memberi minyak/pelumas pada mesin jahit secara berkala",
+                  "Mengecek ketajaman jarum dan mengganti jika perlu",
+                  "Mengecek kondisi dinamo mesin jahit",
+                  "Membersihkan area sekoci dan sisa benang tersangkut",
+                  "Melaporkan ke atasan jika ada kerusakan mesin"
+                ]
+              },
+              cat7: {
+                name: "Pro Aktif",
+                items: [
+                  "Membantu melayani konsumen toko jika sedang ramai",
+                  "Menginformasikan jika stok bahan/benang mulai menipis",
+                  "Memberikan ide/saran model jahitan baru",
+                  "Merapikan area display barang jika melihat berantakan",
+                  "Menjaga kebersihan area sekitar secara mandiri"
+                ]
+              }
+            };
+            // Simpan ke database Supabase
+            supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria').then(res => {
+              if (!res.error) buildChecklistForm('CLHP', cachedCriteria.CLHP);
+            });
+          }
 
       // Daftar Kode Status Kehadiran yang Dikecualikan dari Pembagi Nilai
       var EXCUSED_STATUS_MAP = {
