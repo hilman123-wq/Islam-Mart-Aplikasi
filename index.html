@@ -1647,6 +1647,27 @@
               </div>
             </div>
 
+            <!-- Filter & Pencarian -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="filterStokPermakSearch" oninput="window.stokPermakCurrentPage = 1; renderStokPermak()"
+                  placeholder="Cari nama bahan / keterangan rak..."
+                  class="w-full pl-8 pr-3 py-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-semibold outline-none focus:ring-2 focus:ring-orange-600">
+              </div>
+              <div>
+                <select id="filterStokPermakSort" onchange="window.stokPermakCurrentPage = 1; renderStokPermak()"
+                  class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500">
+                  <option value="nama_asc">Urut: Nama (A-Z)</option>
+                  <option value="nama_desc">Urut: Nama (Z-A)</option>
+                  <option value="stok_asc">Urut: Stok (Paling Sedikit)</option>
+                  <option value="stok_desc">Urut: Stok (Paling Banyak)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="overflow-x-auto rounded-2xl border border-slate-100">
               <table class="w-full text-left text-xs min-w-[600px]">
                 <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
@@ -11039,29 +11060,96 @@
         }
       }
 
+      window.stokPermakCurrentPage = 1;
+      window.stokPermakItemsPerPage = 50;
+      window.filteredStokPermakItems = [];
+
       function renderStokPermak() {
         var tb = document.getElementById('stokPermakTableBody');
         if (!tb) return;
-        if (cachedStokPermak.length === 0) {
-          tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Belum ada data stok bahan permak.</td></tr>';
+
+        var searchInp = document.getElementById('filterStokPermakSearch');
+        var sortSel = document.getElementById('filterStokPermakSort');
+        var q = searchInp ? searchInp.value.trim().toLowerCase() : '';
+        var sortBy = sortSel ? sortSel.value : 'nama_asc';
+
+        // Filter / Pencarian
+        window.filteredStokPermakItems = cachedStokPermak.filter(item => {
+          if (!q) return true;
+          return String(item.nama || '').toLowerCase().includes(q) || String(item.ket || '').toLowerCase().includes(q);
+        });
+
+        // Sorting / Pengurutan
+        window.filteredStokPermakItems.sort((a, b) => {
+          if (sortBy === 'nama_asc') return String(a.nama).localeCompare(String(b.nama));
+          if (sortBy === 'nama_desc') return String(b.nama).localeCompare(String(a.nama));
+          if (sortBy === 'stok_asc') return (a.qty || 0) - (b.qty || 0);
+          if (sortBy === 'stok_desc') return (b.qty || 0) - (a.qty || 0);
+          return 0;
+        });
+
+        var totalItems = window.filteredStokPermakItems.length;
+        if (totalItems === 0) {
+          tb.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada data stok bahan permak.</td></tr>';
           return;
         }
 
+        var startIndex = (window.stokPermakCurrentPage - 1) * window.stokPermakItemsPerPage;
+        var endIndex = startIndex + window.stokPermakItemsPerPage;
+        var itemsToRender = window.filteredStokPermakItems.slice(startIndex, endIndex);
+
         var html = '';
-        cachedStokPermak.forEach((item, idx) => {
+        itemsToRender.forEach((item, i) => {
+          var actualIndex = startIndex + i + 1;
+          var originalIdx = cachedStokPermak.indexOf(item); // Kunci agar Edit/Hapus tidak salah sasaran
           var safeItem = JSON.stringify(item).replace(/'/g, "&apos;");
+          
           html += '<tr class="hover:bg-orange-50/30 transition">' +
-            '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (idx + 1) + '</td>' +
+            '<td class="py-3 px-3 text-center font-bold text-slate-400">' + actualIndex + '</td>' +
             '<td class="py-3 px-4 font-black text-slate-800">' + item.nama + '</td>' +
             '<td class="py-3 px-3 text-center"><span class="font-black text-lg ' + (item.qty <= 2 ? 'text-red-600' : 'text-orange-600') + '">' + item.qty + '</span></td>' +
             '<td class="py-3 px-3 font-semibold text-slate-600">' + item.satuan + '</td>' +
             '<td class="py-3 px-4 text-slate-500">' + (item.ket || '-') + '</td>' +
             '<td class="py-3 px-4 text-center">' +
-              '<button onclick=\'openStokPermakModal(' + safeItem + ', ' + idx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
-              '<button onclick="deleteStokPermak(' + idx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+              '<button onclick=\'openStokPermakModal(' + safeItem + ', ' + originalIdx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
+              '<button onclick="deleteStokPermak(' + originalIdx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
             '</td></tr>';
         });
+
+        // Paginasi (Halaman Bawah)
+        var totalPages = Math.ceil(totalItems / window.stokPermakItemsPerPage);
+        if (totalPages > 1) {
+          var pageOptions = '';
+          for (var p = 1; p <= totalPages; p++) {
+            pageOptions += '<option value="' + p + '" ' + (p === window.stokPermakCurrentPage ? 'selected' : '') + '>Hal ' + p + '</option>';
+          }
+
+          html += '<tr><td colspan="6" class="py-3 bg-white sticky left-0 border-t"><div class="flex items-center justify-between px-4">' +
+            '<span class="text-[11px] font-bold text-slate-500">Tampil ' + (startIndex + 1) + '-' + Math.min(endIndex, totalItems) + ' dari total ' + totalItems + '</span>' +
+            '<div class="flex items-center gap-2">' +
+            '<button type="button" onclick="changeStokPermakPage(-1)" class="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.stokPermakCurrentPage === 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left mr-1"></i> Prev</button>' +
+            '<select onchange="goToStokPermakPage(this.value)" class="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-orange-600 cursor-pointer">' + pageOptions + '</select>' +
+            '<span class="text-xs font-bold text-slate-500">/ ' + totalPages + '</span>' +
+            '<button type="button" onclick="changeStokPermakPage(1)" class="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg text-[11px] font-black transition disabled:opacity-40" ' + (window.stokPermakCurrentPage === totalPages ? 'disabled' : '') + '>Next <i class="fa-solid fa-chevron-right ml-1"></i></button>' +
+            '</div></div></td></tr>';
+        }
+
         tb.innerHTML = html;
+      }
+
+      function changeStokPermakPage(delta) {
+        var maxPage = Math.ceil(window.filteredStokPermakItems.length / window.stokPermakItemsPerPage);
+        var newPage = window.stokPermakCurrentPage + delta;
+        if (newPage >= 1 && newPage <= maxPage) { window.stokPermakCurrentPage = newPage; renderStokPermak(); }
+      }
+
+      function goToStokPermakPage(page) {
+        var newPage = parseInt(page);
+        var maxPage = Math.ceil(window.filteredStokPermakItems.length / window.stokPermakItemsPerPage);
+        if (newPage >= 1 && newPage <= maxPage) {
+          window.stokPermakCurrentPage = newPage;
+          renderStokPermak();
+        }
       }
 
       function openStokPermakModal(item = null, index = -1) {
