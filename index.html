@@ -369,6 +369,11 @@
               <i class="fa-solid fa-scissors w-5 text-center text-rose-400"></i>
               <span>Ceklis Permak (CLHP)</span>
             </button>
+            <button onclick="switchTab('clhdp-form')" id="nav-clhdp-form"
+              class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+              <i class="fa-solid fa-truck-fast w-5 text-center text-sky-400"></i>
+              <span>Ceklis Purchasing (CLHDP)</span>
+            </button>
 
             <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-3 pb-1">Laporan &
               Evaluasi</div>
@@ -1552,6 +1557,60 @@
         </section>
 
         <!-- ========================================================================= -->
+        <!-- TAB: CEKLIS PURCHASING (CLHDP) -->
+        <!-- ========================================================================= -->
+        <section id="tab-clhdp-form" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <div>
+                  <h2 class="text-sm sm:text-base font-black text-slate-800">Ceklis Driver Purchasing (CLHDP)</h2>
+                  <p class="text-[11px] sm:text-xs text-slate-500">Evaluasi kebersihan, ketepatan barang, dan kendaraan.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 bg-sky-50 border border-sky-200 px-4 py-2 rounded-2xl">
+                <span class="text-xs font-bold text-sky-900">Skor Langsung:</span>
+                <span id="clhdpLiveScore" class="text-xl font-black text-sky-700">0.0</span>
+                <span id="clhdpLiveGrade" class="px-2 py-0.5 rounded text-xs font-black bg-sky-200 text-sky-900">E</span>
+              </div>
+            </div>
+
+            <!-- Form Identitas Ceklis Purchasing -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Tanggal Tugas *</label>
+                <input type="date" id="clhdpTanggal" required class="w-full p-2 bg-white border rounded-xl font-bold">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Nama Driver *</label>
+                <input type="text" id="clhdpNama" readonly class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-700 cursor-not-allowed">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Unit Toko *</label>
+                <input type="text" id="clhdpIM" readonly class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-700 cursor-not-allowed">
+              </div>
+            </div>
+
+            <div id="clhdpCategoriesContainer" class="space-y-4"></div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Catatan Tambahan Purchasing</label>
+              <textarea id="clhdpCatatan" rows="2" placeholder="Catatan servis mobil, nota tol, bensin, dll..." class="w-full p-2.5 bg-slate-50 border rounded-xl text-xs font-medium outline-none focus:bg-white focus:ring-2 focus:ring-sky-500"></textarea>
+            </div>
+
+            <div class="flex justify-end pt-3 border-t">
+              <button type="button" onclick="submitChecklist('CLHDP')" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-black rounded-xl text-xs shadow active:scale-95 transition flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Kirim Ceklis Purchasing</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
         <!-- TAB: DATA RIWAYAT CEKLIS -->
         <!-- ========================================================================= -->
         <section id="tab-data-history" style="display: none;" class="space-y-6">
@@ -1569,6 +1628,7 @@
                   <option value="CLHG">Gudang (CLHG)</option>
                   <option value="CLHKA">Keuangan (CLHKA)</option>
                   <option value="CLHP">Permak (CLHP)</option>
+                  <option value="CLHDP">Purchasing (CLHDP)</option>
                 </select>
                 <select id="historyIM" onchange="loadHistoryTable()"
                   class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
@@ -1620,6 +1680,7 @@
                   <option value="CLHG">Gudang (CLHG)</option>
                   <option value="CLHKA">Keuangan (CLHKA)</option>
                   <option value="CLHP">Permak (CLHP)</option>
+                  <option value="CLHDP">Purchasing (CLHDP)</option>
                 </select>
                 <select id="weeklyIM" onchange="loadWeeklyReport()"
                   class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
@@ -1718,6 +1779,7 @@
                   <option value="CLHG">Gudang (CLHG)</option>
                   <option value="CLHKA">Keuangan (CLHKA)</option>
                   <option value="CLHP">Permak (CLHP)</option>
+                  <option value="CLHDP">Purchasing (CLHDP)</option>
                 </select>
                 <select id="raportIM" onchange="loadMonthlyRaport()"
                   class="p-2 bg-slate-50 border rounded-xl text-xs font-bold">
@@ -2673,6 +2735,11 @@
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
         <i class="fa-solid fa-scissors text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Permak</span>
+      </button>
+      <button id="btnNavBtmPurchasing" onclick="switchTab('clhdp-form')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
+        <i class="fa-solid fa-truck-fast text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Driver</span>
       </button>
       <button id="btnNavBtmStaf" onclick="switchTab('user-management')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-purple-600 focus:text-purple-600 transition-colors">
@@ -3965,7 +4032,7 @@
         var today = new Date().toISOString().split('T')[0];
         var curMonth = today.substring(0, 7);
 
-        ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal'].forEach(id => {
+        ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal', 'clhdpTanggal'].forEach(id => {
           if (document.getElementById(id)) document.getElementById(id).value = today;
         });
 
@@ -4124,7 +4191,7 @@
         if (document.getElementById('userRoleBadge')) document.getElementById('userRoleBadge').innerText = currentUser.role || 'Staf';
         if (document.getElementById('userIMBadge')) document.getElementById('userIMBadge').innerText = 'IM ' + (currentUser.im || 'Banin');
 
-        ['clhk', 'clhg', 'clhka', 'clhp'].forEach(pfx => {
+        ['clhk', 'clhg', 'clhka', 'clhp', 'clhdp'].forEach(pfx => {
           if (document.getElementById(pfx + 'Nama')) document.getElementById(pfx + 'Nama').value = currentUser.nama || '';
           if (document.getElementById(pfx + 'IM')) document.getElementById(pfx + 'IM').value = 'IM ' + (currentUser.im || 'Banin');
         });
@@ -4135,6 +4202,7 @@
         var isGudang = roleStr.includes('gudang');
         var isKeuangan = roleStr.includes('keuangan');
         var isPermak = roleStr.includes('permak');
+        var isPurchasing = roleStr.includes('purchasing') || roleStr.includes('driver');
         var isKepalaAdmin = roleStr.includes('kepala administrasi');
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser) && !isBazar;
 
@@ -4211,6 +4279,7 @@
         var btmStaf = document.getElementById('btnNavBtmStaf');
         var btmSantri = document.getElementById('btnNavBtmSantri');
         var btmPermak = document.getElementById('btnNavBtmPermak');
+        var btmPurchasing = document.getElementById('btnNavBtmPurchasing');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -4228,6 +4297,7 @@
         if (btmStaf) btmStaf.style.display = 'none';
         if (btmSantri) btmSantri.style.display = 'none';
         if (btmPermak) btmPermak.style.display = 'none';
+        if (btmPurchasing) btmPurchasing.style.display = 'none'
 
         // ATURAN KHUSUS BAZAR BANIN & BANAT (Tanpa Menu Arsip)
         if (isBazar) {
@@ -4282,6 +4352,13 @@
         else if (isPermak) {
           if (btmForm) btmForm.style.display = 'flex';
           if (btmPermak) btmPermak.style.display = 'flex';
+          if (btmLaporan) btmLaporan.style.display = 'flex';
+        }
+        
+        // ATURAN 6: PURCHASING
+        else if (isPurchasing) {
+          if (btmForm) btmForm.style.display = 'flex';
+          if (btmPurchasing) btmPurchasing.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
@@ -4365,13 +4442,14 @@
       function openMobileSidebar() { document.getElementById('mainSidebar').classList.remove('-translate-x-full'); document.getElementById('mobileSidebarBackdrop').style.display = 'block'; }
       function closeMobileSidebar() { document.getElementById('mainSidebar').classList.add('-translate-x-full'); document.getElementById('mobileSidebarBackdrop').style.display = 'none'; }
       function goToMyChecklist() {
-     if (!currentUser) return;
-     var r = (currentUser.role || '').toLowerCase();
-     if (r.includes('gudang')) switchTab('clhg-form');
-     else if (r.includes('keuangan')) switchTab('clhka-form');
-     else if (r.includes('permak')) switchTab('clhp-form');
-     else switchTab('clhk-form');
-   }
+        if (!currentUser) return;
+        var r = (currentUser.role || '').toLowerCase();
+        if (r.includes('gudang')) switchTab('clhg-form');
+        else if (r.includes('keuangan')) switchTab('clhka-form');
+        else if (r.includes('permak')) switchTab('clhp-form');
+        else if (r.includes('purchasing') || r.includes('driver')) switchTab('clhdp-form');
+        else switchTab('clhk-form');
+      }
 
       function switchTab(tabId) {
         var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
@@ -4394,7 +4472,7 @@
         var activeBtn = document.getElementById('nav-' + tabId);
         if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-        ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
+        ['dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
           if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
         });
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
@@ -4422,6 +4500,7 @@
         else if (tabId === 'clhg-form') checkAndLoadChecklistByDate('CLHG');
         else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
+        else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
       }
 
       function refreshTab() {
@@ -7489,10 +7568,24 @@
               supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria').then(()=>{});
             }
 
+            // AUTO-INJECT INDIKATOR PURCHASING JIKA MASIH KOSONG
+            if (!cachedCriteria.CLHDP || Object.keys(cachedCriteria.CLHDP).length === 0) {
+              cachedCriteria.CLHDP = {
+                cat1: { name: "Kebersihan", items: ["Membersihkan Mobil", "Membersihkan Area Toko atau Kantor"] },
+                cat2: { name: "Kedisiplinan", items: ["Datang tepat waktu", "Pulang setelah tugas selesai", "Melakukan serah terima barang"] },
+                cat3: { name: "Ketepatan Barang", items: ["Belanja sesuai PO", "Bongkaran barang dihari H atau besok dipagi hari", "Tidak ada barang yang rusak atau expired"] },
+                cat4: { name: "Update surat kendaraan", items: ["KIR Mobil", "Plat TNKB", "STNK"] },
+                cat5: { name: "Perawatan & Maintenance", items: ["Cek Oli", "Tune Up", "Cek Radiator", "Cek Air Wiper"] },
+                cat6: { name: "Pro Aktif", items: ["Menghadiri Briefing tiap hari", "Berkoordinasi bila ada barang yang tidak sesuai PO", "Mengupdate Supplier", "Mengajukan perbaikan mobil", "Tidak ada selisih setoran"] }
+              };
+              supaClient.from('app_settings').update({ data: cachedCriteria }).eq('id', 'criteria').then(()=>{});
+            }
+
             buildChecklistForm('CLHK', cachedCriteria.CLHK); 
             buildChecklistForm('CLHG', cachedCriteria.CLHG); 
             buildChecklistForm('CLHKA', cachedCriteria.CLHKA); 
             buildChecklistForm('CLHP', cachedCriteria.CLHP);
+            buildChecklistForm('CLHDP', cachedCriteria.CLHDP);
           }
         } catch (err) { }
       }
@@ -7814,8 +7907,8 @@
 
         if (btnSubmit) {
           btnSubmit.disabled = isLocked;
-          var labelMap = { 'CLHK': 'Kirim Ceklis Kasir', 'CLHG': 'Kirim Ceklis Gudang', 'CLHKA': 'Kirim Ceklis Keuangan', 'CLHP': 'Kirim Ceklis Permak' };
-       var colorMap = { 'CLHK': 'bg-amber-600 hover:bg-amber-700', 'CLHG': 'bg-blue-600 hover:bg-blue-700', 'CLHKA': 'bg-purple-600 hover:bg-purple-700', 'CLHP': 'bg-rose-600 hover:bg-rose-700' };
+          var labelMap = { 'CLHK': 'Kirim Ceklis Kasir', 'CLHG': 'Kirim Ceklis Gudang', 'CLHKA': 'Kirim Ceklis Keuangan', 'CLHP': 'Kirim Ceklis Permak', 'CLHDP': 'Kirim Ceklis Purchasing' };
+          var colorMap = { 'CLHK': 'bg-amber-600 hover:bg-amber-700', 'CLHG': 'bg-blue-600 hover:bg-blue-700', 'CLHKA': 'bg-purple-600 hover:bg-purple-700', 'CLHP': 'bg-rose-600 hover:bg-rose-700', 'CLHDP': 'bg-sky-600 hover:bg-sky-700' };
 
           if (isLocked) {
             btnSubmit.className = 'px-6 py-2.5 bg-slate-300 text-slate-500 font-black rounded-xl text-xs cursor-not-allowed flex items-center gap-2';
@@ -7915,7 +8008,7 @@
       }
 
       // Pasang pendeteksi otomatis saat staf mengganti Tanggal Tugas di kalender
-      ['CLHK', 'CLHG', 'CLHKA', 'CLHP'].forEach(function (div) {
+      ['CLHK', 'CLHG', 'CLHKA', 'CLHP', 'CLHDP'].forEach(function (div) {
         var tglEl = document.getElementById(div.toLowerCase() + 'Tanggal');
         if (tglEl) {
           tglEl.addEventListener('change', function () {
