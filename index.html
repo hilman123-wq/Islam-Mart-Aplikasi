@@ -6516,15 +6516,16 @@
         var listEl = document.getElementById('waliCheckoutItemsList');
         if (!listEl) return;
         var rows = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
+        
         if (rows.length === 0) {
-          listEl.innerHTML = '<div class="py-8 text-center text-slate-400 text-xs font-bold">Keranjang kosong</div>';
-          closeModal('waliCheckoutModal');
+          listEl.innerHTML = '<div class="py-12 flex flex-col items-center justify-center text-slate-400"><i class="fa-solid fa-cart-arrow-down text-4xl mb-3 text-slate-200"></i><span class="text-xs font-bold">Keranjang belanja Anda kosong</span></div>';
           return;
         }
 
         var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
         var html = '';
 
+        // Tampilan Identitas Khusus Staf
         if (!isWali) {
           var curIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : 'Banin';
           var curSup = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
@@ -6536,60 +6537,118 @@
             '<button type="button" onclick="closeModal(\'waliCheckoutModal\'); switchTab(\'order-history\');" class="text-[10px] text-teal-700 underline font-bold">Lihat Riwayat PO</button>' +
             '</div>' +
             '<div class="grid grid-cols-2 gap-2">' +
-            '<div>' +
-            '<label class="text-[10px] font-bold text-slate-500 block mb-0.5">Unit Toko</label>' +
+            '<div><label class="text-[10px] font-bold text-slate-500 block mb-0.5">Unit Toko</label>' +
             '<select onchange="document.getElementById(\'orderIM\').value=this.value; onOrderStoreChange();" class="w-full p-2 bg-white border rounded-xl text-xs font-bold">' +
             '<option value="Banin" ' + (curIM === 'Banin' ? 'selected' : '') + '>IM Banin</option>' +
             '<option value="Banat" ' + (curIM === 'Banat' ? 'selected' : '') + '>IM Banat</option>' +
-            '</select>' +
+            '</select></div>' +
+            '<div><label class="text-[10px] font-bold text-slate-500 block mb-0.5">No. WA Sales</label>' +
+            '<input type="text" value="' + curWa + '" oninput="document.getElementById(\'orderNoWaSupplier\').value=this.value" placeholder="08xxxx" class="w-full p-2 bg-white border rounded-xl text-xs font-mono font-bold"></div>' +
             '</div>' +
-            '<div>' +
-            '<label class="text-[10px] font-bold text-slate-500 block mb-0.5">No. WA Sales</label>' +
-            '<input type="text" value="' + curWa + '" oninput="document.getElementById(\'orderNoWaSupplier\').value=this.value" placeholder="08xxxx" class="w-full p-2 bg-white border rounded-xl text-xs font-mono font-bold">' +
-            '</div>' +
-            '</div>' +
-            '<div>' +
-            '<label class="text-[10px] font-bold text-slate-500 block mb-0.5">Nama Distributor / Supplier</label>' +
-            '<input type="text" list="supplierMasterDatalist" value="' + curSup + '" oninput="document.getElementById(\'orderSupplier\').value=this.value; onSupplierSelectChange(this.value);" placeholder="Ketik / pilih nama supplier..." class="w-full p-2 bg-white border rounded-xl text-xs font-bold">' +
-            '</div>' +
+            '<div><label class="text-[10px] font-bold text-slate-500 block mb-0.5">Nama Distributor / Supplier</label>' +
+            '<input type="text" list="supplierMasterDatalist" value="' + curSup + '" oninput="document.getElementById(\'orderSupplier\').value=this.value; onSupplierSelectChange(this.value);" placeholder="Ketik / pilih nama supplier..." class="w-full p-2 bg-white border rounded-xl text-xs font-bold"></div>' +
             '</div>';
+        }
+
+        // Kalkulasi Centang
+        var allChecked = Array.from(rows).every(r => { var cb = r.querySelector('.item-order-checkbox'); return cb && cb.checked; });
+        var checkedCount = Array.from(rows).filter(r => { var cb = r.querySelector('.item-order-checkbox'); return cb && cb.checked; }).length;
+
+        // HEADER "PILIH SEMUA" ALA SHOPEE (Hanya untuk Wali Santri)
+        if (isWali) {
+          html += '<div class="flex items-center justify-between bg-white p-3 rounded-2xl mb-3 border border-slate-200 shadow-sm sticky top-0 z-10">' +
+              '<label class="flex items-center gap-3 cursor-pointer font-black text-slate-700 text-xs">' +
+                  '<input type="checkbox" ' + (allChecked ? 'checked' : '') + ' onchange="toggleWaliCartAll(this.checked)" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">' +
+                  '<span>Pilih Semua (' + checkedCount + ')</span>' +
+              '</label>' +
+              '<button type="button" onclick="removeSelectedWaliCartItems()" class="text-[10px] font-bold text-rose-600 px-3 py-1.5 hover:bg-rose-50 rounded-lg transition border border-rose-200 active:scale-95">Hapus</button>' +
+          '</div>';
         }
 
         rows.forEach(r => {
           var id = r.getAttribute('data-id');
+          var cb = r.querySelector('.item-order-checkbox');
+          var isChecked = (cb && cb.checked) ? 'checked' : '';
           var nama = r.querySelector('.item-name').value;
           var qty = Number(r.querySelector('.item-qty').value) || 1;
           var unitVal = r.querySelector('.item-unit').value || 'Pcs';
           var mult = getUnitMultiplier(unitVal);
           var price = Number(r.querySelector('.item-price').value) || 0;
-          var sub = qty * price * mult;
 
           var extraStafControls = '';
           if (!isWali) {
             var units = ['Pcs', 'Lusin (12 pcs)', 'Renceng (10 pcs)', 'Dus (24 pcs)', 'Dus (30 pcs)', 'Dus (40 pcs)', 'Dus (60 pcs)', 'Pack', 'Pack (10 pcs)', 'Pack (12 pcs)', 'Bal', 'Kg'];
             var uOpts = units.map(u => '<option value="' + u + '" ' + (u === unitVal ? 'selected' : '') + '>' + u + '</option>').join('');
-            extraStafControls = '<div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">' +
+            extraStafControls = '<div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 w-full">' +
               '<div><span class="text-[9px] text-slate-400 font-bold block">Satuan Beli:</span><select onchange="changeCartItemUnit(\'' + id + '\', this.value)" class="w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-bold">' + uOpts + '</select></div>' +
               '<div><span class="text-[9px] text-slate-400 font-bold block">Harga Modal (Rp):</span><input type="number" value="' + price + '" oninput="changeCartItemPrice(\'' + id + '\', this.value)" class="w-full p-1.5 bg-slate-50 border rounded-lg text-[10px] font-mono font-bold text-right"></div>' +
               '</div>';
           }
 
-          html += '<div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">' +
-            '<div class="flex items-center justify-between gap-3">' +
-            '<div class="min-w-0 flex-1">' +
-            '<h4 class="font-bold text-slate-800 text-xs truncate">' + nama + '</h4>' +
-            '<p class="text-[11px] font-black text-emerald-600 mt-0.5">Rp' + price.toLocaleString('id-ID') + ' <span class="text-slate-400 font-normal">x ' + qty + ' ' + unitVal + ' = Rp' + sub.toLocaleString('id-ID') + '</span></p>' +
-            '</div>' +
-            '<div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">' +
-            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-slate-700 font-black shadow-2xs active:scale-90 shrink-0">-</button>' +
-            '<input type="number" value="' + qty + '" onchange="setWaliItemQtyExact(\'' + id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-slate-800 bg-transparent outline-none border-b border-slate-300 focus:border-emerald-500 m-0 p-0 hide-arrows">' +
-            '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90 shrink-0">+</button>' +
-            '</div>' +
+          var opacityClass = isChecked ? 'bg-white border-emerald-200' : 'bg-slate-50 border-slate-200 opacity-60 grayscale-[30%]';
+
+          html += '<div class="p-3 rounded-2xl shadow-2xs flex flex-col gap-2 mb-2 transition border ' + opacityClass + '">' +
+            '<div class="flex items-center gap-3 w-full">' +
+              (isWali ? '<input type="checkbox" ' + isChecked + ' onchange="toggleWaliCartItem(\'' + id + '\', this.checked)" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0">' : '') +
+              '<div class="min-w-0 flex-1">' +
+                '<h4 class="font-bold text-slate-800 text-xs line-clamp-2 leading-snug">' + nama + '</h4>' +
+                '<div class="flex items-center justify-between mt-2.5">' +
+                  '<p class="text-sm font-black ' + (isChecked ? 'text-emerald-600' : 'text-slate-500') + '">Rp' + price.toLocaleString('id-ID') + '</p>' +
+                  '<div class="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">' +
+                    '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-black active:scale-90 shrink-0 transition">-</button>' +
+                    '<input type="number" value="' + qty + '" onchange="setWaliItemQtyExact(\'' + id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-slate-800 bg-transparent outline-none border-b border-slate-300 focus:border-emerald-500 m-0 p-0 hide-arrows">' +
+                    '<button type="button" onclick="changeWaliItemQty(\'' + id + '\', 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-emerald-100 text-emerald-700 font-black active:scale-90 shrink-0 transition">+</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
             extraStafControls +
             '</div>';
         });
         listEl.innerHTML = html;
+      }
+
+      function toggleWaliCartItem(id, isChecked) {
+        var row = document.querySelector('#orderItemsTableBody tr[data-id="' + id + '"]');
+        if (row) {
+          var cb = row.querySelector('.item-order-checkbox');
+          if (cb) cb.checked = isChecked;
+          calcOrderTotals();
+          renderWaliCheckoutModalList(); 
+        }
+      }
+
+      function toggleWaliCartAll(isChecked) {
+        var rows = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
+        rows.forEach(row => {
+          var cb = row.querySelector('.item-order-checkbox');
+          if (cb) cb.checked = isChecked;
+        });
+        calcOrderTotals();
+        renderWaliCheckoutModalList();
+      }
+
+      function removeSelectedWaliCartItems() {
+        var rows = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
+        var anyRemoved = false;
+        rows.forEach(row => {
+          var cb = row.querySelector('.item-order-checkbox');
+          if (cb && cb.checked) {
+            row.remove();
+            anyRemoved = true;
+          }
+        });
+        
+        if (anyRemoved) {
+          var remaining = document.querySelectorAll('#orderItemsTableBody tr[data-id]');
+          remaining.forEach((r, i) => r.querySelector('.row-num').innerText = i + 1);
+          if (remaining.length === 0) clearPoCart();
+          calcOrderTotals();
+          renderPoCatalogPage();
+          renderWaliCheckoutModalList();
+        } else {
+          showToast('Pilih barang yang ingin dihapus terlebih dahulu!', 'info');
+        }
       }
 
       function getItemSpecialStamp(it) {
