@@ -8620,6 +8620,12 @@
       function renderWeeklyReport(res) {
         document.getElementById('weeklyPrintTitle').innerText = 'LAPORAN MINGGUAN ' + res.meta.type;
         document.getElementById('weeklyMetaMonth').innerText = res.meta.month;
+        if (document.getElementById('weeklyMetaPeriod')) document.getElementById('weeklyMetaPeriod').innerText = 'Minggu ke-' + (res.meta.week || '-');
+        if (document.getElementById('weeklyMetaUnit')) document.getElementById('weeklyMetaUnit').innerText = res.meta.im;
+
+        if (document.getElementById('weeklyKepalaGudangSign')) {
+          document.getElementById('weeklyKepalaGudangSign').innerText = (res.meta.im === 'Banat') ? 'Muhammad Reza Al-Fanny' : 'Hilman Nurul Alfin, S.E';
+        }
 
         var theadTr = document.querySelector('#tab-weekly-report table thead');
         if (theadTr) {
@@ -8635,9 +8641,15 @@
           theadTr.innerHTML = headHtml;
         }
 
-        var tbody = document.getElementById('weeklyTableBody'); if (!tbody) return; tbody.innerHTML = '';
+        var tbody = document.getElementById('weeklyTableBody'); 
+        if (!tbody) return; 
+        tbody.innerHTML = '';
+        
         var colSpan = 6 + res.meta.categoryNames.length;
-        if (!res.data || res.data.length === 0) { tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-slate-400">Tidak ada data.</td></tr>'; return; }
+        if (!res.data || res.data.length === 0) { 
+          tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-6 text-center text-slate-400">Tidak ada data.</td></tr>'; 
+          return; 
+        }
 
         res.data.forEach(r => {
           var rowHtml = '<tr class="text-center hover:bg-slate-50"><td class="py-2.5 px-2 border">' + r.no + '</td><td class="py-2.5 px-3 border text-left font-bold">' + r.nama + '</td><td class="py-2.5 px-2 border">' + r.im + '</td><td class="py-2.5 px-2 border font-semibold text-slate-700">' + r.count + '</td>';
