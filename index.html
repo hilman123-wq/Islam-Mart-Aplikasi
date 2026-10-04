@@ -1628,11 +1628,23 @@
                 </h2>
                 <p class="text-[11px] sm:text-xs text-slate-500">Pantau sisa benang, jarum, resleting, dan perlengkapan lainnya.</p>
               </div>
-              <button onclick="openStokPermakModal()"
-                class="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
-                <i class="fa-solid fa-plus"></i>
-                <span>Tambah Stok Baru</span>
-              </button>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="exportStokPermakExcel()"
+                  class="px-3 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-excel"></i>
+                  <span>Ekspor Excel</span>
+                </button>
+                <button type="button" onclick="openImportStokPermakModal()"
+                  class="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-import"></i>
+                  <span>Import</span>
+                </button>
+                <button type="button" onclick="openStokPermakModal()"
+                  class="px-3 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Tambah Stok</span>
+                </button>
+              </div>
             </div>
 
             <div class="overflow-x-auto rounded-2xl border border-slate-100">
@@ -1706,6 +1718,38 @@
                 <button type="submit" class="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl shadow active:scale-95 transition">
                   <i class="fa-solid fa-save mr-1.5"></i>Simpan
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: IMPORT EXCEL STOK PERMAK -->
+        <div id="importStokPermakModal" style="display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <div>
+                <h3 class="text-sm sm:text-base font-black text-slate-800">Import Master Bahan Permak</h3>
+                <p class="text-[11px] text-slate-500">Unggah daftar bahan dari file Excel</p>
+              </div>
+              <button onclick="closeModal('importStokPermakModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="importStokPermakForm" onsubmit="submitImportStokPermak(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="importStokPermakRawJson" value="">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih File Excel (.xlsx) *</label>
+                <div class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-4 text-center hover:border-orange-400 transition cursor-pointer relative">
+                  <i class="fa-solid fa-file-excel text-3xl text-orange-500 mb-2"></i>
+                  <p id="importStokPermakFileName" class="text-xs font-semibold text-slate-600">Klik untuk Pilih File Excel</p>
+                  <input type="file" accept=".xlsx, .xls" onchange="parseImportStokPermakExcel(event)" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+                <div class="mt-2 p-2 bg-slate-100 rounded-lg text-[10px] text-slate-600">
+                  <p class="font-bold text-slate-800">Format Judul Kolom Baris Pertama Excel:</p>
+                  <p class="font-mono">Nama Barang | Stok | Satuan | Keterangan</p>
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('importStokPermakModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow">Mulai Import</button>
               </div>
             </form>
           </div>
@@ -11084,6 +11128,100 @@
         } catch (err) {
           hideLoading();
           showToast('Gagal: ' + err.message, 'error');
+        }
+      }
+
+      // EXPORT EXCEL STOK PERMAK
+      function exportStokPermakExcel() {
+        if (!cachedStokPermak || cachedStokPermak.length === 0) return showToast('Tidak ada data stok untuk diekspor!', 'error');
+        
+        var rows = cachedStokPermak.map((d, i) => ({
+          "No": i + 1,
+          "Nama Barang / Bahan": d.nama,
+          "Sisa Stok": d.qty,
+          "Satuan": d.satuan,
+          "Keterangan / Lokasi": d.ket || '-'
+        }));
+        
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = [{wch: 5}, {wch: 35}, {wch: 15}, {wch: 15}, {wch: 25}]; 
+        
+        XLSX.utils.book_append_sheet(wb, ws, "Stok Permak");
+        var tgl = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, "Data_Stok_Permak_" + tgl + ".xlsx");
+      }
+
+      // IMPORT EXCEL STOK PERMAK
+      function openImportStokPermakModal() {
+        if(document.getElementById('importStokPermakForm')) document.getElementById('importStokPermakForm').reset();
+        document.getElementById('importStokPermakRawJson').value = '';
+        document.getElementById('importStokPermakFileName').innerText = 'Klik Pilih File Excel';
+        openModal('importStokPermakModal');
+      }
+
+      function parseImportStokPermakExcel(e) {
+        var file = e.target.files[0]; if (!file) return;
+        document.getElementById('importStokPermakFileName').innerText = file.name;
+        var r = new FileReader();
+        r.onload = function(evt) {
+          try {
+            var wb = XLSX.read(new Uint8Array(evt.target.result), {type: 'array'});
+            var json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            if (!json.length) throw new Error('File Excel kosong');
+            document.getElementById('importStokPermakRawJson').value = JSON.stringify(json);
+            showToast(json.length + ' baris data siap diimport!', 'success');
+          } catch(err) { showToast('Gagal baca Excel: ' + err.message, 'error'); }
+        };
+        r.readAsArrayBuffer(file);
+      }
+
+      async function submitImportStokPermak(e) {
+        e.preventDefault();
+        var j = document.getElementById('importStokPermakRawJson').value;
+        if (!j) return showToast('Pilih file Excel terlebih dahulu!', 'error');
+        var raw = JSON.parse(j);
+
+        showLoading('Mengimpor data stok permak...');
+        try {
+          var getVal = function(rowObj, keywords) {
+            for (let key in rowObj) {
+              var lowerKey = key.toLowerCase();
+              if (keywords.some(kw => lowerKey.includes(kw))) return rowObj[key];
+            }
+            return '';
+          };
+
+          // Proses gabung data
+          raw.forEach(r => {
+            var nama = String(getVal(r, ['nama', 'barang', 'bahan']) || '').trim();
+            if (nama) {
+              var newQty = parseInt(String(getVal(r, ['stok', 'qty', 'jumlah']) || '0').replace(/[^0-9]/g, '')) || 0;
+              var newSatuan = String(getVal(r, ['satuan']) || 'Pcs').trim();
+              var newKet = String(getVal(r, ['ket', 'posisi', 'rak']) || '').trim();
+
+              // Update jika nama sama, kalau tidak, tambah baru
+              var existing = cachedStokPermak.find(x => String(x.nama).toLowerCase() === nama.toLowerCase());
+              if (existing) {
+                existing.qty = newQty;
+                existing.satuan = newSatuan;
+                if (newKet) existing.ket = newKet;
+              } else {
+                cachedStokPermak.push({ nama: nama, qty: newQty, satuan: newSatuan, ket: newKet });
+              }
+            }
+          });
+
+          const { error } = await supaClient.from('app_settings').upsert({ id: 'stok_permak', data: cachedStokPermak });
+          hideLoading();
+          if (error) throw error;
+          
+          showToast('Berhasil mengimpor data stok permak!', 'success');
+          closeModal('importStokPermakModal');
+          renderStokPermak();
+        } catch (err) { 
+          hideLoading(); 
+          showToast('Gagal import: ' + err.message, 'error'); 
         }
       }
 
