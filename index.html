@@ -775,7 +775,7 @@
                     class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-base shadow-2xs">
                     <i class="fa-solid fa-bowl-food"></i>
                   </div>
-                  <span class="text-[10px] font-bold text-slate-600 leading-tight">Basah</span>
+                  <span class="text-[10px] font-bold text-slate-600 leading-tight">Makanan Basah</span>
                 </button>
                 <button type="button" onclick="selectWaliCategory('ATK')" data-cat="ATK"
                   class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
@@ -6696,7 +6696,7 @@
             } else if (rawImg.startsWith('http') || rawImg.startsWith('data:')) {
               imgUrl = rawImg;
             } else {
-              imgUrl = placeholderImg; // Tolak teks nyasar (seperti nama PT) & gunakan logo default
+              imgUrl = placeholderImg; 
             }
           }
 
@@ -6709,54 +6709,45 @@
           var stampType = getItemSpecialStamp(it);
           var stampOverlayHtml = '';
           if (stampType === 'BANNED') {
-            stampOverlayHtml = '<div class="absolute inset-0 bg-rose-950/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none">' +
-              '<div class="border-4 border-rose-600 bg-white/95 text-rose-600 font-black text-xs sm:text-sm px-3 py-1 rounded-xl uppercase tracking-widest -rotate-12 shadow-xl flex items-center gap-1">' +
-                '<i class="fa-solid fa-ban"></i><span>BANNED</span>' +
-              '</div>' +
-            '</div>';
+            stampOverlayHtml = '<div class="absolute inset-0 bg-rose-950/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none"><div class="border-4 border-rose-600 bg-white/95 text-rose-600 font-black text-xs sm:text-sm px-3 py-1 rounded-xl uppercase tracking-widest -rotate-12 shadow-xl flex items-center gap-1"><i class="fa-solid fa-ban"></i><span>BANNED</span></div></div>';
           } else if (stampType === 'DISCONTINUE') {
-            stampOverlayHtml = '<div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none">' +
-              '<div class="border-4 border-amber-500 bg-slate-900/95 text-amber-400 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl uppercase tracking-wider -rotate-12 shadow-xl flex items-center gap-1">' +
-                '<i class="fa-solid fa-circle-pause"></i><span>DISCONTINUE</span>' +
-              '</div>' +
-            '</div>';
+            stampOverlayHtml = '<div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px] z-20 flex items-center justify-center p-2 pointer-events-none"><div class="border-4 border-amber-500 bg-slate-900/95 text-amber-400 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl uppercase tracking-wider -rotate-12 shadow-xl flex items-center gap-1"><i class="fa-solid fa-circle-pause"></i><span>DISCONTINUE</span></div></div>';
           }
+
+          // === LOGIKA VARIAN MAKANAN BASAH ===
+          var namaLower = String(it.nama || '').toLowerCase().trim();
+          var isVariantItem = ["makanan basah 2.500", "makanan basah 3.000", "makanan basah 4.000", "makanan basah 5.000", "makanan basah 9.000", "tataboga 2.500"].includes(namaLower);
+          var encodedIt = encodeURIComponent(JSON.stringify(it));
+          var clickAction = isVariantItem ? "openVariantModal('" + encodedIt + "')" : "addItmToCart(" + safeIt + ")";
+          var imgCursor = isVariantItem ? "cursor-pointer" : "";
 
           var qtyInCart = getCartQtyByItemId(it.id);
           var actionButtonHtml = '';
           var infoTidakTersediaHtml = '';
 
           if (stampType === 'BANNED') {
-            actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
-              '<i class="fa-solid fa-ban"></i> <span>PRODUK BANNED</span>' +
-            '</button>';
+            actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1"><i class="fa-solid fa-ban"></i> <span>PRODUK BANNED</span></button>';
           } else if (stampType === 'DISCONTINUE') {
             if (isWali) {
-              infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sudah discontinue / tidak tersedia</p>';
-              actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center">' +
-                '<span>Tidak Tersedia</span>' +
-              '</button>';
+              infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk discontinue</p>';
+              actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center shadow-2xs"><span>Tidak Tersedia</span></button>';
             } else {
-              actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1">' +
-                '<i class="fa-solid fa-triangle-exclamation"></i> <span>DISCONTINUE</span>' +
-              '</button>';
+              actionButtonHtml = '<button type="button" disabled class="w-full py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-xl font-black text-[10px] cursor-not-allowed flex items-center justify-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> <span>DISCONTINUE</span></button>';
             }
           } else if (isHabisWali) {
-            infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sedang habis / tidak tersedia di toko</p>';
-            actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center shadow-2xs">' +
-              '<span>Tidak Tersedia</span>' +
-            '</button>';
-          } else if (qtyInCart > 0) {
+            infoTidakTersediaHtml = '<p class="text-[10px] text-slate-400 font-medium leading-snug mb-2">Produk sedang habis di toko</p>';
+            actionButtonHtml = '<button type="button" disabled class="w-full py-2.5 bg-slate-400 text-white rounded-xl font-bold text-[11px] cursor-not-allowed flex items-center justify-center shadow-2xs"><span>Tidak Tersedia</span></button>';
+          } else if (qtyInCart > 0 && !isVariantItem) {
             actionButtonHtml = '<div class="flex items-center justify-between bg-emerald-50 border-2 border-emerald-500 rounded-xl p-1">' +
               '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', -1)" class="w-7 h-7 rounded-lg bg-white text-emerald-800 font-black shadow-2xs active:scale-90 shrink-0">-</button>' +
-              '<input type="number" value="' + qtyInCart + '" onchange="setWaliItemQtyExact(\'' + it.id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-emerald-900 bg-transparent outline-none border-b border-emerald-300 focus:border-emerald-600 m-0 p-0 hide-arrows" style="-moz-appearance: textfield;">' +
+              '<input type="number" value="' + qtyInCart + '" onchange="setWaliItemQtyExact(\'' + it.id + '\', this.value)" onclick="this.select()" class="w-10 text-center font-black text-xs text-emerald-900 bg-transparent outline-none border-b border-emerald-300 focus:border-emerald-600 m-0 p-0 hide-arrows">' +
               '<button type="button" onclick="changeWaliItemQty(\'' + it.id + '\', 1)" class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black shadow-2xs active:scale-90 shrink-0">+</button>' +
               '</div>';
           } else {
-            var btnLabel = isWali ? '+ Beli' : '+ Order PO';
-            actionButtonHtml = '<button type="button" onclick=\'addItmToCart(' + safeIt + ')\' class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[11px] shadow-xs transition active:scale-95 flex items-center justify-center gap-1.5">' +
-              '<i class="fa-solid fa-cart-plus"></i> <span class="tracking-wide">' + btnLabel + '</span>' +
-              '</button>';
+            var btnLabel = isVariantItem ? 'Pilih Varian' : (isWali ? '+ Beli' : '+ Order PO');
+            var btnIcon = isVariantItem ? 'fa-list-ul' : 'fa-cart-plus';
+            var btnColor = isVariantItem ? 'bg-orange-500 hover:bg-orange-600' : 'bg-emerald-600 hover:bg-emerald-700';
+            actionButtonHtml = '<button type="button" onclick="' + clickAction + '" class="w-full py-2 ' + btnColor + ' text-white rounded-xl font-black text-[11px] shadow-xs transition active:scale-95 flex items-center justify-center gap-1.5"><i class="fa-solid ' + btnIcon + '"></i> <span class="tracking-wide">' + btnLabel + '</span></button>';
           }
 
           var priceHtml = (isWali && (isHabisWali || stampType === 'DISCONTINUE'))
@@ -6764,23 +6755,16 @@
             : '<span class="font-black text-rose-600 text-xs sm:text-sm">Rp' + Number(displayPrice).toLocaleString('id-ID') + '</span>';
 
           html += '<div class="bg-white rounded-2xl shadow-xs border ' + (stampType ? 'border-amber-300' : 'border-slate-200/80') + ' overflow-hidden flex flex-col hover:shadow-md transition duration-300 group">' +
-            '<div class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">' +
+            '<div onclick="' + (isVariantItem ? clickAction : '') + '" class="aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100 ' + imgCursor + '">' +
             '<img src="' + imgUrl + '" onerror="this.src=\'' + errorImg + '\'" class="w-full h-full object-cover ' + (stampType ? 'grayscale-[35%]' : 'group-hover:scale-105') + ' transition duration-500" loading="lazy" alt="Produk">' +
-            stokBadge +
-            stampOverlayHtml +
+            stokBadge + stampOverlayHtml +
             '</div>' +
             '<div class="p-2.5 sm:p-3 flex flex-col flex-1">' +
             '<span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded w-fit mb-1 truncate max-w-full">' + subInfo + '</span>' +
             '<h4 class="font-bold text-slate-800 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1.5">' + it.nama + '</h4>' +
-            '<div class="mt-auto pt-1">' +
-            '<div class="flex items-center justify-between mb-1.5">' +
-            priceHtml +
-            '</div>' +
-            infoTidakTersediaHtml +
-            actionButtonHtml +
-            '</div>' +
-            '</div>' +
-            '</div>';
+            '<div class="mt-auto pt-1"><div class="flex items-center justify-between mb-1.5">' + priceHtml + '</div>' +
+            infoTidakTersediaHtml + actionButtonHtml +
+            '</div></div></div>';
         });
         html += '</div>';
 
@@ -11587,6 +11571,89 @@
         
         XLSX.utils.book_append_sheet(wb, ws, "Produksi " + bulan);
         XLSX.writeFile(wb, "Laporan_Produksi_Permak_" + bulan + ".xlsx");
+      }
+
+      <!-- MODAL: PILIH VARIAN MAKANAN BASAH -->
+    <div id="variantSelectionModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-bowl-food"></i></div>
+            <div>
+              <h3 id="variantModalTitle" class="text-sm font-black uppercase tracking-wider">Pilih Varian</h3>
+              <p id="variantModalPrice" class="text-[11px] font-bold text-orange-100">Rp 0</p>
+            </div>
+          </div>
+          <button onclick="closeModal('variantSelectionModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scrollbar bg-slate-50 flex-1">
+          <div id="variantGridContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- JS INJECTS VARIANTS HERE -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    // ==========================================
+      // FITUR PILIH VARIAN MAKANAN BASAH
+      // ==========================================
+      var MAKANAN_BASAH_VARIANTS = {
+        "makanan basah 2.500": ["Cireng", "Piscok", "Tahu isi", "Buras", "Bakwan", "Moci", "Cireng geprek", "Risol ayam", "Mpek mpek", "Makaroni basah", "Pangsit isi ayam", "Martabak", "Lumpia", "Pastel", "Martabak manis", "Cimin", "Cilor", "Sotong", "Bakso mercon", "Cicos", "Snack kering"],
+        "tataboga 2.500": ["Cireng", "Piscok", "Tahu isi", "Buras", "Bakwan", "Moci", "Cireng geprek", "Risol ayam", "Mpek mpek", "Makaroni basah", "Pangsit isi ayam", "Martabak", "Lumpia", "Pastel", "Martabak manis", "Cimin", "Cilor", "Sotong", "Bakso mercon", "Cicos", "Snack kering"],
+        "makanan basah 3.000": ["Roti Goreng", "Cilok kacang", "Bakso Bakar", "Bakso Ayam", "Bakso tahu", "Cikin mini", "Naget ayam"],
+        "makanan basah 5.000": ["Kebab"],
+        "makanan basah 4.000": ["Varian 4000 (Hubungi Kasir)"],
+        "makanan basah 9.000": ["Varian 9000 (Hubungi Kasir)"]
+      };
+
+      var currentVariantParentItem = null;
+
+      function openVariantModal(itemStr) {
+        var item = JSON.parse(decodeURIComponent(itemStr));
+        currentVariantParentItem = item;
+        
+        var namaLower = String(item.nama || '').toLowerCase().trim();
+        var variants = MAKANAN_BASAH_VARIANTS[namaLower];
+        
+        // Jika tidak ada di daftar, kasih default 1 menu
+        if (!variants || variants.length === 0) variants = [item.nama];
+
+        document.getElementById('variantModalTitle').innerText = 'Varian ' + item.nama;
+        var price = (typeof isWaliSantri === 'function' && isWaliSantri(currentUser)) ? (item.harga_jual || item.hargaJual || 0) : (item.harga_beli || item.hargaBeli || 0);
+        document.getElementById('variantModalPrice').innerText = 'Harga: Rp ' + Number(price).toLocaleString('id-ID') + ' / Pcs';
+
+        var grid = document.getElementById('variantGridContainer');
+        var html = '';
+        
+        variants.forEach(function(vName) {
+          var safeVName = vName.replace(/'/g, "\\'");
+          html += '<div onclick="addVariantToCart(\\'' + safeVName + '\\')" class="bg-white rounded-2xl border-2 border-orange-100 overflow-hidden shadow-sm hover:shadow-md hover:border-orange-400 cursor-pointer transition active:scale-95 flex flex-col group">' +
+            '<div class="w-full h-20 bg-orange-50 flex items-center justify-center text-orange-300 text-3xl group-hover:bg-orange-500 group-hover:text-white transition duration-300">' +
+              '<i class="fa-solid fa-utensils"></i>' +
+            '</div>' +
+            '<div class="p-3 text-center flex-1 flex items-center justify-center bg-white">' +
+              '<span class="font-black text-xs text-slate-800 leading-snug">' + vName + '</span>' +
+            '</div>' +
+          '</div>';
+        });
+        
+        grid.innerHTML = html;
+        openModal('variantSelectionModal');
+      }
+
+      function addVariantToCart(variantName) {
+        if (!currentVariantParentItem) return;
+        var baseItem = currentVariantParentItem;
+        
+        // Gandakan item dan ubah namanya agar menjadi unik di keranjang
+        var variantItem = Object.assign({}, baseItem);
+        variantItem.id = baseItem.id + '_' + variantName.replace(/\s+/g, '');
+        variantItem.nama = baseItem.nama + ' (' + variantName + ')';
+        
+        closeModal('variantSelectionModal');
+        addItmToCart(variantItem);
       }
 
     </script>
