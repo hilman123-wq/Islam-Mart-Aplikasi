@@ -4203,7 +4203,6 @@
         var today = new Date().toISOString().split('T')[0];
         var curMonth = today.substring(0, 7);
 
-        // Memasukkan juga form Permak & Purchasing
         ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal', 'clhdpTanggal'].forEach(id => {
           if (document.getElementById(id)) document.getElementById(id).value = today;
         });
@@ -4272,7 +4271,7 @@
       // AUTHENTICATION & SESSION
       // ==========================================
       function togglePasswordVisibility() {
-        var input = document.getElementById('loginPassword'), icon = document.getElementById('eyeIcon');
+        var input = document.getElementById('loginPassword'), icon = document.getElementById('togglePwdIcon');
         if (!input || !icon) return;
         if (input.type === 'password') { input.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
         else { input.type = 'password'; icon.className = 'fa-solid fa-eye'; }
@@ -4303,7 +4302,7 @@
           const { data: santriList, error: santriErr } = await supaClient
             .from('master_santri')
             .select('*')
-            .or(`nama_santri.ilike."${u}",nis.eq."${u}"`)
+            .or(`nama_santri.ilike.${u},nis.eq.${u}`)
             .eq('password', p)
             .limit(1);
 
@@ -8621,14 +8620,9 @@
       function renderWeeklyReport(res) {
         document.getElementById('weeklyPrintTitle').innerText = 'LAPORAN MINGGUAN ' + res.meta.type;
         document.getElementById('weeklyMetaMonth').innerText = res.meta.month;
-        if (document.getElementById('weeklyMetaPeriod')) document.getElementById('weeklyMetaPeriod').innerText = 'Minggu ke-' + (res.meta.week || '-');
-        if (document.getElementById('weeklyMetaUnit')) document.getElementById('weeklyMetaUnit').innerText = res.meta.im;
 
-        if (document.getElementById('weeklyKepalaGudangSign')) {
-          document.getElementById('weeklyKepalaGudangSign').innerText = (res.meta.im === 'Banat') ? 'Muhammad Reza Al-Fanny' : 'Hilman Nurul Alfin, S.E';
-        }
-
-          var theadTr = document.querySelector('#tab-weekly-report table thead');
+        var theadTr = document.querySelector('#tab-weekly-report table thead');
+        if (theadTr) {
           var headHtml = '<tr><th class="py-2.5 px-2 border border-slate-300 w-10">No</th>' +
             '<th class="py-2.5 px-3 border border-slate-300 text-left">Nama Pegawai</th>' +
             '<th class="py-2.5 px-2 border border-slate-300 w-16">Unit</th>' +
@@ -8733,11 +8727,6 @@
       function renderMonthlyRaport(res) {
         document.getElementById('raportPrintTitle').innerText = 'RAPORT BULANAN ' + res.meta.type;
         document.getElementById('raportMetaMonth').innerText = res.meta.month;
-        if (document.getElementById('raportMetaUnit')) document.getElementById('raportMetaUnit').innerText = res.meta.im;
-
-        if (document.getElementById('raportKepalaGudangSign')) {
-          document.getElementById('raportKepalaGudangSign').innerText = (res.meta.im === 'Banat') ? 'Muhammad Reza Al-Fanny' : 'Hilman Nurul Alfin, S.E';
-        }
 
         var theadTr = document.querySelector('#tab-monthly-raport table thead');
         if (theadTr) {
@@ -11112,7 +11101,7 @@
         var html = '';
         itemsToRender.forEach((item, i) => {
           var actualIndex = startIndex + i + 1;
-          var originalIdx = cachedStokPermak.indexOf(item); 
+          var originalIdx = cachedStokPermak.indexOf(item); // Kunci agar Edit/Hapus tidak salah sasaran
           var safeItem = JSON.stringify(item).replace(/'/g, "&apos;");
           
           html += '<tr class="hover:bg-orange-50/30 transition">' +
@@ -11122,8 +11111,8 @@
             '<td class="py-3 px-3 font-semibold text-slate-600">' + item.satuan + '</td>' +
             '<td class="py-3 px-4 text-slate-500">' + (item.ket || '-') + '</td>' +
             '<td class="py-3 px-4 text-center">' +
-              '<button type="button" onclick=\'openStokPermakModal(' + safeItem + ', ' + originalIdx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
-              '<button type="button" onclick="deleteStokPermak(' + originalIdx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+              '<button onclick=\'openStokPermakModal(' + safeItem + ', ' + originalIdx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
+              '<button onclick="deleteStokPermak(' + originalIdx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
             '</td></tr>';
         });
 
@@ -11192,9 +11181,9 @@
         };
 
         if (idxStr !== '') {
-          cachedStokPermak[parseInt(idxStr)] = payload; 
+          cachedStokPermak[parseInt(idxStr)] = payload; // Mode Edit
         } else {
-          cachedStokPermak.push(payload); 
+          cachedStokPermak.push(payload); // Mode Tambah Baru
         }
 
         showLoading('Menyimpan stok...');
@@ -11291,6 +11280,7 @@
             return '';
           };
 
+          // Proses gabung data
           raw.forEach(r => {
             var nama = String(getVal(r, ['nama', 'barang', 'bahan']) || '').trim();
             if (nama) {
@@ -11298,6 +11288,7 @@
               var newSatuan = String(getVal(r, ['satuan']) || 'Pcs').trim();
               var newKet = String(getVal(r, ['ket', 'posisi', 'rak']) || '').trim();
 
+              // Update jika nama sama, kalau tidak, tambah baru
               var existing = cachedStokPermak.find(x => String(x.nama).toLowerCase() === nama.toLowerCase());
               if (existing) {
                 existing.qty = newQty;
