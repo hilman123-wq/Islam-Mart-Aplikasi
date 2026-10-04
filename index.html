@@ -11112,7 +11112,7 @@
         var html = '';
         itemsToRender.forEach((item, i) => {
           var actualIndex = startIndex + i + 1;
-          var originalIdx = cachedStokPermak.indexOf(item); // Kunci agar Edit/Hapus tidak salah sasaran
+          var originalIdx = cachedStokPermak.indexOf(item); 
           var safeItem = JSON.stringify(item).replace(/'/g, "&apos;");
           
           html += '<tr class="hover:bg-orange-50/30 transition">' +
@@ -11122,8 +11122,8 @@
             '<td class="py-3 px-3 font-semibold text-slate-600">' + item.satuan + '</td>' +
             '<td class="py-3 px-4 text-slate-500">' + (item.ket || '-') + '</td>' +
             '<td class="py-3 px-4 text-center">' +
-              '<button onclick=\'openStokPermakModal(' + safeItem + ', ' + originalIdx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
-              '<button onclick="deleteStokPermak(' + originalIdx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
+              '<button type="button" onclick=\'openStokPermakModal(' + safeItem + ', ' + originalIdx + ')\' class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
+              '<button type="button" onclick="deleteStokPermak(' + originalIdx + ', \'' + item.nama.replace(/'/g, "\\'") + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
             '</td></tr>';
         });
 
@@ -11192,9 +11192,9 @@
         };
 
         if (idxStr !== '') {
-          cachedStokPermak[parseInt(idxStr)] = payload; // Mode Edit
+          cachedStokPermak[parseInt(idxStr)] = payload; 
         } else {
-          cachedStokPermak.push(payload); // Mode Tambah Baru
+          cachedStokPermak.push(payload); 
         }
 
         showLoading('Menyimpan stok...');
@@ -11291,7 +11291,6 @@
             return '';
           };
 
-          // Proses gabung data
           raw.forEach(r => {
             var nama = String(getVal(r, ['nama', 'barang', 'bahan']) || '').trim();
             if (nama) {
@@ -11299,7 +11298,6 @@
               var newSatuan = String(getVal(r, ['satuan']) || 'Pcs').trim();
               var newKet = String(getVal(r, ['ket', 'posisi', 'rak']) || '').trim();
 
-              // Update jika nama sama, kalau tidak, tambah baru
               var existing = cachedStokPermak.find(x => String(x.nama).toLowerCase() === nama.toLowerCase());
               if (existing) {
                 existing.qty = newQty;
