@@ -374,6 +374,11 @@
               <i class="fa-solid fa-box-open w-5 text-center text-orange-400"></i>
               <span>Stok Bahan Permak</span>
             </button>
+            <button onclick="switchTab('produksi-permak')" id="nav-produksi-permak"
+              class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+              <i class="fa-solid fa-shirt w-5 text-center text-rose-400"></i>
+              <span>Produksi & Penjualan</span>
+            </button>
             <button onclick="switchTab('clhdp-form')" id="nav-clhdp-form"
               class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
               <i class="fa-solid fa-truck-fast w-5 text-center text-sky-400"></i>
@@ -1777,6 +1782,71 @@
         </div>
 
         <!-- ========================================================================= -->
+        <!-- TAB: PRODUKSI PERMAK -->
+        <!-- ========================================================================= -->
+        <section id="tab-produksi-permak" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-shirt text-rose-600"></i>
+                  <span>Laporan Penjualan & Produksi Kerudung</span>
+                </h2>
+                <p class="text-[11px] sm:text-xs text-slate-500">Rekap hasil kerja permak dan produksi per bulan.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <input type="month" id="filterBulanProdPermak" onchange="loadProduksiPermak()" class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-rose-500">
+                <button type="button" onclick="exportProduksiPermak()" class="px-3 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Ekspor Excel</span>
+                </button>
+                <button type="button" onclick="simpanProduksiPermak()" class="px-3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-save"></i> <span class="hidden sm:inline">Simpan Data</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+              <table class="w-full text-left text-xs min-w-[500px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3 w-12 text-center">No</th>
+                    <th class="py-3 px-4">Judul</th>
+                    <th class="py-3 px-4 text-center w-32">Jumlah</th>
+                    <th class="py-3 px-4 w-32">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-800 font-medium">
+                  <tr class="hover:bg-rose-50/30 transition">
+                    <td class="py-3 px-3 text-center">1</td>
+                    <td class="py-3 px-4 font-bold">Permak Karyawan</td>
+                    <td class="py-3 px-4 text-center"><input type="number" id="prodPermakKaryawan" value="0" min="0" class="w-20 p-2 text-center font-black bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-rose-500"></td>
+                    <td class="py-3 px-4 text-slate-500 font-semibold">Orang</td>
+                  </tr>
+                  <tr class="hover:bg-rose-50/30 transition">
+                    <td class="py-3 px-3 text-center">2</td>
+                    <td class="py-3 px-4 font-bold">Permak Santri</td>
+                    <td class="py-3 px-4 text-center"><input type="number" id="prodPermakSantri" value="0" min="0" class="w-20 p-2 text-center font-black bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-rose-500"></td>
+                    <td class="py-3 px-4 text-slate-500 font-semibold">Orang</td>
+                  </tr>
+                  <tr class="hover:bg-rose-50/30 transition">
+                    <td class="py-3 px-3 text-center">3</td>
+                    <td class="py-3 px-4 font-bold">Produksi Segiempat</td>
+                    <td class="py-3 px-4 text-center"><input type="number" id="prodSegiempat" value="0" min="0" class="w-20 p-2 text-center font-black bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-rose-500"></td>
+                    <td class="py-3 px-4 text-slate-500 font-semibold">Pcs</td>
+                  </tr>
+                  <tr class="hover:bg-rose-50/30 transition">
+                    <td class="py-3 px-3 text-center">4</td>
+                    <td class="py-3 px-4 font-bold">Produksi Bergo</td>
+                    <td class="py-3 px-4 text-center"><input type="number" id="prodBergo" value="0" min="0" class="w-20 p-2 text-center font-black bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-rose-500"></td>
+                    <td class="py-3 px-4 text-slate-500 font-semibold">Pcs</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
         <!-- TAB: DATA RIWAYAT CEKLIS -->
         <!-- ========================================================================= -->
         <section id="tab-data-history" style="display: none;" class="space-y-6">
@@ -2911,6 +2981,11 @@
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-orange-600 focus:text-orange-600 transition-colors">
         <i class="fa-solid fa-box-open text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Stok Bahan</span>
+      </button>
+      <button id="btnNavBtmProdPermak" onclick="switchTab('produksi-permak')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+        <i class="fa-solid fa-shirt text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Produksi</span>
       </button>
       <button id="btnNavBtmStaf" onclick="switchTab('user-management')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-purple-600 focus:text-purple-600 transition-colors">
@@ -4449,6 +4524,7 @@
         var btmBazarBarang = document.getElementById('btnNavBtmBazarBarang');
         var btmStaf = document.getElementById('btnNavBtmStaf');
         var btmStokPermak = document.getElementById('btnNavBtmStokPermak');
+        var btmProdPermak = document.getElementById('btnNavBtmProdPermak');
         var btmSantri = document.getElementById('btnNavBtmSantri');
         var btmPermak = document.getElementById('btnNavBtmPermak');
         var btmPurchasing = document.getElementById('btnNavBtmPurchasing');
@@ -4468,6 +4544,7 @@
         if (btmBazarBarang) btmBazarBarang.style.display = 'none';
         if (btmStaf) btmStaf.style.display = 'none';
         if (btmStokPermak) btmStokPermak.style.display = 'none';
+        if (btmProdPermak) btmProdPermak.style.display = 'none';
         if (btmSantri) btmSantri.style.display = 'none';
         if (btmPermak) btmPermak.style.display = 'none';
         if (btmPurchasing) btmPurchasing.style.display = 'none'
@@ -4525,6 +4602,7 @@
         else if (isPermak) {
           if (btmForm) btmForm.style.display = 'flex';
           if (btmStokPermak) btmStokPermak.style.display = 'flex';
+          if (btmProdPermak) btmProdPermak.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
@@ -4645,7 +4723,7 @@
         var activeBtn = document.getElementById('nav-' + tabId);
         if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-        ['stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
+        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
           if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
         });
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
@@ -4675,6 +4753,12 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
+        else if (tabId === 'produksi-permak') {
+          if (!document.getElementById('filterBulanProdPermak').value) {
+            document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
+          }
+          loadProduksiPermak();
+        } 
       }
 
       function refreshTab() {
@@ -11336,6 +11420,95 @@
           hideLoading(); 
           showToast('Gagal import: ' + err.message, 'error'); 
         }
+      }
+
+      // ==========================================
+      // LAPORAN PRODUKSI & PENJUALAN PERMAK
+      // ==========================================
+      var cachedProduksiPermak = {};
+
+      async function loadProduksiPermak() {
+        var bulan = document.getElementById('filterBulanProdPermak').value;
+        if (!bulan) return;
+        
+        showLoading('Memuat laporan produksi...');
+        try {
+          const { data, error } = await supaClient.from('app_settings').select('data').eq('id', 'laporan_produksi_permak').maybeSingle();
+          if (error && error.code !== 'PGRST116') throw error;
+          
+          cachedProduksiPermak = (data && data.data) ? data.data : {};
+          var curData = cachedProduksiPermak[bulan] || { pKaryawan: 0, pSantri: 0, pSegiempat: 0, pBergo: 0 };
+          
+          document.getElementById('prodPermakKaryawan').value = curData.pKaryawan || 0;
+          document.getElementById('prodPermakSantri').value = curData.pSantri || 0;
+          document.getElementById('prodSegiempat').value = curData.pSegiempat || 0;
+          document.getElementById('prodBergo').value = curData.pBergo || 0;
+          
+          hideLoading();
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal memuat: ' + err.message, 'error');
+        }
+      }
+
+      async function simpanProduksiPermak() {
+        var bulan = document.getElementById('filterBulanProdPermak').value;
+        if (!bulan) return showToast('Pilih bulan terlebih dahulu', 'error');
+        
+        var payload = {
+          pKaryawan: parseInt(document.getElementById('prodPermakKaryawan').value) || 0,
+          pSantri: parseInt(document.getElementById('prodPermakSantri').value) || 0,
+          pSegiempat: parseInt(document.getElementById('prodSegiempat').value) || 0,
+          pBergo: parseInt(document.getElementById('prodBergo').value) || 0
+        };
+        
+        cachedProduksiPermak[bulan] = payload;
+        
+        showLoading('Menyimpan laporan...');
+        try {
+          const { error } = await supaClient.from('app_settings').upsert({ id: 'laporan_produksi_permak', data: cachedProduksiPermak });
+          hideLoading();
+          if (error) throw error;
+          
+          showToast('Laporan bulan ' + bulan + ' tersimpan!', 'success');
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal: ' + err.message, 'error');
+        }
+      }
+
+      function exportProduksiPermak() {
+        var bulan = document.getElementById('filterBulanProdPermak').value;
+        var pKar = document.getElementById('prodPermakKaryawan').value;
+        var pSan = document.getElementById('prodPermakSantri').value;
+        var pSeg = document.getElementById('prodSegiempat').value;
+        var pBer = document.getElementById('prodBergo').value;
+        
+        if (typeof XLSX === 'undefined') return showToast('Tunggu sistem memuat library Excel!', 'error');
+
+        var rows = [
+          ["LAPORAN PENJUALAN PERMAK DAN PRODUKSI KERUDUNG"],
+          ["BULAN " + bulan],
+          [],
+          ["NO", "JUDUL", "JUMLAH", "KETERANGAN"],
+          [1, "Permak Karyawan", parseInt(pKar) || 0, "Orang"],
+          [2, "Permak Santri", parseInt(pSan) || 0, "Orang"],
+          [3, "Produksi Segiempat", parseInt(pSeg) || 0, "Pcs"],
+          [4, "Produksi Bergo", parseInt(pBer) || 0, "Pcs"]
+        ];
+        
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.aoa_to_sheet(rows);
+        
+        // Gabungkan judul seperti di gambar
+        ws['!merges'] = [
+          { s: {r: 0, c: 0}, e: {r: 0, c: 3} },
+          { s: {r: 1, c: 0}, e: {r: 1, c: 3} }
+        ];
+        ws['!cols'] = [{wch: 5}, {wch: 25}, {wch: 15}, {wch: 15}];
+        
+        XLSX.utils.book_append_sheet(wb, ws, "Produksi " + bulan);
+        XLSX.writeFile(wb, "Laporan_Produksi_Permak_" + bulan + ".xlsx");
       }
 
     </script>
