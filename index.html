@@ -6719,7 +6719,7 @@
 
           // === LOGIKA VARIAN MAKANAN BASAH ===
           var namaClean = String(it.nama || '').toLowerCase().replace(/\./g, '').trim();
-          var isVariantItem = ["makanan basah 2500", "makanan basah 3000", "makanan basah 4000", "makanan basah 5000", "makanan basah 9000", "tataboga 2500"].includes(namaClean);
+          var isVariantItem = ["makanan basah 2500", "makanan basah 3000", "makanan basah 4000", "makanan basah 5000", "makanan basah 9000", "tataboga 2500", "tataboga sb 2500"].includes(namaClean);
           
           var clickAction = isVariantItem ? "openVariantModal(&quot;" + encodedIt + "&quot;)" : "addItmToCart(" + safeIt + ")";
           var imgCursor = isVariantItem ? "cursor-pointer" : "";
@@ -11583,6 +11583,7 @@
       var MAKANAN_BASAH_VARIANTS = {
         "makanan basah 2500": var2500,
         "tataboga 2500": ["Gabin", "Cimol bojot", "Cibay", "Pangsit", "Cihu", "Cireng"],
+        "tataboga sb 2500": ["Gabin", "Cimol bojot", "Cibay", "Pangsit", "Cihu", "Cireng"],
         "makanan basah 3000": ["Roti Goreng", "Cilok kacang", "Bakso Bakar", "Bakso Ayam", "Bakso tahu", "Cikin mini", "Naget ayam"],
         "makanan basah 5000": ["Kebab"],
         "makanan basah 4000": ["Varian 4000 (Hubungi Kasir)"],
