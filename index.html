@@ -9508,10 +9508,26 @@
           lblKet.innerText = 'Alasan Kerugian :';
         }
 
+        // BUAT GUDANG AUTO-COMPLETE (Mengingat Stok & Nama)
+        var imTujuan = document.getElementById('bazarTransIM').value;
+        var list = cachedBazarBarang.filter(b => b.im === imTujuan);
+        var dataListHTML = '';
+        list.forEach(b => {
+           dataListHTML += '<option value="' + b.nama_barang + '">Stok: ' + b.stok + '</option>';
+        });
+
+        var existingDatalist = document.getElementById('daftarBarangNotaDatalist');
+        if (!existingDatalist) {
+           existingDatalist = document.createElement('datalist');
+           existingDatalist.id = 'daftarBarangNotaDatalist';
+           document.body.appendChild(existingDatalist);
+        }
+        existingDatalist.innerHTML = dataListHTML;
+
         var tbody = document.getElementById('bazarTransInlineBody');
-        tbody.innerHTML = ''; // Kosongkan tabel
-        
-        addBazarInlineRow(preselectedId); // Tambah 1 baris kosong pertama
+        tbody.innerHTML = ''; 
+
+        addBazarInlineRow(preselectedId); // Tambah 1 baris kosong
         calcBazarInlineTotals();
         openModal('bazarTransModal');
       }
@@ -9937,10 +9953,8 @@
           <div class="flex sm:contents items-center bg-slate-100 sm:bg-transparent border-b sm:border-b-0 border-slate-200 sm:border-slate-300">
              <div class="w-10 sm:w-auto p-2 sm:border-r border-slate-300 text-center text-slate-500 font-bold row-num text-xs sm:text-sm">${trCount}</div>
              <div class="flex-1 sm:w-auto p-1 sm:p-0 sm:border-r border-slate-300 relative">
-               <select onchange="updateBazarInlineRow(this)" class="row-barang w-full p-2 bg-transparent outline-none focus:bg-blue-50 text-xs sm:text-sm font-bold sm:font-normal text-slate-800 cursor-pointer">
-                 ${optHtml}
-               </select>
-             </div>
+            <input type="text" list="daftarBarangNotaDatalist" value="${valName}" oninput="updateBazarInlineRow(this)" onchange="updateBazarInlineRow(this)" placeholder="Ketik cari nama barang..." class="row-barang w-full p-2 bg-transparent outline-none focus:bg-blue-50 text-xs sm:text-sm font-bold sm:font-normal text-slate-800">
+          </div>
              <div class="w-10 sm:hidden text-center border-l border-slate-200">
                <button type="button" onclick="removeBazarInlineRow(this)" class="text-rose-500 hover:text-rose-700 p-2"><i class="fa-solid fa-trash-can"></i></button>
              </div>
@@ -9974,16 +9988,21 @@
         if (selectedId) updateBazarInlineRow(tr.querySelector('.row-barang'));
       }
 
-      function updateBazarInlineRow(selectEl) {
-        var tr = selectEl.closest('.inline-row');
-        var id = selectEl.value;
-        if (id) {
-          var item = cachedBazarBarang.find(b => b.id === id);
+      function updateBazarInlineRow(inputEl) {
+        var tr = inputEl.closest('.inline-row');
+        var namaInput = inputEl.value.trim().toLowerCase();
+        if (namaInput) {
+          var item = cachedBazarBarang.find(b => String(b.nama_barang).toLowerCase() === namaInput);
           if (item) {
+            // Pasang ID di belakang layar agar sistem tetap tahu barang yang dimaksud
+            inputEl.setAttribute('data-id', item.id);
             tr.querySelector('.row-beli').value = item.harga_beli || 0;
             tr.querySelector('.row-jual').value = item.harga_jual || 0;
+          } else {
+            inputEl.removeAttribute('data-id');
           }
         } else {
+          inputEl.removeAttribute('data-id');
           tr.querySelector('.row-beli').value = 0;
           tr.querySelector('.row-jual').value = 0;
         }
@@ -10043,7 +10062,7 @@
         var adaError = false;
 
         rows.forEach(tr => {
-          var id = tr.querySelector('.row-barang').value;
+          var id = tr.querySelector('.row-barang').getAttribute('data-id')
           if (!id) return; // Lewati baris yang kosong
 
           var masterItem = cachedBazarBarang.find(b => b.id === id);
