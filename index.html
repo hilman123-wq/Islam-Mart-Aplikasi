@@ -4203,6 +4203,7 @@
         var today = new Date().toISOString().split('T')[0];
         var curMonth = today.substring(0, 7);
 
+        // Memasukkan juga form Permak & Purchasing
         ['orderTanggal', 'clhkTanggal', 'clhgTanggal', 'clhkaTanggal', 'clhpTanggal', 'clhdpTanggal'].forEach(id => {
           if (document.getElementById(id)) document.getElementById(id).value = today;
         });
