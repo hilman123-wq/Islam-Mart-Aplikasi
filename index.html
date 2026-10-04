@@ -70,7 +70,7 @@
     body {
       width: 100%;
       max-width: 100vw;
-      overflow-x: hidden !important;
+      overflow-x: clip !important;
       /* Mengunci geser kiri-kanan */
       overflow-y: auto !important;
       /* Membuka kunci geser atas-bawah */
@@ -695,118 +695,71 @@
         <section id="tab-order-create" style="display: none;" class="space-y-4 pb-16">
 
           <!-- ================= 1. HEADER & KATEGORI ALA SHOPEE (KHUSUS WALI SANTRI) ================= -->
-          <div id="waliShopeeContainer" style="display: none;" class="space-y-3">
-            <<!-- Sticky Search Bar + Cart Icon Ala Shopee -->
-            <div
-              class="sticky top-[58px] sm:top-[72px] z-30 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl text-white space-y-3 outline outline-4 outline-slate-100/50">
-              <div class="flex items-center gap-2.5">
-                <div class="relative flex-1">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-700">
-                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                  </span>
-                  <input type="text" id="waliSearchInput" oninput="syncWaliSearch(this.value)"
-                    placeholder="Cari jajanan, sabun, alat tulis santri..."
-                    class="w-full pl-10 pr-4 py-2.5 bg-white text-slate-800 rounded-2xl text-xs font-bold outline-none shadow-inner">
-                </div>
-                <button type="button" onclick="openWaliCheckoutModal()"
-                  class="relative w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 flex items-center justify-center text-white active:scale-95 transition shrink-0">
-                  <i class="fa-solid fa-cart-shopping text-lg"></i>
-                  <span id="waliTopCartBadge" style="display: none;"
-                    class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center shadow">0</span>
-                </button>
+          <!-- KOTAK HIJAU PENCARIAN (DIPISAH AGAR BISA STICKY SAMPAI BAWAH) -->
+          <div id="waliGreenBox" style="display: none;" class="sticky top-[58px] sm:top-[72px] z-30 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl text-white space-y-3 outline outline-4 outline-slate-100/50 mb-3 mt-1">
+            <div class="flex items-center gap-2.5">
+              <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-700">
+                  <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                </span>
+                <input type="text" id="waliSearchInput" oninput="syncWaliSearch(this.value)" placeholder="Cari jajanan, sabun, alat tulis santri..." class="w-full pl-10 pr-4 py-2.5 bg-white text-slate-800 rounded-2xl text-xs font-bold outline-none shadow-inner">
               </div>
-
-              <!-- Info Penerima (Wali Santri) ATAU Dropdown Pilih Distributor (Kasir/Staf) -->
-              <div
-                class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-2.5 py-2 rounded-xl text-[11px] gap-2 w-full overflow-hidden">
-                <!-- Tampilan Khusus Wali Santri -->
-                <div id="waliRecipientInfoBox" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
-                  <i class="fa-solid fa-location-dot text-amber-300 shrink-0"></i>
-                  <span class="text-emerald-100 shrink-0">Penerima:</span>
-                  <b id="waliShopeeSantriLabel" class="text-white truncate block">-</b>
-                </div>
-
-                <!-- Tampilan Khusus Kasir/Staf: Dropdown Pilih Distributor (Pas di Layar HP) -->
-                <div id="stafSupplierDropdownBox" style="display: none;"
-                  class="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
-                  <i class="fa-solid fa-truck-field text-amber-300 shrink-0"></i>
-                  <span class="text-emerald-100 font-bold shrink-0 text-[10px] sm:text-[11px]">Distributor:</span>
-                  <select id="stafTopSupplierSelect" onchange="onTopSupplierDropdownChange(this.value)"
-                    class="w-full min-w-0 max-w-full flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
-                    <option value="">-- Semua Distributor --</option>
-                  </select>
-                </div>
-
-                <span id="waliShopeeUnitBadge"
-                  class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-black uppercase shrink-0">IM Banin</span>
+              <button type="button" onclick="openWaliCheckoutModal()" class="relative w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 flex items-center justify-center text-white active:scale-95 transition shrink-0">
+                <i class="fa-solid fa-cart-shopping text-lg"></i>
+                <span id="waliTopCartBadge" style="display: none;" class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center shadow">0</span>
+              </button>
+            </div>
+            <div class="flex items-center justify-between bg-black/20 backdrop-blur-xs px-2.5 py-2 rounded-xl text-[11px] gap-2 w-full overflow-hidden">
+              <div id="waliRecipientInfoBox" class="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                <i class="fa-solid fa-location-dot text-amber-300 shrink-0"></i>
+                <span class="text-emerald-100 shrink-0">Penerima:</span>
+                <b id="waliShopeeSantriLabel" class="text-white truncate block">-</b>
               </div>
-            </div> <!-- <-- WAJIB TAMBAHKAN 1 PENUTUP DIV INI -->
+              <div id="stafSupplierDropdownBox" style="display: none;" class="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                <i class="fa-solid fa-truck-field text-amber-300 shrink-0"></i>
+                <span class="text-emerald-100 font-bold shrink-0 text-[10px] sm:text-[11px]">Distributor:</span>
+                <select id="stafTopSupplierSelect" onchange="onTopSupplierDropdownChange(this.value)" class="w-full min-w-0 max-w-full flex-1 bg-white text-slate-800 font-extrabold text-[11px] px-2 py-1.5 rounded-lg outline-none cursor-pointer truncate shadow-xs">
+                  <option value="">-- Semua Distributor --</option>
+                </select>
+              </div>
+              <span id="waliShopeeUnitBadge" class="px-2 py-0.5 rounded bg-white/20 text-[9px] font-black uppercase shrink-0">IM Banin</span>
+            </div>
+          </div>
 
+          <div id="waliShopeeContainer" style="display: none;" class="space-y-3 mb-4 pt-1">
             <!-- Menu Ikon Kategori Ala Shopee -->
             <div class="bg-white p-3.5 rounded-3xl border border-slate-200 shadow-xs">
               <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center">
-                <button type="button" onclick="selectWaliCategory('ALL')" data-cat="ALL"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl bg-emerald-50 ring-2 ring-emerald-500 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-border-all"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('ALL')" data-cat="ALL" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl bg-emerald-50 ring-2 ring-emerald-500 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-border-all"></i></div>
                   <span class="text-[10px] font-extrabold text-slate-700 leading-tight">Semua</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Makanan')" data-cat="Makanan"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-cookie-bite"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Makanan')" data-cat="Makanan" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-cookie-bite"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Makanan</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Minuman')" data-cat="Minuman"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-bottle-water"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Minuman')" data-cat="Minuman" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-bottle-water"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Minuman</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Makanan Basah')" data-cat="Makanan Basah"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-bowl-food"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Makanan Basah')" data-cat="Makanan Basah" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-bowl-food"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Basah</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('ATK')" data-cat="ATK"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-pen-ruler"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('ATK')" data-cat="ATK" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-pen-ruler"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">ATK</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Pembersih')" data-cat="Pembersih"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-pump-soap"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Pembersih')" data-cat="Pembersih" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-pump-soap"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Sabun</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Peralatan')" data-cat="Peralatan"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-bucket"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Peralatan')" data-cat="Peralatan" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-bucket"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Alat</span>
                 </button>
-                <button type="button" onclick="selectWaliCategory('Obat-obatan')" data-cat="Obat-obatan"
-                  class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
-                  <div
-                    class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-base shadow-2xs">
-                    <i class="fa-solid fa-kit-medical"></i>
-                  </div>
+                <button type="button" onclick="selectWaliCategory('Obat-obatan')" data-cat="Obat-obatan" class="wali-cat-btn flex flex-col items-center gap-1.5 p-1.5 rounded-2xl hover:bg-slate-50 transition">
+                  <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-base shadow-2xs"><i class="fa-solid fa-kit-medical"></i></div>
                   <span class="text-[10px] font-bold text-slate-600 leading-tight">Obat</span>
                 </button>
               </div>
@@ -6336,28 +6289,54 @@
       }
 
       // Aktifkan Tampilan Ala Shopee untuk SEMUA USER (Wali Santri & Kasir/Staf)
-      function populateTopSupplierDropdown() {
-        var sel = document.getElementById('stafTopSupplierSelect');
-        if (!sel) return;
-        var currentVal = document.getElementById('orderSupplier') ? document.getElementById('orderSupplier').value : '';
-        var selectedIM = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
+      function toggleWaliShopeeLayout() {
+        var isWali = typeof isWaliSantri === 'function' && isWaliSantri(currentUser);
+        var shopeeBox = document.getElementById('waliShopeeContainer');
+        var greenBox = document.getElementById('waliGreenBox');
+        var stafTopBar = document.getElementById('stafPoTopBar');
+        var stafIdGrid = document.getElementById('stafPoIdentityGrid');
+        var stafFilterBar = document.getElementById('stafPoFilterBar');
+        var stafCartSec = document.getElementById('stafPoCartSection');
+        var waliSortBar = document.getElementById('waliSortBar');
+        var catWrap = document.getElementById('poCatalogWrapperBox');
+        var catCont = document.getElementById('poCatalogContainer');
 
-        var uniqueSuppliers = [];
-        (cachedMasterBarang || []).forEach(it => {
-          var matchIM = !it.im || it.im.toLowerCase() === String(selectedIM).toLowerCase() || it.im.toLowerCase() === 'all';
-          var sup = String(it.supplier || '').trim();
-          if (matchIM && sup && !uniqueSuppliers.includes(sup)) {
-            uniqueSuppliers.push(sup);
-          }
-        });
-        uniqueSuppliers.sort((a, b) => a.localeCompare(b));
+        if (shopeeBox) shopeeBox.style.display = 'block';
+        if (greenBox) greenBox.style.display = 'block';
+        if (stafTopBar) stafTopBar.style.display = 'none';
+        if (stafIdGrid) stafIdGrid.style.display = 'none';
+        if (stafFilterBar) stafFilterBar.style.display = 'none';
+        if (stafCartSec) stafCartSec.style.display = 'none';
+        if (waliSortBar) waliSortBar.style.display = 'flex';
+        if (catWrap) catWrap.className = 'p-0 bg-transparent border-0';
+        if (catCont) catCont.className = 'bg-transparent border-0 rounded-none';
 
-        var html = '<option value="">-- Semua Distributor (' + uniqueSuppliers.length + ' Supplier) --</option>';
-        uniqueSuppliers.forEach(s => {
-          var isSel = (s === currentVal) ? 'selected' : '';
-          html += '<option value="' + s.replace(/"/g, '&quot;') + '" ' + isSel + '>' + s + '</option>';
-        });
-        sel.innerHTML = html;
+        var searchInp = document.getElementById('waliSearchInput');
+        var santriLbl = document.getElementById('waliShopeeSantriLabel');
+        var unitBadge = document.getElementById('waliShopeeUnitBadge');
+        var waliRecBox = document.getElementById('waliRecipientInfoBox');
+        var stafSupBox = document.getElementById('stafSupplierDropdownBox');
+        var catTitle = document.getElementById('waliActiveCatTitle');
+        var btmRiwayat = document.getElementById('btnNavBtmRiwayatPO');
+
+        if (isWali) {
+          if (waliRecBox) waliRecBox.style.display = 'flex';
+          if (stafSupBox) stafSupBox.style.display = 'none';
+          if (searchInp) searchInp.placeholder = 'Cari jajanan, sabun, alat tulis santri...';
+          if (santriLbl) santriLbl.innerText = currentUser.info_santri || currentUser.nama_santri || '-';
+          if (unitBadge) unitBadge.innerText = 'IM ' + (currentUser.im || 'Banin');
+          if (catTitle && catTitle.innerText.includes('Katalog')) catTitle.innerText = '🔥 Katalog Produk Santri';
+          if (btmRiwayat && btmRiwayat.querySelector('span')) btmRiwayat.querySelector('span').innerText = 'Riwayat Pembelanjaan';
+        } else {
+          if (waliRecBox) waliRecBox.style.display = 'none';
+          if (stafSupBox) stafSupBox.style.display = 'flex';
+          if (searchInp) searchInp.placeholder = 'Ketik nama barang / barcode untuk Order PO...';
+          var curUnit = document.getElementById('orderIM') ? document.getElementById('orderIM').value : (currentUser ? currentUser.im : 'Banin');
+          if (unitBadge) unitBadge.innerText = 'PO IM ' + curUnit;
+          if (catTitle && catTitle.innerText.includes('Katalog')) catTitle.innerText = '📦 Katalog Order PO Toko';
+          if (btmRiwayat && btmRiwayat.querySelector('span')) btmRiwayat.querySelector('span').innerText = 'Riwayat Pesanan';
+          populateTopSupplierDropdown();
+        }
       }
 
       function onTopSupplierDropdownChange(supName) {
