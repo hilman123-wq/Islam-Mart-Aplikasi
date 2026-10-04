@@ -4870,7 +4870,7 @@
         if ((isKepalaAdmin || isAdmin) && tabDashboardSection) {
           var adminHtml = '<div id="kepalaAdminDashboard" class="space-y-4 mt-6 mb-2 border-t border-slate-200 pt-6">' +
             '<h3 class="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-2"><i class="fa-solid fa-list-check"></i> Kelola Indikator Ceklis & Evaluasi Divisi (Khusus Admin)</h3>' +
-            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">' + // Diubah menjadi 3 kolom agar 6 menu tersusun rapi 2 baris
 
             // Pintasan 1: Edit Indikator CLHK Kasir
             '<div onclick="switchTab(\'clhk-form\')" class="bg-white p-4 rounded-3xl border-2 border-amber-200 hover:border-amber-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
@@ -4896,7 +4896,13 @@
               '<div><h4 class="text-xs font-black text-slate-800">Kelola CLHP (Permak)</h4><p class="text-[10px] text-slate-500 mt-0.5">Tambah, edit, & hapus indikator Permak.</p></div>' +
             '</div>' +
 
-            // Pintasan 5: Lihat Riwayat & Raport Ceklis Semua Staf
+            // Pintasan 5: Edit Indikator CLHDP Purchasing (BARU)
+            '<div onclick="switchTab(\'clhdp-form\')" class="bg-white p-4 rounded-3xl border-2 border-sky-200 hover:border-sky-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
+              '<div class="w-11 h-11 rounded-2xl bg-sky-100 text-sky-700 group-hover:bg-sky-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-truck-fast"></i></div>' +
+              '<div><h4 class="text-xs font-black text-slate-800">Kelola CLHDP (Driver)</h4><p class="text-[10px] text-slate-500 mt-0.5">Tambah, edit, & hapus indikator Driver.</p></div>' +
+            '</div>' +
+
+            // Pintasan 6: Lihat Riwayat & Raport Ceklis Semua Staf
             '<div onclick="switchTab(\'monthly-raport\')" class="bg-white p-4 rounded-3xl border-2 border-emerald-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition cursor-pointer flex items-center gap-3.5 group">' +
               '<div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center text-lg shrink-0 transition"><i class="fa-solid fa-award"></i></div>' +
               '<div><h4 class="text-xs font-black text-slate-800">Raport & Evaluasi</h4><p class="text-[10px] text-slate-500 mt-0.5">Pantau ranking bulanan & nilai seluruh divisi.</p></div>' +
@@ -4905,7 +4911,7 @@
             '</div></div>';
           tabDashboardSection.insertAdjacentHTML('beforeend', adminHtml);
         }
-      }// <-- PASTIKAN KURUNG KURAWAL PENUTUP renderDashboard INI ADA!
+      }
 
       function goToAdminReport(tipeDivisi) { var selectType = document.getElementById('raportType'); if (selectType && selectType.value !== tipeDivisi) { selectType.value = tipeDivisi; window.isRaportLoaded = false; } switchTab('monthly-raport'); }
 
