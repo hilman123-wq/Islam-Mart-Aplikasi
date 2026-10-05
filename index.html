@@ -11576,6 +11576,80 @@
         XLSX.utils.book_append_sheet(wb, ws, "Produksi " + bulan);
         XLSX.writeFile(wb, "Laporan_Produksi_Permak_" + bulan + ".xlsx");
       }
+
+      // ==========================================
+      // FITUR E-NOTA & CETAK PDF WALI SANTRI
+      // ==========================================
+      var currentNotaHtml = '';
+
+      function openNotaWali(orderId) {
+        // Cari data pesanan dari riwayat
+        var order = cachedOrdersList.find(o => String(o.id) === String(orderId)) || currentSelectedOrder;
+        if(!order) return showToast('Data pesanan tidak ditemukan', 'error');
+
+        var items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+        var total = 0;
+        var tbody = '';
+        
+        // Rangkai daftar barang belanjaan
+        items.forEach(it => {
+            var harga = Number(it.harga || it.harga_jual || 0);
+            var sub = (it.qty * harga);
+            total += sub;
+            tbody += '<tr>' +
+                '<td style="padding: 8px 0; border-bottom: 1px dashed #cbd5e1; font-weight: bold; color: #1e293b;">' + it.nama + '<br><span style="font-size: 10px; color: #64748b; font-weight: normal;">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' x Rp' + harga.toLocaleString('id-ID') + '</span></td>' +
+                '<td style="padding: 8px 0; border-bottom: 1px dashed #cbd5e1; text-align: right; vertical-align: bottom; font-weight: bold; color: #1e293b;">Rp' + sub.toLocaleString('id-ID') + '</td>' +
+            '</tr>';
+        });
+
+        var tglObj = new Date(order.tanggal || order.created_at || new Date());
+        var tglStr = tglObj.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + tglObj.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+        var noOrder = String(order.id).substring(0,8).toUpperCase();
+        var statusStr = String(order.status || '').toUpperCase();
+
+        // Desain HTML murni khusus agar rapi saat diprint ke PDF (Gaya Struk Kasir)
+        currentNotaHtml = '<div style="font-family: monospace; color: #1e293b; max-width: 320px; margin: 0 auto; background: #fff; padding: 10px;">' +
+            '<div style="text-align: center; margin-bottom: 20px;">' +
+            '<h2 style="font-size: 20px; font-weight: 900; margin: 0 0 4px 0; letter-spacing: 1px;">ISLAM MART</h2>' +
+            '<p style="font-size: 11px; color: #64748b; margin: 0 0 4px 0;">Unit: ' + (order.im || 'Banin') + '</p>' +
+            '<p style="font-size: 11px; color: #64748b; border-bottom: 2px solid #1e293b; padding-bottom: 16px; margin: 0 0 16px 0;">' + tglStr + '</p>' +
+            '</div>' +
+            '<div style="margin-bottom: 20px; font-size: 12px; line-height: 1.6;">' +
+            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">No. Trx:</span><strong style="color: #1e293b;">' + noOrder + '</strong></div>' +
+            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Wali Dari:</span><strong style="color: #1e293b;">' + (order.supplier || order.nama_santri || '-') + '</strong></div>' +
+            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Status:</span><strong style="color: #059669;">' + statusStr + '</strong></div>' +
+            '</div>' +
+            '<table style="width: 100%; font-size: 12px; margin-bottom: 20px; border-collapse: collapse;"><tbody>' + tbody + '</tbody></table>' +
+            '<div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; border-top: 2px solid #1e293b; padding-top: 12px; margin-bottom: 24px; color: #1e293b;">' +
+            '<span>TOTAL</span><span>Rp' + total.toLocaleString('id-ID') + '</span>' +
+            '</div>' +
+            '<div style="text-align: center; font-size: 11px; color: #64748b; font-style: italic; line-height: 1.5; border-top: 1px dashed #cbd5e1; padding-top: 16px;">' +
+            '<p style="margin: 0;">Terima kasih telah berbelanja</p>' +
+            '<p style="margin: 0;">Semoga rezekinya semakin berkah.</p>' +
+            '</div>' +
+            '</div>';
+
+        document.getElementById('notaWaliPrintArea').innerHTML = currentNotaHtml;
+        openModal('notaWaliModal');
+      }
+
+      function cetakNotaWaliPDF() {
+         showToast('Menyiapkan file PDF...', 'info');
+         var iframe = document.createElement('iframe');
+         iframe.style.display = 'none';
+         document.body.appendChild(iframe);
+         var doc = iframe.contentWindow.document;
+         doc.write('<html><head><title>Nota Pembelanjaan Santri</title></head><body style="padding: 20px; background: white;">');
+         doc.write(currentNotaHtml);
+         doc.write('</body></html>');
+         doc.close();
+         
+         setTimeout(function() {
+             iframe.contentWindow.focus();
+             iframe.contentWindow.print();
+             setTimeout(() => document.body.removeChild(iframe), 1000);
+         }, 800);
+      }
       
       // ==========================================
       // FITUR PILIH VARIAN MAKANAN BASAH
@@ -11687,80 +11761,6 @@
         </div>
       </div>
     </div>
-
-    // ==========================================
-      // FITUR E-NOTA & CETAK PDF WALI SANTRI
-      // ==========================================
-      var currentNotaHtml = '';
-
-      function openNotaWali(orderId) {
-        // Cari data pesanan dari riwayat
-        var order = cachedOrdersList.find(o => String(o.id) === String(orderId)) || currentSelectedOrder;
-        if(!order) return showToast('Data pesanan tidak ditemukan', 'error');
-
-        var items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
-        var total = 0;
-        var tbody = '';
-        
-        // Rangkai daftar barang belanjaan
-        items.forEach(it => {
-            var harga = Number(it.harga || it.harga_jual || 0);
-            var sub = (it.qty * harga);
-            total += sub;
-            tbody += '<tr>' +
-                '<td style="padding: 8px 0; border-bottom: 1px dashed #cbd5e1; font-weight: bold; color: #1e293b;">' + it.nama + '<br><span style="font-size: 10px; color: #64748b; font-weight: normal;">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' x Rp' + harga.toLocaleString('id-ID') + '</span></td>' +
-                '<td style="padding: 8px 0; border-bottom: 1px dashed #cbd5e1; text-align: right; vertical-align: bottom; font-weight: bold; color: #1e293b;">Rp' + sub.toLocaleString('id-ID') + '</td>' +
-            '</tr>';
-        });
-
-        var tglObj = new Date(order.tanggal || order.created_at || new Date());
-        var tglStr = tglObj.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) + ' ' + tglObj.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-        var noOrder = String(order.id).substring(0,8).toUpperCase();
-        var statusStr = String(order.status || '').toUpperCase();
-
-        // Desain HTML murni khusus agar rapi saat diprint ke PDF (Gaya Struk Kasir)
-        currentNotaHtml = '<div style="font-family: monospace; color: #1e293b; max-width: 320px; margin: 0 auto; background: #fff; padding: 10px;">' +
-            '<div style="text-align: center; margin-bottom: 20px;">' +
-            '<h2 style="font-size: 20px; font-weight: 900; margin: 0 0 4px 0; letter-spacing: 1px;">ISLAM MART</h2>' +
-            '<p style="font-size: 11px; color: #64748b; margin: 0 0 4px 0;">Unit: ' + (order.im || 'Banin') + '</p>' +
-            '<p style="font-size: 11px; color: #64748b; border-bottom: 2px solid #1e293b; padding-bottom: 16px; margin: 0 0 16px 0;">' + tglStr + '</p>' +
-            '</div>' +
-            '<div style="margin-bottom: 20px; font-size: 12px; line-height: 1.6;">' +
-            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">No. Trx:</span><strong style="color: #1e293b;">' + noOrder + '</strong></div>' +
-            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Wali Dari:</span><strong style="color: #1e293b;">' + (order.supplier || order.nama_santri || '-') + '</strong></div>' +
-            '<div style="display: flex; justify-content: space-between;"><span style="color: #64748b;">Status:</span><strong style="color: #059669;">' + statusStr + '</strong></div>' +
-            '</div>' +
-            '<table style="width: 100%; font-size: 12px; margin-bottom: 20px; border-collapse: collapse;"><tbody>' + tbody + '</tbody></table>' +
-            '<div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; border-top: 2px solid #1e293b; padding-top: 12px; margin-bottom: 24px; color: #1e293b;">' +
-            '<span>TOTAL</span><span>Rp' + total.toLocaleString('id-ID') + '</span>' +
-            '</div>' +
-            '<div style="text-align: center; font-size: 11px; color: #64748b; font-style: italic; line-height: 1.5; border-top: 1px dashed #cbd5e1; padding-top: 16px;">' +
-            '<p style="margin: 0;">Terima kasih telah berbelanja</p>' +
-            '<p style="margin: 0;">Semoga rezekinya semakin berkah.</p>' +
-            '</div>' +
-            '</div>';
-
-        document.getElementById('notaWaliPrintArea').innerHTML = currentNotaHtml;
-        openModal('notaWaliModal');
-      }
-
-      function cetakNotaWaliPDF() {
-         showToast('Menyiapkan file PDF...', 'info');
-         var iframe = document.createElement('iframe');
-         iframe.style.display = 'none';
-         document.body.appendChild(iframe);
-         var doc = iframe.contentWindow.document;
-         doc.write('<html><head><title>Nota Pembelanjaan Santri</title></head><body style="padding: 20px; background: white;">');
-         doc.write(currentNotaHtml);
-         doc.write('</body></html>');
-         doc.close();
-         
-         setTimeout(function() {
-             iframe.contentWindow.focus();
-             iframe.contentWindow.print();
-             setTimeout(() => document.body.removeChild(iframe), 1000);
-         }, 800);
-      }
 
     <!-- Register Service Worker PWA -->
     <script>
