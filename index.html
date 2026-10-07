@@ -9251,8 +9251,12 @@
 
             var submittedUsers = reports.map(r => r.petugas);
             var targetRoles = ['gudang', 'keuangan', 'sarpras', 'permak', 'kantin daycare', 'bazar'];
+            var exemptedUsers = ['iman_bzr', 'fafa_bzr']; // Pengecualian sementara agar tidak ditagih lapbul
 
             unsubmittedStaffList = users.filter(u => {
+              var uName = String(u.username || '').toLowerCase();
+              if (exemptedUsers.includes(uName)) return false; // Abaikan akun yang dikecualikan
+
               var uRole = String(u.role || '').toLowerCase();
               var isTarget = targetRoles.some(tr => uRole.includes(tr));
               var hasSubmitted = submittedUsers.includes(u.nama);
@@ -9425,7 +9429,12 @@
 
           // 2. Tentukan divisi wajib lapor (sesuai aturan di sistem pengingat WA)
           var targetRoles = ['gudang', 'keuangan', 'sarpras', 'permak', 'kantin daycare', 'bazar'];
+          var exemptedUsers = ['iman_bzr', 'fafa_bzr']; // Pengecualian sementara agar tidak memblokir export
+          
           var requiredStaff = users.filter(u => {
+            var uName = String(u.username || '').toLowerCase();
+            if (exemptedUsers.includes(uName)) return false; // Abaikan akun yang dikecualikan
+
             var uRole = String(u.role || '').toLowerCase();
             return targetRoles.some(tr => uRole.includes(tr));
           });
