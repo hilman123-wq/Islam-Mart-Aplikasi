@@ -3709,17 +3709,19 @@
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">File Laporan (Format .xlsx / .xls) *</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">File Laporan (Excel / Word / PDF) *</label>
             <div
               class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-4 text-center hover:border-rose-400 transition cursor-pointer relative">
-              <i class="fa-solid fa-file-excel text-3xl text-emerald-600 mb-2"></i>
-              <p id="laporanFileName" class="text-xs font-semibold text-slate-600">Klik untuk Pilih File Excel Laporan
-              </p>
-              <input type="file" id="laporanFileExcel" accept=".xlsx, .xls" onchange="parseExcelToJSON(event)" required
+              <div class="flex justify-center gap-3 mb-2">
+                <i class="fa-solid fa-file-excel text-3xl text-emerald-600"></i>
+                <i class="fa-solid fa-file-word text-3xl text-blue-600"></i>
+                <i class="fa-solid fa-file-pdf text-3xl text-rose-600"></i>
+              </div>
+              <p id="laporanFileName" class="text-xs font-semibold text-slate-600">Klik Pilih File (Maksimal 3 MB)</p>
+              <input type="file" id="laporanFileExcel" accept=".xlsx, .xls, .doc, .docx, .pdf" onchange="handleReportUpload(event)" required
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
             </div>
-            <p class="text-[10px] text-slate-400 mt-1 italic">Catatan: Data excel akan dibaca dan disimpan ke sistem
-              secara otomatis.</p>
+            <p class="text-[10px] text-slate-400 mt-1 italic">Catatan: Excel akan direkap otomatis. File Word / PDF akan disimpan sebagai lampiran dokumen.</p>
           </div>
 
           <div class="flex justify-end gap-2 pt-3 border-t">
@@ -8689,14 +8691,51 @@
         openModal('laporanModal');
       }
 
-      function parseExcelToJSON(e) {
-        var file = e.target.files[0]; if (!file) return; document.getElementById('laporanFileName').innerText = file.name;
-        var r = new FileReader(); r.onload = function (evt) {
-          try {
-            var wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' }), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            if (!json.length) throw new Error("Kosong"); document.getElementById('laporanRawJson').value = JSON.stringify(json); showToast('Excel siap!');
-          } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
-        }; r.readAsArrayBuffer(file);
+      function handleReportUpload(e) {
+        var file = e.target.files[0]; 
+        if (!file) return; 
+        
+        // Proteksi Ukuran File (Maksimal 3 MB agar database tidak overload)
+        if (file.size > 3 * 1024 * 1024) {
+          e.target.value = '';
+          return showToast('Ukuran file terlalu besar! Maksimal 3 MB.', 'error');
+        }
+
+        document.getElementById('laporanFileName').innerText = file.name;
+        var ext = file.name.split('.').pop().toLowerCase();
+
+        if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') {
+          // Format Excel lama: Diolah jadi baris data
+          var r = new FileReader(); 
+          r.onload = function (evt) {
+            try {
+              var wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+              var json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+              if (!json.length) throw new Error("File Kosong"); 
+              document.getElementById('laporanRawJson').value = JSON.stringify(json); 
+              showToast('File Excel siap diunggah!', 'success');
+            } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
+          }; 
+          r.readAsArrayBuffer(file);
+        } else if (ext === 'pdf' || ext === 'doc' || ext === 'docx') {
+          // Format PDF & Word: Disimpan utuh sebagai Base64 di dalam JSON
+          var r = new FileReader();
+          r.onload = function (evt) {
+            var base64Data = evt.target.result;
+            var docJson = {
+              _is_document: true,
+              filename: file.name,
+              mime: file.type,
+              base64: base64Data
+            };
+            document.getElementById('laporanRawJson').value = JSON.stringify(docJson);
+            showToast('File ' + ext.toUpperCase() + ' siap diunggah!', 'success');
+          };
+          r.readAsDataURL(file);
+        } else {
+          showToast('Format file tidak didukung!', 'error');
+          e.target.value = '';
+        }
       }
 
       async function submitLaporanForm(e) {
@@ -8728,8 +8767,26 @@
       }
 
       function exportLaporanToExcel(id) {
-        var r = cachedLaporanList.find(x => x.id === id); if (!r || !r.data_json) return showToast('Data tidak ada!', 'error');
-        var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(r.data_json), "Laporan"); XLSX.writeFile(wb, r.jenis + "_" + r.periode + ".xlsx");
+        var r = cachedLaporanList.find(x => x.id === id); 
+        if (!r || !r.data_json) return showToast('Data tidak ada!', 'error');
+        
+        var data = r.data_json;
+
+        if (data._is_document && data.base64) {
+          // Download file utuh sebagai Word / PDF sesuai aslinya
+          var link = document.createElement('a');
+          link.href = data.base64;
+          link.download = data.filename || (r.jenis + '_' + r.periode);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showToast('Mendownload file dokumen...', 'success');
+        } else {
+          // Download sebagai Excel jika asalnya berupa baris data tabel
+          var wb = XLSX.utils.book_new(); 
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Laporan"); 
+          XLSX.writeFile(wb, r.jenis + "_" + r.periode + ".xlsx");
+        }
       }
 
       async function deleteLaporan(id) {
