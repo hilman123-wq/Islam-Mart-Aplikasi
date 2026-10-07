@@ -9415,35 +9415,39 @@
         printReport('laporanPrintArea');
       }
 
-      // FITUR BARU: EXPORT WORD OTOMATIS JIKA SELURUH STAF SUDAH MENGISI
+      // FITUR BARU: EXPORT WORD BUKU LAPORAN LENGKAP ISLAM MART
       async function exportLaporanAkhirWord() {
         var bulanVal = document.getElementById('filterLaporanBulan').value;
         if (!bulanVal) return showToast('Pilih periode bulan terlebih dahulu!', 'error');
 
-        showLoading('Mengecek kelengkapan laporan seluruh staf...');
+        // Pisahkan tahun dan nama bulan
+        var arrBulan = bulanVal.split('-');
+        var tahun = arrBulan[0];
+        var namaBulan = new Date(tahun, arrBulan[1] - 1, 1).toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+        var judulBulanTahun = namaBulan + ' ' + tahun;
+
+        showLoading('Mengumpulkan data dari seluruh divisi...');
 
         try {
-          // 1. Ambil data semua staf aktif
-          const { data: users, error: errU } = await supaClient.from('users').select('*').eq('status', 'Aktif');
+          // 1. Ambil data staf dari database untuk memeriksa kelengkapan & menyusun tabel "Data Karyawan Aktif"
+          const { data: users, error: errU } = await supaClient.from('users').select('*').eq('status', 'Aktif').order('nama', { ascending: true });
           if (errU) throw errU;
 
-          // 2. Tentukan divisi wajib lapor (sesuai aturan di sistem pengingat WA)
           var targetRoles = ['gudang', 'keuangan', 'sarpras', 'permak', 'kantin daycare', 'bazar'];
-          var exemptedUsers = ['iman_bzr', 'fafa_bzr']; // Pengecualian sementara agar tidak memblokir export
-          
+          var exemptedUsers = ['iman_bzr', 'fafa_bzr']; // Pengecualian wajib lapor
+
           var requiredStaff = users.filter(u => {
             var uName = String(u.username || '').toLowerCase();
-            if (exemptedUsers.includes(uName)) return false; // Abaikan akun yang dikecualikan
-
+            if (exemptedUsers.includes(uName)) return false;
             var uRole = String(u.role || '').toLowerCase();
             return targetRoles.some(tr => uRole.includes(tr));
           });
 
-          // 3. Ambil data laporan yang sudah masuk di bulan tersebut
+          // 2. Ambil data Laporan Bulanan yang sudah masuk
           const { data: reports, error: errR } = await supaClient.from('laporan_bulanan').select('*').eq('periode', bulanVal);
           if (errR) throw errR;
 
-          // 4. Deteksi apakah ada staf wajib yang belum mengumpulkan
+          // Deteksi staf yang belum setor
           var submittedNames = reports.map(r => r.petugas);
           var missingStaff = requiredStaff.filter(u => !submittedNames.includes(u.nama));
 
@@ -9453,66 +9457,255 @@
             return showToast('GAGAL! Laporan belum lengkap. Staf berikut belum kirim: ' + missingNames, 'error');
           }
 
-          showLoading('Merakit dokumen Microsoft Word...');
+          showLoading('Merakit buku laporan Microsoft Word...');
 
-          // 5. Susun isi/desain dokumen Microsoft Word
-          var tableRowsHtml = '';
+          // ==========================================
+          // BAGIAN A: TABEL-TABEL DATA KARYAWAN
+          // ==========================================
+          var tabelKaryawanHtml = `
+            <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px;">
+              <thead>
+                <tr style="background:#F2F2F2;">
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>No</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Nama Karyawan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Divisi / Jabatan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Unit (IM)</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>No. Telepon / WA</b></td>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          users.forEach((u, idx) => {
+            tabelKaryawanHtml += `
+              <tr>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${idx + 1}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${u.nama}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${u.role}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${u.im || 'Banin'}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${u.nowa || '-'}</td>
+              </tr>
+            `;
+          });
+          tabelKaryawanHtml += `</tbody></table>`;
+
+          // ==========================================
+          // BAGIAN B: TABEL INDEKS PENGUMPULAN DOKUMEN
+          // ==========================================
+          var tabelIndeksLaporan = `
+            <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px;">
+              <thead>
+                <tr style="background:#F2F2F2;">
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center; width:5%;"><b>No</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:20%;"><b>Divisi</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:10%;"><b>Unit</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:25%;"><b>Nama Petugas</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:25%;"><b>Jenis Laporan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center; width:15%;"><b>Tanggal Unggah</b></td>
+                </tr>
+              </thead>
+              <tbody>
+          `;
           reports.sort((a, b) => String(a.divisi).localeCompare(String(b.divisi))).forEach((r, idx) => {
             var tglStr = new Date(r.created_at).toLocaleDateString('id-ID');
-            tableRowsHtml += `
+            tabelIndeksLaporan += `
               <tr>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;">${idx + 1}</td>
-                <td style="border: 1px solid black; padding: 5px; font-weight: bold;">${r.divisi} - ${r.im}</td>
-                <td style="border: 1px solid black; padding: 5px;">${r.petugas}</td>
-                <td style="border: 1px solid black; padding: 5px;">${r.jenis}</td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;">${tglStr}</td>
-              </tr>`;
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${idx + 1}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;"><b>${r.divisi}</b></td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${r.im}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${r.petugas}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${r.jenis}</td>
+                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${tglStr}</td>
+              </tr>
+            `;
           });
+          tabelIndeksLaporan += `</tbody></table>`;
 
+          // ==========================================
+          // BAGIAN C: STRUKTUR DOKUMEN HTML WORD
+          // ==========================================
           var wordHtmlContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
               <meta charset='utf-8'>
               <title>Laporan Akhir Islam Mart</title>
+              <!-- [if gte mso 9] >
+                <xml>
+                  <w:WordDocument>
+                    <w:View>Print</w:View>
+                    <w:Zoom>100</w:Zoom>
+                    <w:DoNotOptimizeForBrowser/>
+                  </w:WordDocument>
+                </xml>
+              <! [endif] -->
               <style>
-                body { font-family: 'Arial', sans-serif; }
-                table { border-collapse: collapse; width: 100%; font-size: 11pt; margin-top: 20px; }
-                th { background-color: #f2f2f2; border: 1px solid black; padding: 8px; font-weight: bold; }
+                @page Section1 {
+                  size: 8.27in 11.69in; /* A4 Paper */
+                  margin: 1.0in 1.0in 1.0in 1.0in; /* Top Right Bottom Left */
+                  mso-header-margin: .5in;
+                  mso-footer-margin: .5in;
+                  mso-paper-source: 0;
+                }
+                div.Section1 { page: Section1; }
+                body { 
+                  font-family: 'Times New Roman', serif; 
+                  font-size: 11pt; 
+                  line-height: 1.15; 
+                  color: black;
+                }
+                h1 { 
+                  text-align: center; 
+                  font-size: 26pt; 
+                  font-weight: bold; 
+                  text-transform: uppercase; 
+                  margin-bottom: 0;
+                  color: #8CC63F; /* Warna Hijau Daun ala Islam Mart */
+                }
+                h2 { 
+                  text-align: center; 
+                  font-size: 16pt; 
+                  font-weight: bold; 
+                  text-transform: uppercase; 
+                  margin-top: 5px;
+                  margin-bottom: 30px;
+                }
+                h3 {
+                  font-size: 12pt;
+                  font-weight: bold;
+                  margin-top: 20px;
+                  margin-bottom: 5px;
+                }
+                .paragraf-indent {
+                  text-align: justify;
+                  text-indent: 0.5in;
+                  margin-top: 10px;
+                  margin-bottom: 10px;
+                }
+                .cover-page {
+                  page-break-after: always;
+                }
+                .cover-title {
+                  text-align: center;
+                  font-size: 36pt;
+                  font-weight: bold;
+                  color: #8CC63F;
+                  margin-top: 3in;
+                }
+                .cover-subtitle {
+                  text-align: center;
+                  font-size: 24pt;
+                  color: #FFC000;
+                  margin-top: 20px;
+                  font-weight: bold;
+                }
+                .text-center { text-align: center; }
+                .text-bold { font-weight: bold; }
               </style>
             </head>
             <body>
-              <h2 style="text-align: center; text-transform: uppercase; margin-bottom: 0;">REKAPITULASI LAPORAN AKHIR BULANAN</h2>
-              <h3 style="text-align: center; margin-top: 5px;">ISLAM MART (PERIODE: ${bulanVal})</h3>
-              <p>Alhamdulillah, seluruh divisi operasional (Gudang, Keuangan, Permak, Sarpras, Kantin & Bazar) telah menyelesaikan dan mengunggah laporan bulanannya secara lengkap pada periode ini.</p>
-              <p>Berikut adalah rincian indeks pengumpulan dokumen yang telah direkam ke dalam database sistem:</p>
-              
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 5%;">No</th>
-                    <th style="width: 30%;">Divisi & Unit</th>
-                    <th style="width: 25%;">Nama Petugas</th>
-                    <th style="width: 25%;">Jenis Dokumen Laporan</th>
-                    <th style="width: 15%;">Tanggal Kirim</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${tableRowsHtml}
-                </tbody>
-              </table>
+              <div class="Section1">
+                
+                <!-- HALAMAN 1: SAMPUL (COVER) -->
+                <div class="cover-page">
+                  <div class="cover-title">Islam Mart</div>
+                  <div class="cover-subtitle">LAPORAN KERJA BULANAN</div>
+                  <div class="cover-subtitle" style="font-size: 18pt;">${judulBulanTahun}</div>
+                </div>
 
-              <br><br><br>
-              <table style="width: 100%; border: none;">
-                <tr style="border: none;">
-                  <td style="border: none; text-align: center; width: 50%;"></td>
-                  <td style="border: none; text-align: center; width: 50%;">
-                    <p>Mengetahui,</p>
-                    <p>Kepala Administrasi Islam Mart</p>
-                    <br><br><br>
-                    <p style="font-weight: bold; text-decoration: underline;">${currentUser.nama}</p>
-                  </td>
-                </tr>
-              </table>
+                <!-- HALAMAN 2: KATA PENGANTAR -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black;">KATA PENGANTAR</h2>
+                  <p class="paragraf-indent">Segala puji bagi Allah SWT yang telah melimpahkan rahmat dan karunia-Nya, sehingga kami dapat menyelesaikan Laporan Kerja Bulanan ini dengan baik, insyaa Allah. Shalawat dan salam semoga senantiasa tercurahkan kepada Nabi Muhammad SAW, keluarga beliau, para sahabat, serta semua umat yang istiqamah mengikuti petunjuk yang benar. Amma ba’du.</p>
+                  <p class="paragraf-indent">Allah SWT berfirman dalam surat Al-Muddassir ayat 38: "Tiap-tiap diri bertanggung jawab atas apa yang telah diperbuatnya." Rasulullah SAW juga bersabda: "Setiap kalian adalah pemimpin, dan setiap pemimpin akan dimintai pertanggungjawaban atas kepemimpinannya."</p>
+                  <p class="paragraf-indent">Sejalan dengan pesan tersebut, laporan ini kami susun sebagai bentuk pertanggungjawaban kepada Pembina Yayasan Pondok Pesantren Modern Al-Islam atas pelaksanaan kegiatan operasional Islam Mart. Penyusunan laporan ini telah kami lakukan dengan sebaik-baiknya, penuh ketelitian, dan kehati-hatian.</p>
+                  <p class="paragraf-indent">Kami menyadari bahwa laporan ini masih jauh dari sempurna, baik dari segi penulisan maupun penyajian. Oleh karena itu, kami sangat mengharapkan kritik, saran, serta masukan yang membangun sebagai bahan evaluasi demi perbaikan yang berkelanjutan.</p>
+                  <p class="paragraf-indent">Ucapan terima kasih kami sampaikan kepada pimpinan yang telah memberikan kepercayaan, bimbingan, dan arahan, serta kepada semua pihak yang telah berkontribusi dalam mendukung kegiatan operasional Islam Mart.</p>
+                  <p class="paragraf-indent">Semoga laporan ini bermanfaat bagi semua pihak yang berkepentingan dan dapat menjadi acuan dalam pengambilan keputusan serta kebijakan pengurus manajemen operasional Islam Mart.</p>
+                </div>
+
+                <!-- HALAMAN 3: LEMBAR PENGESAHAN -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black;">LEMBAR PENGESAHAN</h2>
+                  <p style="text-align: right; margin-bottom: 40px;">Cirebon, ...................... ${tahun}</p>
+                  
+                  <table style="width: 100%; border: none; text-align: center; margin-bottom: 60px;">
+                    <tr>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Kepala Toko & Gudang IM Banat</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Reza Muhammad Al-fanny</p>
+                      </td>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Kepala Toko & Gudang IM Banin</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Hilman Nurul Alfin, S.E.</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table style="width: 100%; border: none; text-align: center; margin-bottom: 60px;">
+                    <tr>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Akunting & Keuangan IM Banat</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Naday Sharfina Izzati</p>
+                      </td>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Akunting & Keuangan IM Banin</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Muhammad Akira</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table style="width: 100%; border: none; text-align: center;">
+                    <tr>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Mudirul Ma’had</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Ust. Muhammad Ibrahiem, S.Pd.I., M.Pd.</p>
+                      </td>
+                      <td style="width: 50%; border: none;">
+                        <p style="margin: 0;">Kepala Bidang Islam Mart</p>
+                        <br><br><br>
+                        <p style="margin: 0; text-decoration: underline; font-weight: bold;">Ust. Eja Suteja, S.E.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- HALAMAN 4: PENDAHULUAN -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black;">PENDAHULUAN</h2>
+                  <p class="paragraf-indent">Islam Mart merupakan unit usaha di bawah Yayasan Alam Islam Indonesia yang bergerak dalam bidang perdagangan ritel dan jasa. Islam Mart berlokasi di Kompleks Pondok Pesantren Modern Al Islam, Jalan Raya Cirebon – Kuningan, RT 12 RW 04, Desa Kondangsari, Kecamatan Beber, Kabupaten Cirebon, Jawa Barat. Awalnya, unit usaha ini dikenal dengan nama Koperasi Al Islam Mart. Namun, pada tanggal 1 November 2018, melalui peresmian oleh Ketua Yayasan Alam Islam Indonesia, Bapak H. Komarudin, nama tersebut diubah menjadi Islam Mart.</p>
+                  <p class="paragraf-indent">Pada tahun 2014, Pondok Pesantren Modern Al Islam mulai beroperasi dengan jumlah santri sebanyak 201 orang. Karena lokasinya yang jauh dari pusat perdagangan dan adanya aturan pondok yang melarang santri untuk keluar tanpa wali atau alasan mendesak, banyak pengajar memulai usaha sambilan untuk memenuhi kebutuhan santri dan warga pondok. Namun, hal ini menyebabkan beberapa pengajar kurang fokus pada tugas utama mereka, dan menarik perhatian pihak luar untuk berjualan di area pondok.</p>
+                  <p class="paragraf-indent">Melihat situasi tersebut, Yayasan Alam Islam Indonesia memutuskan untuk mendirikan satu unit usaha yang dapat memenuhi kebutuhan santri dan warga pondok. Pada Januari 2015, dibentuklah unit usaha bernama Al Islam Mart. Seiring waktu, Al Islam Mart berkembang dari sebuah kantin kecil menjadi toko ritel modern bernama Islam Mart, yang berlokasi di kompleks Banin (laki-laki) dan Banat (perempuan) Pondok Pesantren Modern Al Islam, masing-masing dengan luas sekitar 100 m².</p>
+                  <p class="paragraf-indent">Dalam perjalanannya, Islam Mart terus melakukan berbagai pembenahan dan perbaikan, termasuk rekrutmen karyawan, pelatihan, pembinaan, pengadaan tenaga ahli, perombakan manajemen, serta evaluasi berkala. Langkah-langkah ini bertujuan untuk mencapai target yang telah ditetapkan dan meningkatkan kualitas pelayanan kepada pelanggan. Islam Mart memiliki visi dan misi untuk menjadi perusahaan ritel terbaik di Indonesia yang mampu memenuhi kebutuhan masyarakat sekaligus mendukung pengembangan perekonomian umat.</p>
+                </div>
+
+                <!-- HALAMAN 5: DATA KARYAWAN & LAPORAN -->
+                <h2 style="color: black;">REKAPITULASI DOKUMEN LAPORAN & DATA KARYAWAN</h2>
+                <h3>A. Data Karyawan Aktif Sistem</h2>
+                ${tabelKaryawanHtml}
+
+                <br>
+                <h3>B. Indeks Penyerahan Dokumen Laporan (Otomatis dari Sistem)</h2>
+                ${tabelIndeksLaporan}
+
+                <br><br><br>
+                <table style="width: 100%; border: none;">
+                  <tr style="border: none;">
+                    <td style="border: none; text-align: center; width: 50%;"></td>
+                    <td style="border: none; text-align: center; width: 50%;">
+                      <p>Kondangsari, ........................ ${tahun}</p>
+                      <p>Mengesahkan kelengkapan dokumen,</p>
+                      <p>Kepala Administrasi Islam Mart</p>
+                      <br><br><br>
+                      <p style="font-weight: bold; text-decoration: underline;">${currentUser.nama}</p>
+                    </td>
+                  </tr>
+                </table>
+
+              </div>
             </body>
             </html>
           `;
@@ -9522,14 +9715,14 @@
           var url = URL.createObjectURL(blob);
           var link = document.createElement("a");
           link.href = url;
-          link.download = 'Laporan_Akhir_IslamMart_' + bulanVal + '.doc';
+          link.download = 'Laporan_Kerja_Bulanan_IslamMart_' + bulanVal + '.doc';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
 
           hideLoading();
-          showToast('Dokumen Word berhasil dibuat dan diunduh!', 'success');
+          showToast('Buku Laporan Word berhasil dirakit dan diunduh!', 'success');
 
         } catch (err) {
           hideLoading();
