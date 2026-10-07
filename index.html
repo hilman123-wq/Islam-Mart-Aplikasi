@@ -38,6 +38,9 @@
   <!-- SheetJS Library untuk Membaca & Export Excel (WAJIB DITAMBAHKAN BARIS INI) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- Library untuk Download PDF Otomatis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     /* PENGATURAN CETAK (PRINT) & ANTI TERPOTONG */
     @media print {
@@ -11634,21 +11637,30 @@
       }
 
       function cetakNotaWaliPDF() {
-         showToast('Menyiapkan file PDF...', 'info');
-         var iframe = document.createElement('iframe');
-         iframe.style.display = 'none';
-         document.body.appendChild(iframe);
-         var doc = iframe.contentWindow.document;
-         doc.write('<html><head><title>Nota Pembelanjaan Santri</title></head><body style="padding: 20px; background: white;">');
-         doc.write(currentNotaHtml);
-         doc.write('</body></html>');
-         doc.close();
-         
-         setTimeout(function() {
-             iframe.contentWindow.focus();
-             iframe.contentWindow.print();
-             setTimeout(() => document.body.removeChild(iframe), 1000);
-         }, 800);
+        showToast ('Mendownload E-Nota PDF...', 'info');
+        
+        // Membuat bungkus sementara khusus untuk PDF
+        var printWrap = document.createElement('div');
+        printWrap.innerHTML = '<div style="padding: 20px; background: white; width: 100%;">' + currentNotaHtml + '</div>';
+        
+        var noPesananMatch = currentNotaHtml.match(/<strong[^>]*>([SNT\-A-Z0-9]+)<\/strong>/);
+        var namaFile = noPesananMatch ? 'Nota_' + noPesananMatch[1] + '.pdf' : 'E-Nota_IslamMart.pdf';
+
+        // Pengaturan cetak PDF otomatis
+        var opt = {
+          margin:       0.2,
+          filename:     namaFile,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'a5', orientation: 'portrait' }
+        };
+
+        // Eksekusi download langsung menggunakan library
+        html2pdf().set(opt).from(printWrap).save().then(function() {
+          showToast('File PDF berhasil disimpan!', 'success');
+        }).catch(function(err) {
+          showToast('Gagal mendownload PDF', 'error');
+        });
       }
       
       // ==========================================
