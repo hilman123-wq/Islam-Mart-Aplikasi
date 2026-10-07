@@ -4317,15 +4317,61 @@
         if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'flex';
       }
       function hideLoading() { if (document.getElementById('loadingOverlay')) document.getElementById('loadingOverlay').style.display = 'none'; }
-      // FUNGSI UNTUK MENCETAK LAPORAN (PDF/KERTAS)
+      
+      // FUNGSI UNTUK MENCETAK LAPORAN (PDF OTOMATIS A4)
       function printReport(areaId) {
         var printArea = document.getElementById(areaId);
         if (!printArea) {
           return showToast('Area laporan tidak ditemukan!', 'error');
         }
-        // CSS @media print bawaan Anda sudah mengatur agar bagian tabel/laporannya saja yang dicetak
-        window.print();
+
+        // Khusus Label Rak tetap pakai window.print() bawaan agar ukuran stiker presisi
+        if (areaId === 'shelfLabelPrintArea') {
+          window.print();
+          return;
+        }
+
+        showToast('Menyiapkan file PDF (A4)...', 'info');
+
+        // Kloning area laporan agar tidak merusak tampilan asli
+        var element = printArea.cloneNode(true);
+        element.style.display = 'block';
+        element.style.padding = '20px';
+        element.style.background = '#ffffff';
+
+        // PAKSA TABEL MENYESUAIKAN UKURAN KERTAS A4 (Buang min-width dari Tailwind)
+        var tables = element.querySelectorAll('table');
+        tables.forEach(t => {
+          t.style.minWidth = '100%';
+          t.style.width = '100%';
+          t.style.fontSize = '10.5px'; // Kecilkan font sedikit agar tabel berkolom banyak bisa muat
+        });
+
+        // Deteksi Nama File Otomatis
+        var fileName = 'Laporan_Islam_Mart.pdf';
+        var titleEl = element.querySelector('h2, h3');
+        if (titleEl) fileName = titleEl.innerText.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+
+        // Atur Orientasi Kertas (PO = Portrait, Raport/Laporan = Landscape agar kolom tidak tertumpuk)
+        var isPortrait = (areaId === 'poPrintArea');
+
+        // Konfigurasi Kertas A4
+        var opt = {
+          margin:       0.3,
+          filename:     fileName,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: isPortrait ? 'portrait' : 'landscape' }
+        };
+
+        // Eksekusi Download Langsung
+        html2pdf().set(opt).from(element).save().then(function() {
+          showToast('File PDF A4 Berhasil Disimpan!', 'success');
+        }).catch(function() {
+          showToast('Gagal memproses PDF', 'error');
+        });
       }
+
       function openModal(id) {
         var el = document.getElementById(id);
         if (el) {
@@ -9299,16 +9345,8 @@
         document.getElementById('cetakLaporanBulan').innerText = bulanVal || 'Semua Waktu';
         document.getElementById('cetakNamaAdmin').innerText = currentUser.nama;
 
-        var appContent = document.getElementById('mainApp');
-        var printContent = document.getElementById('laporanPrintArea');
-
-        appContent.style.display = 'none';
-        printContent.style.display = 'block';
-
-        window.print();
-
-        printContent.style.display = 'none';
-        appContent.style.display = 'flex';
+        // Langsung panggil mesin pembuat PDF A4 Otomatis
+        printReport('laporanPrintArea');
       }
 
       // ==========================================
