@@ -3709,19 +3709,19 @@
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">File Laporan (Excel / Word / PDF) *</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">File Laporan (Excel / PDF / Foto) *</label>
             <div
               class="border-2 border-dashed border-slate-300 bg-slate-50 rounded-xl p-4 text-center hover:border-rose-400 transition cursor-pointer relative">
               <div class="flex justify-center gap-3 mb-2">
                 <i class="fa-solid fa-file-excel text-3xl text-emerald-600"></i>
-                <i class="fa-solid fa-file-word text-3xl text-blue-600"></i>
+                <i class="fa-solid fa-image text-3xl text-amber-500"></i>
                 <i class="fa-solid fa-file-pdf text-3xl text-rose-600"></i>
               </div>
-              <p id="laporanFileName" class="text-xs font-semibold text-slate-600">Klik Pilih File (Maksimal 3 MB)</p>
-              <input type="file" id="laporanFileExcel" accept=".xlsx, .xls, .doc, .docx, .pdf" onchange="handleReportUpload(event)" required
+              <p id="laporanFileName" class="text-xs font-semibold text-slate-600">Klik Pilih File (Excel / Foto / PDF)</p>
+              <input type="file" id="laporanFileExcel" accept=".xlsx, .xls, .pdf, image/png, image/jpeg, image/jpg" onchange="handleReportUpload(event)" required
                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
             </div>
-            <p class="text-[10px] text-slate-400 mt-1 italic">Catatan: Excel akan direkap otomatis. File Word / PDF akan disimpan sebagai lampiran dokumen.</p>
+            <p class="text-[10px] text-slate-400 mt-1 italic">Catatan: Data Excel akan jadi tabel otomatis. Foto akan langsung ditempel di dalam laporan Word. PDF disimpan sbg lampiran.</p>
           </div>
 
           <div class="flex justify-end gap-2 pt-3 border-t">
@@ -8740,7 +8740,6 @@
         var ext = file.name.split('.').pop().toLowerCase();
 
         if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') {
-          // Format Excel lama: Diolah jadi baris data
           var r = new FileReader(); 
           r.onload = function (evt) {
             try {
@@ -8752,13 +8751,14 @@
             } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
           }; 
           r.readAsArrayBuffer(file);
-        } else if (ext === 'pdf' || ext === 'doc' || ext === 'docx') {
-          // Format PDF & Word: Disimpan utuh sebagai Base64 di dalam JSON
+        } else if (ext === 'pdf' || ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'doc' || ext === 'docx') {
+          var isImage = (ext === 'png' || ext === 'jpg' || ext === 'jpeg');
           var r = new FileReader();
           r.onload = function (evt) {
             var base64Data = evt.target.result;
             var docJson = {
-              _is_document: true,
+              _is_document: !isImage,
+              _is_image: isImage,
               filename: file.name,
               mime: file.type,
               base64: base64Data
@@ -9556,55 +9556,59 @@
           tabelIndeksLaporan += `</tbody></table>`;
 
           // ==========================================
-          // BAGIAN C: EKSTRAK ISI DATA EXCEL MENJADI TABEL WORD
+          // BAGIAN C: EKSTRAK ISI EXCEL & GAMBAR KE DALAM WORD
           // ==========================================
           var isiLaporanDivisiHtml = '';
           
           reports.sort((a, b) => String(a.jenis).localeCompare(String(b.jenis))).forEach((r) => {
             var dataJson = r.data_json;
             
-            // Periksa apakah ini data tabel Excel (bukan PDF/Word base64)
-            if (dataJson && !dataJson._is_document && Array.isArray(dataJson) && dataJson.length > 0) {
+            // 1. Jika file yang diunggah berupa EXCEL (Array Tabel)
+            if (dataJson && !dataJson._is_document && !dataJson._is_image && Array.isArray(dataJson) && dataJson.length > 0) {
               var headers = Object.keys(dataJson[0]);
-              
               isiLaporanDivisiHtml += `
                 <br>
                 <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Laporan: ${r.jenis} (${r.im})</h3>
                 <p style="margin-top: 0; font-size: 10pt; color: #555;"><i>Dilaporkan oleh: ${r.petugas} | Divisi: ${r.divisi}</i></p>
-                
                 <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px; font-size: 9pt;">
-                  <thead>
-                    <tr style="background:#E2EFDA;">
+                  <thead><tr style="background:#E2EFDA;">
               `;
-              
-              // Cetak Header Tabel
               headers.forEach(h => {
                 isiLaporanDivisiHtml += `<td style="border:solid windowtext 1.0pt; padding:4px; text-align:center;"><b>${h}</b></td>`;
               });
               isiLaporanDivisiHtml += `</tr></thead><tbody>`;
-              
-              // Cetak Isi Baris Data Excel
               dataJson.forEach(row => {
                 isiLaporanDivisiHtml += `<tr>`;
                 headers.forEach(h => {
                   var val = (row[h] !== undefined && row[h] !== null) ? row[h] : '';
-                  // Coba format angka jika terlihat seperti nominal uang besar
                   if (typeof val === 'number' && val > 1000) val = val.toLocaleString('id-ID');
                   isiLaporanDivisiHtml += `<td style="border:solid windowtext 1.0pt; padding:4px;">${val}</td>`;
                 });
                 isiLaporanDivisiHtml += `</tr>`;
               });
-              
               isiLaporanDivisiHtml += `</tbody></table>`;
             } 
-            else if (dataJson && dataJson._is_document) {
-              // Jika staf mengunggah PDF / Word
+            
+            // 2. Jika file yang diunggah berupa GAMBAR / FOTO Laporan
+            else if (dataJson && dataJson._is_image && dataJson.base64) {
               isiLaporanDivisiHtml += `
                 <br>
-                <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Laporan: ${r.jenis} (${r.im})</h3>
+                <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Lampiran Foto Laporan: ${r.jenis} (${r.im})</h3>
+                <p style="margin-top: 0; font-size: 10pt; color: #555; margin-bottom: 15px;"><i>Dilaporkan oleh: ${r.petugas} | Divisi: ${r.divisi}</i></p>
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <img src="${dataJson.base64}" style="max-width: 6.5in; height: auto; border: 1px solid #ccc; padding: 5px;" alt="Bukti Laporan Foto">
+                </div>
+              `;
+            }
+            
+            // 3. Jika file yang diunggah berupa PDF / WORD DOC
+            else if (dataJson && dataJson._is_document) {
+              isiLaporanDivisiHtml += `
+                <br>
+                <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Lampiran Dokumen: ${r.jenis} (${r.im})</h3>
                 <p style="margin-top: 0; font-size: 10pt; color: #555;"><i>Dilaporkan oleh: ${r.petugas} | Divisi: ${r.divisi}</i></p>
                 <p style="border: 1px dashed gray; padding: 10px; background: #f9f9f9; text-align: center; font-size: 10pt; font-style: italic;">
-                  [ Laporan ini diunggah dalam format terpisah (${dataJson.filename}). Silakan unduh langsung melalui sistem. ]
+                  [ Dokumen ini diunggah dalam format PDF/Word terpisah (${dataJson.filename}). Silakan unduh langsung melalui menu arsip di sistem. ]
                 </p>
               `;
             }
