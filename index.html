@@ -9450,7 +9450,7 @@
         printReport('laporanPrintArea');
       }
 
-      // FITUR BARU: EXPORT WORD BUKU LAPORAN LENGKAP ISLAM MART
+      // FITUR BARU: EXPORT WORD BUKU LAPORAN LENGKAP ISLAM MART (TERMASUK ISI DATA EXCEL)
       async function exportLaporanAkhirWord() {
         var bulanVal = document.getElementById('filterLaporanBulan').value;
         if (!bulanVal) return showToast('Pilih periode bulan terlebih dahulu!', 'error');
@@ -9492,10 +9492,10 @@
             return showToast('GAGAL! Laporan belum lengkap. Staf berikut belum kirim: ' + missingNames, 'error');
           }
 
-          showLoading('Merakit buku laporan Microsoft Word...');
+          showLoading('Merakit buku laporan & mengekstrak data tabel...');
 
           // ==========================================
-          // BAGIAN A: TABEL-TABEL DATA KARYAWAN
+          // BAGIAN A: TABEL DATA KARYAWAN
           // ==========================================
           var tabelKaryawanHtml = `
             <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px;">
@@ -9556,7 +9556,62 @@
           tabelIndeksLaporan += `</tbody></table>`;
 
           // ==========================================
-          // BAGIAN C: STRUKTUR DOKUMEN HTML WORD
+          // BAGIAN C: EKSTRAK ISI DATA EXCEL MENJADI TABEL WORD
+          // ==========================================
+          var isiLaporanDivisiHtml = '';
+          
+          reports.sort((a, b) => String(a.jenis).localeCompare(String(b.jenis))).forEach((r) => {
+            var dataJson = r.data_json;
+            
+            // Periksa apakah ini data tabel Excel (bukan PDF/Word base64)
+            if (dataJson && !dataJson._is_document && Array.isArray(dataJson) && dataJson.length > 0) {
+              var headers = Object.keys(dataJson[0]);
+              
+              isiLaporanDivisiHtml += `
+                <br>
+                <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Laporan: ${r.jenis} (${r.im})</h3>
+                <p style="margin-top: 0; font-size: 10pt; color: #555;"><i>Dilaporkan oleh: ${r.petugas} | Divisi: ${r.divisi}</i></p>
+                
+                <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px; font-size: 9pt;">
+                  <thead>
+                    <tr style="background:#E2EFDA;">
+              `;
+              
+              // Cetak Header Tabel
+              headers.forEach(h => {
+                isiLaporanDivisiHtml += `<td style="border:solid windowtext 1.0pt; padding:4px; text-align:center;"><b>${h}</b></td>`;
+              });
+              isiLaporanDivisiHtml += `</tr></thead><tbody>`;
+              
+              // Cetak Isi Baris Data Excel
+              dataJson.forEach(row => {
+                isiLaporanDivisiHtml += `<tr>`;
+                headers.forEach(h => {
+                  var val = (row[h] !== undefined && row[h] !== null) ? row[h] : '';
+                  // Coba format angka jika terlihat seperti nominal uang besar
+                  if (typeof val === 'number' && val > 1000) val = val.toLocaleString('id-ID');
+                  isiLaporanDivisiHtml += `<td style="border:solid windowtext 1.0pt; padding:4px;">${val}</td>`;
+                });
+                isiLaporanDivisiHtml += `</tr>`;
+              });
+              
+              isiLaporanDivisiHtml += `</tbody></table>`;
+            } 
+            else if (dataJson && dataJson._is_document) {
+              // Jika staf mengunggah PDF / Word
+              isiLaporanDivisiHtml += `
+                <br>
+                <h3 style="color: black; margin-bottom: 5px; text-transform: uppercase;">Laporan: ${r.jenis} (${r.im})</h3>
+                <p style="margin-top: 0; font-size: 10pt; color: #555;"><i>Dilaporkan oleh: ${r.petugas} | Divisi: ${r.divisi}</i></p>
+                <p style="border: 1px dashed gray; padding: 10px; background: #f9f9f9; text-align: center; font-size: 10pt; font-style: italic;">
+                  [ Laporan ini diunggah dalam format terpisah (${dataJson.filename}). Silakan unduh langsung melalui sistem. ]
+                </p>
+              `;
+            }
+          });
+
+          // ==========================================
+          // BAGIAN D: STRUKTUR DOKUMEN HTML WORD
           // ==========================================
           var wordHtmlContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -9583,7 +9638,7 @@
                 div.Section1 { page: Section1; }
                 body { 
                   font-family: 'Times New Roman', serif; 
-                  font-size: 12pt; 
+                  font-size: 11pt; 
                   line-height: 1.15; 
                   color: black;
                 }
@@ -9733,47 +9788,38 @@
                     <tr><td style="border: none;">ORGANIGRAM ISLAM MART</td><td style="border: none; text-align: right;">4</td></tr>
                     <tr><td style="border: none;">PENDAHULUAN</td><td style="border: none; text-align: right;">5</td></tr>
                     <tr><td style="border: none;">I. Data Karyawan</td><td style="border: none; text-align: right;">6</td></tr>
-                    <tr><td style="border: none;">A. Karyawan Aktif</td><td style="border: none; text-align: right;">6</td></tr>
-                    <tr><td style="border: none;">C. Grafik Pendidikan Karyawan Islam Mart</td><td style="border: none; text-align: right;">7</td></tr>
-                    <tr><td style="border: none;">D. Absensi Kehadiran Karyawan Islam Mart</td><td style="border: none; text-align: right;">8</td></tr>
-                    <tr><td style="border: none;">E. Laporan Check List Harian Kasir Islam Mart</td><td style="border: none; text-align: right;">10</td></tr>
-                    <tr><td style="border: none;">1. Islam Mart Banin</td><td style="border: none; text-align: right;">10</td></tr>
-                    <tr><td style="border: none;">2. Islam Mart Banat</td><td style="border: none; text-align: right;">10</td></tr>
-                    <tr><td style="border: none;">F. Laporan Check List Harian Gudang Islam Mart</td><td style="border: none; text-align: right;">11</td></tr>
-                    <tr><td style="border: none;">G. Check List Harian Keuangan Islam Mart</td><td style="border: none; text-align: right;">12</td></tr>
-                    <tr><td style="border: none;">H. Data Supplier</td><td style="border: none; text-align: right;">13</td></tr>
-                    <tr><td style="border: none;">I. Laporan Gudang Dan Toko</td><td style="border: none; text-align: right;">16</td></tr>
-                    <tr><td style="border: none;">J. Laporan Keuangan</td><td style="border: none; text-align: right;">25</td></tr>
-                    <tr><td style="border: none;">V. Penutup</td><td style="border: none; text-align: right;">61</td></tr>
-                    <tr><td style="border: none;">VI. Lampiran-Lampiran</td><td style="border: none; text-align: right;">65</td></tr>
+                    <tr><td style="border: none;">II. Indeks Penyerahan Dokumen</td><td style="border: none; text-align: right;">7</td></tr>
+                    <tr><td style="border: none;">III. Rincian Laporan Data Excel per Divisi</td><td style="border: none; text-align: right;">8</td></tr>
+                    <tr><td style="border: none;">V. Penutup</td><td style="border: none; text-align: right;">-</td></tr>
                   </table>
                 </div>
 
-                <!-- HALAMAN 5: ORGANIGRAM ISLAM MART -->
-                <div style="page-break-after: always; text-align: center;">
-                  <h2 style="color: black;">ORGANIGRAM ISLAM MART</h2>
-                  <p style="font-style: italic; color: gray;">(Bagan Organigram disisipkan melalui gambar manual)</p>
-                </div>
-
-                <!-- HALAMAN 6: PENDAHULUAN -->
+                <!-- HALAMAN 5: PENDAHULUAN -->
                 <div style="page-break-after: always;">
                   <h2 style="color: black;">PENDAHULUAN</h2>
                   <p class="paragraf-indent">Islam Mart merupakan unit usaha di bawah Yayasan Alam Islam Indonesia yang bergerak dalam bidang perdagangan ritel dan jasa. Islam Mart berlokasi di Kompleks Pondok Pesantren Modern Al Islam, Jalan Raya Cirebon – Kuningan, RT 12 RW 04, Desa Kondangsari, Kecamatan Beber, Kabupaten Cirebon, Jawa Barat. Awalnya, unit usaha ini dikenal dengan nama Koperasi Al Islam Mart. Namun, pada tanggal 1 November 2018, melalui peresmian oleh Ketua Yayasan Alam Islam Indonesia, Bapak H. Komarudin, nama tersebut diubah menjadi Islam Mart.</p>
                   <p class="paragraf-indent">Pada tahun 2014, Pondok Pesantren Modern Al Islam mulai beroperasi dengan jumlah santri sebanyak 201 orang. Karena lokasinya yang jauh dari pusat perdagangan dan adanya aturan pondok yang melarang santri untuk keluar tanpa wali atau alasan mendesak, banyak pengajar memulai usaha sambilan untuk memenuhi kebutuhan santri dan warga pondok. Namun, hal ini menyebabkan beberapa pengajar kurang fokus pada tugas utama mereka, dan menarik perhatian pihak luar untuk berjualan di area pondok.</p>
                   <p class="paragraf-indent">Melihat situasi tersebut, Yayasan Alam Islam Indonesia memutuskan untuk mendirikan satu unit usaha yang dapat memenuhi kebutuhan santri dan warga pondok. Pada Januari 2015, dibentuklah unit usaha bernama Al Islam Mart. Seiring waktu, Al Islam Mart berkembang dari sebuah kantin kecil menjadi toko ritel modern bernama Islam Mart, yang berlokasi di kompleks Banin (laki-laki) dan Banat (perempuan) Pondok Pesantren Modern Al Islam, masing-masing dengan luas sekitar 100 m².</p>
                   <p class="paragraf-indent">Islam Mart menyediakan berbagai barang, seperti makanan kering, minuman siap saji, minuman seduh, produk kebersihan, perlengkapan sekolah dan kantor, perlengkapan mandi, kebutuhan dapur, perlengkapan makan, obat-obatan, serta makanan basah yang dikirim setiap hari oleh supplier. Selain itu, Islam Mart juga menawarkan layanan jasa, seperti permak pakaian dan laundry.</p>
-                  <p class="paragraf-indent">Dalam perjalanannya, Islam Mart terus melakukan berbagai pembenahan dan perbaikan, termasuk rekrutmen karyawan, pelatihan, pembinaan, pengadaan tenaga ahli, perombakan manajemen, serta evaluasi berkala. Langkah-langkah ini bertujuan untuk mencapai target yang telah ditetapkan dan meningkatkan kualitas pelayanan kepada pelanggan.</p>
-                  <p class="paragraf-indent">Islam Mart memiliki visi dan misi untuk menjadi perusahaan ritel terbaik di Indonesia yang mampu memenuhi kebutuhan masyarakat sekaligus mendukung pengembangan perekonomian umat. Ke depan, Islam Mart berencana membuka gerai di luar Pondok Pesantren Modern Al Islam dan siap bersaing dengan jaringan ritel lainnya di Indonesia.</p>
                 </div>
 
-                <!-- HALAMAN 7: DATA KARYAWAN & LAPORAN -->
-                <h2 style="color: black; text-align: left;">I. Data Karyawan</h2>
-                <h3>A. Karyawan Aktif Sistem</h2>
-                ${tabelKaryawanHtml}
+                <!-- HALAMAN 6: DATA KARYAWAN & INDEKS -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black; text-align: left;">I. Data Karyawan</h2>
+                  <h3>A. Karyawan Aktif Sistem</h2>
+                  ${tabelKaryawanHtml}
 
-                <br>
-                <h2 style="color: black; text-align: left;">II. Indeks Penyerahan Dokumen Laporan (Otomatis dari Sistem)</h2>
-                ${tabelIndeksLaporan}
+                  <br>
+                  <h2 style="color: black; text-align: left;">II. Indeks Penyerahan Dokumen Laporan (Otomatis dari Sistem)</h2>
+                  ${tabelIndeksLaporan}
+                </div>
+
+                <!-- HALAMAN 7: ISI SELURUH TABEL EXCEL -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black; text-align: left;">III. Rincian Laporan Data per Divisi</h2>
+                  <p class="paragraf-indent">Berikut adalah rekapitulasi data yang diekstrak secara otomatis dari dokumen lampiran format Excel yang telah diunggah oleh setiap penanggung jawab divisi di Islam Mart.</p>
+                  ${isiLaporanDivisiHtml}
+                </div>
 
                 <!-- HALAMAN TERAKHIR: PENUTUP -->
                 <div style="page-break-before: always;">
