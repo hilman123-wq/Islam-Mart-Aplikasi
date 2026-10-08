@@ -5399,10 +5399,13 @@
        document.getElementById('previewZahirInput').click();
        return; 
      }  
-        // 2. Proses Penyaringan (Filtering)
+       // 2. Proses Penyaringan (Filtering)
         var dataSumber = (typeof cachedMasterBarang !== 'undefined' && cachedMasterBarang) ? cachedMasterBarang : [];
         
         window.filteredMasterItems = dataSumber.filter(it => {
+          // Sembunyikan barang Banned/Discontinue khusus dari pandangan Kasir
+          if (isRoleKasir && typeof getItemSpecialStamp === 'function' && getItemSpecialStamp(it) !== '') return false;
+
           var itemIM = String(it.im || 'Banin').trim().toLowerCase();
           
           var matchIM = true;
@@ -6721,8 +6724,11 @@
         if (!container) return;
 
         var isWali = isWaliSantri(currentUser);
-        // Hanya tampilkan barang yang bersih (tanpa stempel Banned/Karmin/Discontinue) untuk Wali Santri
-        var sourceList = isWali
+        var roleStr = String(currentUser ? currentUser.role : '').toLowerCase();
+        var isKasirUser = roleStr.includes('kasir') && !isUserAdmin(currentUser) && !roleStr.includes('kepala');
+
+        // Sembunyikan barang Banned/Karmin/Discontinue untuk Wali Santri DAN Kasir
+        var sourceList = (isWali || isKasirUser)
           ? window.filteredPoItems.filter(it => getItemSpecialStamp(it) === '')
           : window.filteredPoItems;
 
