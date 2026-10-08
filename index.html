@@ -9501,11 +9501,11 @@
             <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px;">
               <thead>
                 <tr style="background:#F2F2F2;">
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>No</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Nama Karyawan</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Divisi / Jabatan</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>Unit (IM)</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;"><b>No. Telepon / WA</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;"><b>No</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;"><b>Nama Karyawan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;"><b>Divisi / Jabatan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;"><b>Unit (IM)</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;"><b>No. WA</b></td>
                 </tr>
               </thead>
               <tbody>
@@ -9513,11 +9513,11 @@
           users.forEach((u, idx) => {
             tabelKaryawanHtml += `
               <tr>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${idx + 1}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${u.nama}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${u.role}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${u.im || 'Banin'}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${u.nowa || '-'}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${idx + 1}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px;">${u.nama}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px;">${u.role}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${u.im || 'Banin'}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${u.nowa || '-'}</td>
               </tr>
             `;
           });
@@ -9530,12 +9530,12 @@
             <table class="MsoNormalTable" border="1" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse; border:none; margin-bottom: 20px;">
               <thead>
                 <tr style="background:#F2F2F2;">
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center; width:5%;"><b>No</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:20%;"><b>Divisi</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:10%;"><b>Unit</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:25%;"><b>Nama Petugas</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; width:25%;"><b>Jenis Laporan</b></td>
-                  <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center; width:15%;"><b>Tanggal Unggah</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center; width:5%;"><b>No</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; width:20%;"><b>Divisi</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; width:10%;"><b>Unit</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; width:25%;"><b>Nama Petugas</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; width:25%;"><b>Jenis Laporan</b></td>
+                  <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center; width:15%;"><b>Tanggal Unggah</b></td>
                 </tr>
               </thead>
               <tbody>
@@ -9544,12 +9544,12 @@
             var tglStr = new Date(r.created_at).toLocaleDateString('id-ID');
             tabelIndeksLaporan += `
               <tr>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${idx + 1}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;"><b>${r.divisi}</b></td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${r.im}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${r.petugas}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt;">${r.jenis}</td>
-                <td style="border:solid windowtext 1.0pt; padding:0in 5.4pt 0in 5.4pt; text-align:center;">${tglStr}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${idx + 1}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px;"><b>${r.divisi}</b></td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${r.im}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px;">${r.petugas}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px;">${r.jenis}</td>
+                <td style="border:solid windowtext 1.0pt; padding:6px; text-align:center;">${tglStr}</td>
               </tr>
             `;
           });
@@ -9583,7 +9583,7 @@
                 div.Section1 { page: Section1; }
                 body { 
                   font-family: 'Times New Roman', serif; 
-                  font-size: 11pt; 
+                  font-size: 12pt; 
                   line-height: 1.15; 
                   color: black;
                 }
@@ -9634,6 +9634,21 @@
                 }
                 .text-center { text-align: center; }
                 .text-bold { font-weight: bold; }
+                .highlight-title {
+                    color: #8CC63F; 
+                    text-align: center; 
+                    font-size: 32pt; 
+                    font-weight: bold; 
+                    margin-top: 3in; 
+                    margin-bottom: 0;
+                }
+                .highlight-subtitle {
+                    color: #FFC000; 
+                    text-align: center; 
+                    font-size: 24pt; 
+                    font-weight: bold; 
+                    margin-top: 10px;
+                }
               </style>
             </head>
             <body>
@@ -9641,23 +9656,12 @@
                 
                 <!-- HALAMAN 1: SAMPUL (COVER) -->
                 <div class="cover-page">
-                  <div class="cover-title">Islam Mart</div>
-                  <div class="cover-subtitle">LAPORAN KERJA BULANAN</div>
-                  <div class="cover-subtitle" style="font-size: 18pt;">${judulBulanTahun}</div>
+                  <h1 class="highlight-title">Islam Mart</h1>
+                  <h2 class="highlight-subtitle">LAPORAN KERJA BULANAN</h2>
+                  <h2 class="highlight-subtitle" style="font-size: 18pt;">${judulBulanTahun}</h2>
                 </div>
 
-                <!-- HALAMAN 2: KATA PENGANTAR -->
-                <div style="page-break-after: always;">
-                  <h2 style="color: black;">KATA PENGANTAR</h2>
-                  <p class="paragraf-indent">Segala puji bagi Allah SWT yang telah melimpahkan rahmat dan karunia-Nya, sehingga kami dapat menyelesaikan Laporan Kerja Bulanan ini dengan baik, insyaa Allah. Shalawat dan salam semoga senantiasa tercurahkan kepada Nabi Muhammad SAW, keluarga beliau, para sahabat, serta semua umat yang istiqamah mengikuti petunjuk yang benar. Amma ba’du.</p>
-                  <p class="paragraf-indent">Allah SWT berfirman dalam surat Al-Muddassir ayat 38: "Tiap-tiap diri bertanggung jawab atas apa yang telah diperbuatnya." Rasulullah SAW juga bersabda: "Setiap kalian adalah pemimpin, dan setiap pemimpin akan dimintai pertanggungjawaban atas kepemimpinannya."</p>
-                  <p class="paragraf-indent">Sejalan dengan pesan tersebut, laporan ini kami susun sebagai bentuk pertanggungjawaban kepada Pembina Yayasan Pondok Pesantren Modern Al-Islam atas pelaksanaan kegiatan operasional Islam Mart. Penyusunan laporan ini telah kami lakukan dengan sebaik-baiknya, penuh ketelitian, dan kehati-hatian.</p>
-                  <p class="paragraf-indent">Kami menyadari bahwa laporan ini masih jauh dari sempurna, baik dari segi penulisan maupun penyajian. Oleh karena itu, kami sangat mengharapkan kritik, saran, serta masukan yang membangun sebagai bahan evaluasi demi perbaikan yang berkelanjutan.</p>
-                  <p class="paragraf-indent">Ucapan terima kasih kami sampaikan kepada pimpinan yang telah memberikan kepercayaan, bimbingan, dan arahan, serta kepada semua pihak yang telah berkontribusi dalam mendukung kegiatan operasional Islam Mart.</p>
-                  <p class="paragraf-indent">Semoga laporan ini bermanfaat bagi semua pihak yang berkepentingan dan dapat menjadi acuan dalam pengambilan keputusan serta kebijakan pengurus manajemen operasional Islam Mart.</p>
-                </div>
-
-                <!-- HALAMAN 3: LEMBAR PENGESAHAN -->
+                <!-- HALAMAN 2: LEMBAR PENGESAHAN -->
                 <div style="page-break-after: always;">
                   <h2 style="color: black;">LEMBAR PENGESAHAN</h2>
                   <p style="text-align: right; margin-bottom: 40px;">Cirebon, ...................... ${tahun}</p>
@@ -9700,7 +9704,7 @@
                         <p style="margin: 0; text-decoration: underline; font-weight: bold;">Ust. Muhammad Ibrahiem, S.Pd.I., M.Pd.</p>
                       </td>
                       <td style="width: 50%; border: none;">
-                        <p style="margin: 0;">Kepala Bidang Islam Mart</p>
+                        <p style="margin: 0;">Kepala Islam Mart</p>
                         <br><br><br>
                         <p style="margin: 0; text-decoration: underline; font-weight: bold;">Ust. Eja Suteja, S.E.</p>
                       </td>
@@ -9708,37 +9712,90 @@
                   </table>
                 </div>
 
-                <!-- HALAMAN 4: PENDAHULUAN -->
+                <!-- HALAMAN 3: KATA PENGANTAR -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black;">KATA PENGANTAR</h2>
+                  <p class="paragraf-indent">Segala puji bagi Allah SWT yang telah melimpahkan rahmat dan karunia-Nya, sehingga kami dapat menyelesaikan Laporan Kerja Bulanan ini dengan baik, insyaa Allah. Shalawat dan salam semoga senantiasa tercurahkan kepada Nabi Muhammad SAW, keluarga beliau, para sahabat, serta semua umat yang istiqamah mengikuti petunjuk yang benar. Amma ba’du.</p>
+                  <p class="paragraf-indent">Allah SWT berfirman dalam surat Al-Muddassir ayat 38: "Tiap-tiap diri bertanggung jawab atas apa yang telah diperbuatnya." Rasulullah SAW juga bersabda: "Setiap kalian adalah pemimpin, dan setiap pemimpin akan dimintai pertanggungjawaban atas kepemimpinannya."</p>
+                  <p class="paragraf-indent">Sejalan dengan pesan tersebut, laporan ini kami susun sebagai bentuk pertanggungjawaban kepada Pembina Yayasan Pondok Pesantren Modern Al-Islam atas pelaksanaan kegiatan operasional Islam Mart. Penyusunan laporan ini telah kami lakukan dengan sebaik-baiknya, penuh ketelitian, dan kehati-hatian.</p>
+                  <p class="paragraf-indent">Kami menyadari bahwa laporan ini masih jauh dari sempurna, baik dari segi penulisan maupun penyajian. Oleh karena itu, kami sangat mengharapkan kritik, saran, serta masukan yang membangun sebagai bahan evaluasi demi perbaikan yang berkelanjutan.</p>
+                  <p class="paragraf-indent">Ucapan terima kasih kami sampaikan kepada pimpinan yang telah memberikan kepercayaan, bimbingan, dan arahan, serta kepada semua pihak yang telah berkontribusi dalam mendukung kegiatan operasional Islam Mart.</p>
+                  <p class="paragraf-indent">Semoga laporan ini bermanfaat bagi semua pihak yang berkepentingan dan dapat menjadi acuan dalam pengambilan keputusan serta kebijakan pengurus manajemen operasional Islam Mart.</p>
+                </div>
+
+                <!-- HALAMAN 4: DAFTAR ISI -->
+                <div style="page-break-after: always;">
+                  <h2 style="color: black;">DAFTAR ISI</h2>
+                  <table style="width: 100%; border: none;">
+                    <tr><td style="border: none;">LEMBAR PENGESAHAN</td><td style="border: none; text-align: right;">i</td></tr>
+                    <tr><td style="border: none;">KATA PENGANTAR</td><td style="border: none; text-align: right;">ii</td></tr>
+                    <tr><td style="border: none;">DAFTAR ISI</td><td style="border: none; text-align: right;">iii</td></tr>
+                    <tr><td style="border: none;">ORGANIGRAM ISLAM MART</td><td style="border: none; text-align: right;">4</td></tr>
+                    <tr><td style="border: none;">PENDAHULUAN</td><td style="border: none; text-align: right;">5</td></tr>
+                    <tr><td style="border: none;">I. Data Karyawan</td><td style="border: none; text-align: right;">6</td></tr>
+                    <tr><td style="border: none;">A. Karyawan Aktif</td><td style="border: none; text-align: right;">6</td></tr>
+                    <tr><td style="border: none;">C. Grafik Pendidikan Karyawan Islam Mart</td><td style="border: none; text-align: right;">7</td></tr>
+                    <tr><td style="border: none;">D. Absensi Kehadiran Karyawan Islam Mart</td><td style="border: none; text-align: right;">8</td></tr>
+                    <tr><td style="border: none;">E. Laporan Check List Harian Kasir Islam Mart</td><td style="border: none; text-align: right;">10</td></tr>
+                    <tr><td style="border: none;">1. Islam Mart Banin</td><td style="border: none; text-align: right;">10</td></tr>
+                    <tr><td style="border: none;">2. Islam Mart Banat</td><td style="border: none; text-align: right;">10</td></tr>
+                    <tr><td style="border: none;">F. Laporan Check List Harian Gudang Islam Mart</td><td style="border: none; text-align: right;">11</td></tr>
+                    <tr><td style="border: none;">G. Check List Harian Keuangan Islam Mart</td><td style="border: none; text-align: right;">12</td></tr>
+                    <tr><td style="border: none;">H. Data Supplier</td><td style="border: none; text-align: right;">13</td></tr>
+                    <tr><td style="border: none;">I. Laporan Gudang Dan Toko</td><td style="border: none; text-align: right;">16</td></tr>
+                    <tr><td style="border: none;">J. Laporan Keuangan</td><td style="border: none; text-align: right;">25</td></tr>
+                    <tr><td style="border: none;">V. Penutup</td><td style="border: none; text-align: right;">61</td></tr>
+                    <tr><td style="border: none;">VI. Lampiran-Lampiran</td><td style="border: none; text-align: right;">65</td></tr>
+                  </table>
+                </div>
+
+                <!-- HALAMAN 5: ORGANIGRAM ISLAM MART -->
+                <div style="page-break-after: always; text-align: center;">
+                  <h2 style="color: black;">ORGANIGRAM ISLAM MART</h2>
+                  <p style="font-style: italic; color: gray;">(Bagan Organigram disisipkan melalui gambar manual)</p>
+                </div>
+
+                <!-- HALAMAN 6: PENDAHULUAN -->
                 <div style="page-break-after: always;">
                   <h2 style="color: black;">PENDAHULUAN</h2>
                   <p class="paragraf-indent">Islam Mart merupakan unit usaha di bawah Yayasan Alam Islam Indonesia yang bergerak dalam bidang perdagangan ritel dan jasa. Islam Mart berlokasi di Kompleks Pondok Pesantren Modern Al Islam, Jalan Raya Cirebon – Kuningan, RT 12 RW 04, Desa Kondangsari, Kecamatan Beber, Kabupaten Cirebon, Jawa Barat. Awalnya, unit usaha ini dikenal dengan nama Koperasi Al Islam Mart. Namun, pada tanggal 1 November 2018, melalui peresmian oleh Ketua Yayasan Alam Islam Indonesia, Bapak H. Komarudin, nama tersebut diubah menjadi Islam Mart.</p>
                   <p class="paragraf-indent">Pada tahun 2014, Pondok Pesantren Modern Al Islam mulai beroperasi dengan jumlah santri sebanyak 201 orang. Karena lokasinya yang jauh dari pusat perdagangan dan adanya aturan pondok yang melarang santri untuk keluar tanpa wali atau alasan mendesak, banyak pengajar memulai usaha sambilan untuk memenuhi kebutuhan santri dan warga pondok. Namun, hal ini menyebabkan beberapa pengajar kurang fokus pada tugas utama mereka, dan menarik perhatian pihak luar untuk berjualan di area pondok.</p>
                   <p class="paragraf-indent">Melihat situasi tersebut, Yayasan Alam Islam Indonesia memutuskan untuk mendirikan satu unit usaha yang dapat memenuhi kebutuhan santri dan warga pondok. Pada Januari 2015, dibentuklah unit usaha bernama Al Islam Mart. Seiring waktu, Al Islam Mart berkembang dari sebuah kantin kecil menjadi toko ritel modern bernama Islam Mart, yang berlokasi di kompleks Banin (laki-laki) dan Banat (perempuan) Pondok Pesantren Modern Al Islam, masing-masing dengan luas sekitar 100 m².</p>
-                  <p class="paragraf-indent">Dalam perjalanannya, Islam Mart terus melakukan berbagai pembenahan dan perbaikan, termasuk rekrutmen karyawan, pelatihan, pembinaan, pengadaan tenaga ahli, perombakan manajemen, serta evaluasi berkala. Langkah-langkah ini bertujuan untuk mencapai target yang telah ditetapkan dan meningkatkan kualitas pelayanan kepada pelanggan. Islam Mart memiliki visi dan misi untuk menjadi perusahaan ritel terbaik di Indonesia yang mampu memenuhi kebutuhan masyarakat sekaligus mendukung pengembangan perekonomian umat.</p>
+                  <p class="paragraf-indent">Islam Mart menyediakan berbagai barang, seperti makanan kering, minuman siap saji, minuman seduh, produk kebersihan, perlengkapan sekolah dan kantor, perlengkapan mandi, kebutuhan dapur, perlengkapan makan, obat-obatan, serta makanan basah yang dikirim setiap hari oleh supplier. Selain itu, Islam Mart juga menawarkan layanan jasa, seperti permak pakaian dan laundry.</p>
+                  <p class="paragraf-indent">Dalam perjalanannya, Islam Mart terus melakukan berbagai pembenahan dan perbaikan, termasuk rekrutmen karyawan, pelatihan, pembinaan, pengadaan tenaga ahli, perombakan manajemen, serta evaluasi berkala. Langkah-langkah ini bertujuan untuk mencapai target yang telah ditetapkan dan meningkatkan kualitas pelayanan kepada pelanggan.</p>
+                  <p class="paragraf-indent">Islam Mart memiliki visi dan misi untuk menjadi perusahaan ritel terbaik di Indonesia yang mampu memenuhi kebutuhan masyarakat sekaligus mendukung pengembangan perekonomian umat. Ke depan, Islam Mart berencana membuka gerai di luar Pondok Pesantren Modern Al Islam dan siap bersaing dengan jaringan ritel lainnya di Indonesia.</p>
                 </div>
 
-                <!-- HALAMAN 5: DATA KARYAWAN & LAPORAN -->
-                <h2 style="color: black;">REKAPITULASI DOKUMEN LAPORAN & DATA KARYAWAN</h2>
-                <h3>A. Data Karyawan Aktif Sistem</h2>
+                <!-- HALAMAN 7: DATA KARYAWAN & LAPORAN -->
+                <h2 style="color: black; text-align: left;">I. Data Karyawan</h2>
+                <h3>A. Karyawan Aktif Sistem</h2>
                 ${tabelKaryawanHtml}
 
                 <br>
-                <h3>B. Indeks Penyerahan Dokumen Laporan (Otomatis dari Sistem)</h2>
+                <h2 style="color: black; text-align: left;">II. Indeks Penyerahan Dokumen Laporan (Otomatis dari Sistem)</h2>
                 ${tabelIndeksLaporan}
 
-                <br><br><br>
-                <table style="width: 100%; border: none;">
-                  <tr style="border: none;">
-                    <td style="border: none; text-align: center; width: 50%;"></td>
-                    <td style="border: none; text-align: center; width: 50%;">
-                      <p>Kondangsari, ........................ ${tahun}</p>
-                      <p>Mengesahkan kelengkapan dokumen,</p>
-                      <p>Kepala Administrasi Islam Mart</p>
-                      <br><br><br>
-                      <p style="font-weight: bold; text-decoration: underline;">${currentUser.nama}</p>
-                    </td>
-                  </tr>
-                </table>
+                <!-- HALAMAN TERAKHIR: PENUTUP -->
+                <div style="page-break-before: always;">
+                  <h2 style="color: black; text-align: left;">V. Penutup</h2>
+                  <p class="paragraf-indent">Demikian laporan kerja bulanan ini kami susun dengan sebaik-baiknya sebagai bentuk tanggung jawab kepada Pembina Yayasan Pondok Pesantren Modern Al-Islam. Kami menyadari bahwa laporan ini masih memiliki kekurangan, baik dari segi penyajian data maupun kelengkapan informasi. Oleh karena itu, kami senantiasa terbuka menerima kritik dan saran yang membangun demi perbaikan di masa mendatang.</p>
+                  <p class="paragraf-indent">Kami mengucapkan terima kasih yang sebesar-besarnya kepada semua pihak yang telah memberikan dukungan, baik secara langsung maupun tidak langsung, sehingga kegiatan operasional Islam Mart dapat berjalan dengan lancar. Semoga laporan ini dapat bermanfaat bagi semua pihak yang berkepentingan dan menjadi acuan dalam pengambilan keputusan strategis di masa depan.</p>
+                  <p class="paragraf-indent">Akhir kata, kami berharap semoga Allah SWT senantiasa memberikan keberkahan dan kemudahan dalam setiap langkah yang kita tempuh. Aamiin.</p>
+                
+                  <br><br><br>
+                  <table style="width: 100%; border: none;">
+                    <tr style="border: none;">
+                      <td style="border: none; text-align: center; width: 50%;"></td>
+                      <td style="border: none; text-align: center; width: 50%;">
+                        <p style="margin-bottom: 0;">Kondangsari, .................................... ${tahun}</p>
+                        <p style="margin-top: 0;">Mengetahui,</p>
+                        <p style="margin-top: 0;">Kepala Administrasi Islam Mart</p>
+                        <br><br><br>
+                        <p style="font-weight: bold; text-decoration: underline; margin-bottom: 0;">${currentUser.nama}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
 
               </div>
             </body>
