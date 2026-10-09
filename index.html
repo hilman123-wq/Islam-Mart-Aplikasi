@@ -7937,75 +7937,19 @@
       // ==========================================
       // CEKLIS & INDIKATOR & RIWAYAT & LAPORAN BULANAN
       // ==========================================
-      // ==========================================
-      // CEKLIS & INDIKATOR & RIWAYAT & LAPORAN BULANAN
-      // ==========================================
       async function loadCriteriaAndBuildForms() {
         try {
-          // Gunakan maybeSingle() agar tidak error meskipun database masih kosong
+          // Ambil data murni dari database tanpa campur tangan reset otomatis
           const { data, error } = await supaClient.from('app_settings').select('data').eq('id', 'criteria').maybeSingle();
           
           cachedCriteria = (data && data.data) ? data.data : {};
-          var isNeedUpdate = false;
 
-          // 1. AUTO-INJECT KASIR (CLHK)
-          if (!cachedCriteria.CLHK || Object.keys(cachedCriteria.CLHK).length === 0) {
-            cachedCriteria.CLHK = {
-              cat1: { name: "Membersihkan Toko", items: ["Menyapu area toko", "Mengepel lantai toko", "Membersihkan kaca pintu & jendela", "Membuang sampah pada tempatnya"] },
-              cat2: { name: "Melayani Konsumen", items: ["Senyum, Salam, Sapa (3S)", "Menawarkan kantong belanja/kardus", "Mengucapkan terima kasih"] },
-              cat3: { name: "Membersihkan Shelving", items: ["Membersihkan debu di rak barang", "Merapikan letak barang (Maju ke depan)"] },
-              cat4: { name: "Kedisiplinan", items: ["Hadir tepat waktu", "Memakai seragam rapi & ID Card", "Tidak main HP saat melayani"] },
-              cat5: { name: "Display Barang", items: ["Mendisplay barang kosong dari gudang", "Mengecek label harga (Price Tag) sesuai", "Cek Expired Date (FEFO)"] },
-              cat6: { name: "Pro Aktif", items: ["Menawarkan produk promo", "Membantu mengepak barang grosir", "Membantu membersihkan area kasir"] }
-            };
-            isNeedUpdate = true;
-          }
-
-          // 2. AUTO-INJECT GUDANG (CLHG)
-          if (!cachedCriteria.CLHG || Object.keys(cachedCriteria.CLHG).length === 0) {
-            cachedCriteria.CLHG = {
-              cat1: { name: "Manajemen Order & PO", items: ["Melakukan Pembagian Tugas Kasir", "Membuat Ajuan PO atau Orderan", "Menganalisa Produk (Fast, Slow, Dead Moving)", "Tidak ada barang yang discontinue (Lost Sell)"] },
-              cat2: { name: "Penerimaan & Tata Letak", items: ["Menata Gudang Dengan Baik", "Menerima Barang dari Supplier", "Melakukan Input Barang Dengan Update"] },
-              cat3: { name: "Evaluasi & Kontrol", items: ["Menekan Barang Badstock", "Mengajukan Harga Jual", "Tidak Ada Pending Transaksi"] },
-              cat4: { name: "Administrasi", items: ["Pro Aktif", "Membuat Laporan Mingguan", "Membuat Laporan Bulanan Maksimal Tgl 3"] }
-            };
-            isNeedUpdate = true;
-          }
-
-          // 3. AUTO-INJECT KEUANGAN (CLHKA)
-          if (!cachedCriteria.CLHKA || Object.keys(cachedCriteria.CLHKA).length === 0) {
-            cachedCriteria.CLHKA = {
-              cat1: { name: "Transaksi Kasir & Brankas", items: ["Serah Terima Modal", "Mencatat Serah Terima Omzet", "Merapihkan uang di Brankas", "Tidak Menyimpan uang sembarangan", "SO Brankas"] },
-              cat2: { name: "Jurnal & Pembukuan", items: ["Input transaksi KM/KK", "Jurnal Biaya-biaya", "Melakukan Posting", "Melakukan Jurnal Penyesuaian", "Mengarsip Dokumen KK/KM"] },
-              cat3: { name: "Evaluasi Khusus", items: ["Mengajukan Harga Jual", "Tidak Ada Pending Transaksi", "Pro Aktif", "Membuat Laporan Mingguan", "Membuat Laporan Bulanan Maksimal Tgl 3"] }
-            };
-            isNeedUpdate = true;
-          }
-
-          // 4. AUTO-INJECT PERMAK (CLHP)
-          if (!cachedCriteria.CLHP || Object.keys(cachedCriteria.CLHP).length === 0) {
-            cachedCriteria.CLHP = {
-              cat1: { name: "Area Kerja & Pelayanan", items: ["Membersihkan area kerja", "Menerima orderan dengan ramah", "Memberikan nota/tanda terima", "Memberikan estimasi waktu selesai"] },
-              cat2: { name: "Permak & Produksi", items: ["Menjahit dengan rapi dan kuat", "Memotong sesuai ukuran", "Membuat pola & produksi sesuai target harian", "Mengecek kembali hasil jahitan (QC)"] },
-              cat3: { name: "Kedisiplinan & Alat", items: ["Hadir tepat waktu & seragam rapi", "Menyelesaikan target tepat waktu", "Memberi pelumas pada mesin jahit", "Mengecek ketajaman jarum & dinamo mesin"] }
-            };
-            isNeedUpdate = true;
-          }
-
-          // 5. AUTO-INJECT PURCHASING (CLHDP)
-          if (!cachedCriteria.CLHDP || Object.keys(cachedCriteria.CLHDP).length === 0) {
-            cachedCriteria.CLHDP = {
-              cat1: { name: "Kebersihan & Disiplin", items: ["Membersihkan Mobil", "Membersihkan Area Toko/Kantor", "Datang tepat waktu", "Melakukan serah terima barang"] },
-              cat2: { name: "Ketepatan Barang & Surat", items: ["Belanja sesuai PO", "Bongkaran barang tidak ditunda", "Tidak ada barang rusak/expired", "Cek KIR, Plat TNKB, dan STNK"] },
-              cat3: { name: "Maintenance & Proaktif", items: ["Cek Oli, Tune Up, Radiator, Air Wiper", "Menghadiri Briefing harian", "Berkoordinasi jika barang tidak sesuai PO", "Tidak ada selisih setoran"] }
-            };
-            isNeedUpdate = true;
-          }
-
-          // Simpan kembali ke database agar paten jika baru dipulihkan
-          if (isNeedUpdate) {
-            await supaClient.from('app_settings').upsert({ id: 'criteria', data: cachedCriteria });
-          }
+          // Pastikan kerangka wadahnya ada agar tidak error, tapi JANGAN timpa isi databasenya
+          if (!cachedCriteria.CLHK) cachedCriteria.CLHK = {};
+          if (!cachedCriteria.CLHG) cachedCriteria.CLHG = {};
+          if (!cachedCriteria.CLHKA) cachedCriteria.CLHKA = {};
+          if (!cachedCriteria.CLHP) cachedCriteria.CLHP = {};
+          if (!cachedCriteria.CLHDP) cachedCriteria.CLHDP = {};
 
           buildChecklistForm('CLHK', cachedCriteria.CLHK); 
           buildChecklistForm('CLHG', cachedCriteria.CLHG); 
