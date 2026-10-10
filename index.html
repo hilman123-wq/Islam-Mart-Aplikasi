@@ -2235,9 +2235,10 @@
               <div id="wrapFilterBazarIM">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Unit Bazar</label>
                 <select id="filterBazarIM" onchange="renderAllBazarData()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
-                  <option value="ALL">Semua Unit (Banin & Banat)</option>
+                  <option value="ALL">Semua Unit (Banin, Banat & Kantin)</option>
                   <option value="Banin">Stok & Laporan Bazar Banin</option>
                   <option value="Banat">Stok & Laporan Bazar Banat</option>
+                  <option value="Kantin Daycare">Stok & Laporan Kantin Daycare</option>
                 </select>
               </div>
               <div>
@@ -2354,9 +2355,10 @@
               <div>
                 <select id="filterBazarStokIM" onchange="renderAllBazarData()"
                   class="w-full p-2.5 bg-white border rounded-xl text-[11px] sm:text-xs font-bold text-slate-700">
-                  <option value="ALL">Semua Unit (Banin & Banat)</option>
+                  <option value="ALL">Semua Unit (Banin, Banat & Kantin)</option>
                   <option value="Banin">Khusus Bazar Banin</option>
                   <option value="Banat">Khusus Bazar Banat</option>
+                  <option value="Kantin Daycare">Khusus Kantin Daycare</option>
                 </select>
               </div>
             </div>
@@ -2459,6 +2461,7 @@
                     class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
                     <option value="Banin">Bazar Banin</option>
                     <option value="Banat">Bazar Banat</option>
+                    <option value="Kantin Daycare">Kantin Daycare</option>
                   </select>
                 </div>
                 <div>
@@ -4003,6 +4006,7 @@
             <select id="importBazarIM" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
               <option value="Banin">Bazar Banin</option>
               <option value="Banat">Bazar Banat</option>
+              <option value="Kantin Daycare">Kantin Daycare</option>
             </select>
           </div>
           <div>
@@ -4605,17 +4609,23 @@
         if (btmPermak) btmPermak.style.display = 'none';
         if (btmPurchasing) btmPurchasing.style.display = 'none'
 
-        // ATURAN KHUSUS BAZAR BANIN & BANAT (Tanpa Menu Arsip)
-        if (isBazar) {
+       // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
+        var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
+        
+        if (isBazar || isKantin) {
           if (btmBeranda) {
             btmBeranda.style.display = 'flex';
             btmBeranda.onclick = function() { switchBazarSubMenu('DASHBOARD'); };
           }
-          if (btmBazarKasir) btmBazarKasir.style.display = 'flex';
+          if (btmBazarKasir) {
+            btmBazarKasir.style.display = 'flex';
+            // Ubah teks menu bawah jadi "Kasir Kantin" jika yang login adalah Kantin
+            if (isKantin) btmBazarKasir.querySelector('span').innerText = 'Kasir Kantin';
+          }
           if (btmBazarNota) btmBazarNota.style.display = 'flex';
           if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'flex';
           if (btmBazarBarang) btmBazarBarang.style.display = 'flex';
-          if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip
+          if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip Lapbul
         }
         
         // ATURAN KHUSUS WALI SANTRI (Sembunyikan Bottom Bar, Logo Header, & tampilkan Ikon Riwayat di atas)
@@ -4725,9 +4735,12 @@
         loadUsersForDropdowns();
         loadMasterBarangAutocompleteData();
 
-        // Arahkan langsung sesuai Role (Wali Santri langsung masuk ke Belanja tanpa Dashboard)
+       // Arahkan langsung sesuai Role (Wali Santri langsung masuk ke Belanja tanpa Dashboard)
         if (isBazar) {
           currentUser.im = bazarUnit;
+          switchTab('bazar-management');
+        } else if (isKantin) {
+          currentUser.im = 'Kantin Daycare';
           switchTab('bazar-management');
         } else if (isWali) {
           switchTab('order-create');
@@ -10078,15 +10091,22 @@
         var isAdmin = isUserAdmin(currentUser) || roleStr.includes('kepala administrasi');
         var selIM = document.getElementById('filterBazarIM');
         var badge = document.getElementById('bazarUnitBadge');
+        var titleHeader = document.getElementById('bazarTitleHeader');
 
-        if (!isAdmin && (roleStr.includes('bazar') || unameStr.includes('bzr') || unameStr.includes('bazar'))) {
-          var myUnit = (roleStr.includes('banat') || unameStr.includes('banat')) ? 'Banat' : 'Banin';
+        var isBazar = roleStr.includes('bazar') || unameStr.includes('bzr');
+        var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
+
+        if (!isAdmin && (isBazar || isKantin)) {
+          var myUnit = isKantin ? 'Kantin Daycare' : ((roleStr.includes('banat') || unameStr.includes('banat')) ? 'Banat' : 'Banin');
           if (selIM) { selIM.value = myUnit; selIM.disabled = true; }
-          if (badge) badge.innerText = 'Khusus Bazar ' + myUnit;
+          if (badge) badge.innerText = isKantin ? 'Unit Kantin' : ('Khusus Bazar ' + myUnit);
+          if (titleHeader) titleHeader.innerText = isKantin ? 'Dashboard Kantin Daycare' : 'Dashboard Operasional Bazar';
         } else {
           if (selIM) selIM.disabled = false;
-          if (badge) badge.innerText = 'Banin & Banat';
+          if (badge) badge.innerText = 'Banin, Banat & Kantin';
+          if (titleHeader) titleHeader.innerText = 'Dashboard Pusat Terpadu';
         }
+        
         switchBazarSubMenu('DASHBOARD');
         loadBazarData(forceRefresh);
       }
