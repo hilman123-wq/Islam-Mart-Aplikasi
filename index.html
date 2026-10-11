@@ -4810,14 +4810,16 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
-        // ATURAN 7: SARPRAS
+       // ATURAN 7: SARPRAS
         else if (roleStr.includes('sarpras')) {
-          if (btmForm) btmForm.style.display = 'flex';
-          if (btmSarpras) btmSarpras.style.display = 'flex';
-          if (btmLaporan) btmLaporan.style.display = 'flex';
+          if (btmBeranda) btmBeranda.style.display = 'none'; // Sembunyikan Beranda Umum
+          if (btmForm) btmForm.style.display = 'none'; // Sembunyikan tombol hijau "Isi Form"
           
-          if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
-          if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
+          if (btmSarpras) btmSarpras.style.display = 'flex'; // Ceklis Sarpras
+          if (btmMasterAset) btmMasterAset.style.display = 'flex'; // Data Aset
+          if (btmLaporan) btmLaporan.style.display = 'flex'; // Upload Laporan
+          
+          if (btmMenu) btmMenu.style.display = 'none';
         }
 
         // Atur visibilitas Header Logo, Bottom Bar, & Ikon Riwayat Pojok Kanan Atas khusus Wali Santri
@@ -4877,6 +4879,8 @@
         loadMasterBarangAutocompleteData();
 
        // Arahkan langsung sesuai Role (Wali Santri langsung masuk ke Belanja tanpa Dashboard)
+        var isSarpras = roleStr.includes('sarpras'); // Deklarasikan peran sarpras
+        
         if (isBazar) {
           currentUser.im = bazarUnit;
           switchTab('bazar-management');
@@ -4885,8 +4889,10 @@
           switchTab('bazar-management');
         } else if (isWali) {
           switchTab('order-create');
+        } else if (isSarpras) {
+          switchTab('master-aset'); // <--- Arahkan khusus Sarpras ke tabel Aset
         } else {
-          switchTab('dashboard');
+          switchTab('dashboard'); // Admin, Kasir, Gudang, dll ke sini
         }
       }
 
