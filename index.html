@@ -388,6 +388,16 @@
               <span>Ceklis Purchasing (CLHDP)</span>
             </button>
 
+            <button onclick="switchTab('clhs-form')" id="nav-clhs-form"
+              class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+              <i class="fa-solid fa-clipboard-check w-5 text-center text-emerald-400"></i>
+              <span>Ceklis Sarpras (CLHS)</span>
+            </button>
+            <button onclick="switchTab('master-aset')" id="nav-master-aset"
+              class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition">
+              <i class="fa-solid fa-boxes-packing w-5 text-center text-amber-400"></i>
+              <span>Master Data Aset</span>
+            </button>
             <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-3 pb-1">Laporan &
               Evaluasi</div>
             <button onclick="switchTab('weekly-report')" id="nav-weekly-report"
@@ -1619,6 +1629,115 @@
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <span>Kirim Ceklis Purchasing</span>
               </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB: CEKLIS SARPRAS (CLHS) -->
+        <!-- ========================================================================= -->
+        <section id="tab-clhs-form" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div>
+                  <h2 class="text-sm sm:text-base font-black text-slate-800">Ceklis Harian Sarpras (CLHS)</h2>
+                  <p class="text-[11px] sm:text-xs text-slate-500">Pengecekan aset tetap & kontrol stok habis pakai.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl">
+                <span class="text-xs font-bold text-emerald-900">Skor Langsung:</span>
+                <span id="clhsLiveScore" class="text-xl font-black text-emerald-700">0.0</span>
+                <span id="clhsLiveGrade" class="px-2 py-0.5 rounded text-xs font-black bg-emerald-200 text-emerald-900">E</span>
+              </div>
+            </div>
+
+            <!-- Form Identitas Ceklis Sarpras -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Tanggal Tugas *</label>
+                <input type="date" id="clhsTanggal" required class="w-full p-2 bg-white border rounded-xl font-bold">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Nama Petugas *</label>
+                <input type="text" id="clhsNama" readonly class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-700 cursor-not-allowed">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 uppercase mb-1">Unit Toko *</label>
+                <input type="text" id="clhsIM" readonly class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-700 cursor-not-allowed">
+              </div>
+            </div>
+
+            <div id="clhsCategoriesContainer" class="space-y-4"></div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Catatan Tambahan Sarpras</label>
+              <textarea id="clhsCatatan" rows="2" placeholder="Tulis kerusakan aset, jadwal servis, atau stok plastik yang habis..." class="w-full p-2.5 bg-slate-50 border rounded-xl text-xs font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500"></textarea>
+            </div>
+
+            <div class="flex justify-end pt-3 border-t">
+              <button type="button" onclick="submitChecklist('CLHS')" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs shadow active:scale-95 transition flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Kirim Ceklis Sarpras</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB: MASTER ASET -->
+        <!-- ========================================================================= -->
+        <section id="tab-master-aset" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 w-full overflow-hidden">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-boxes-packing text-amber-600"></i>
+                  <span>Master Data Aset & Inventaris</span>
+                </h2>
+                <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Data aset tetap (komputer, kulkas) & habis pakai (struk, plastik).</p>
+              </div>
+              <button type="button" onclick="openAsetFormModal()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                <i class="fa-solid fa-plus"></i> Tambah Aset
+              </button>
+            </div>
+
+            <!-- Filter & Tabel (Placeholder Sementara agar UI rapi) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <input type="text" id="filterAsetSearch" oninput="loadMasterAset()" placeholder="Cari nama aset..." class="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-600">
+              <select id="filterAsetKategori" onchange="loadMasterAset()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+                <option value="ALL">Semua Kategori</option>
+                <option value="Aset Tetap">Aset Tetap (Komputer, Kulkas, dll)</option>
+                <option value="Habis Pakai">Habis Pakai (Plastik, Kertas, dll)</option>
+              </select>
+              <select id="filterAsetKondisi" onchange="loadMasterAset()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+                <option value="ALL">Semua Kondisi</option>
+                <option value="Baik">Kondisi Baik</option>
+                <option value="Rusak Ringan">Rusak Ringan</option>
+                <option value="Rusak Berat">Rusak Berat</option>
+              </select>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100 w-full">
+              <table class="w-full text-left text-xs min-w-[750px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3 w-10 text-center">No</th>
+                    <th class="py-3 px-4">Nama Aset</th>
+                    <th class="py-3 px-3">Kategori</th>
+                    <th class="py-3 px-3">Unit</th>
+                    <th class="py-3 px-3 text-center">Kondisi</th>
+                    <th class="py-3 px-3 text-center">Tgl Beli</th>
+                    <th class="py-3 px-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="masterAsetTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <tr><td colspan="7" class="py-8 text-center text-slate-400">Tekan 'Refresh' jika data belum muncul.</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -2988,6 +3107,11 @@
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
         <i class="fa-solid fa-truck-fast text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Driver</span>
+      </button>
+      <button id="btnNavBtmSarpras" onclick="switchTab('clhs-form')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+        <i class="fa-solid fa-boxes-packing text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Sarpras</span>
       </button>
       <button id="btnNavBtmStokPermak" onclick="switchTab('stok-permak')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-orange-600 focus:text-orange-600 transition-colors">
@@ -4498,7 +4622,7 @@
         if (document.getElementById('userRoleBadge')) document.getElementById('userRoleBadge').innerText = currentUser.role || 'Staf';
         if (document.getElementById('userIMBadge')) document.getElementById('userIMBadge').innerText = 'IM ' + (currentUser.im || 'Banin');
 
-        ['clhk', 'clhg', 'clhka', 'clhp', 'clhdp'].forEach(pfx => {
+        ['clhk', 'clhg', 'clhka', 'clhp', 'clhdp', 'clhs'].forEach(pfx => {
           if (document.getElementById(pfx + 'Nama')) document.getElementById(pfx + 'Nama').value = currentUser.nama || '';
           if (document.getElementById(pfx + 'IM')) document.getElementById(pfx + 'IM').value = 'IM ' + (currentUser.im || 'Banin');
         });
@@ -4589,6 +4713,7 @@
         var btmSantri = document.getElementById('btnNavBtmSantri');
         var btmPermak = document.getElementById('btnNavBtmPermak');
         var btmPurchasing = document.getElementById('btnNavBtmPurchasing');
+        var btmSarpras = document.getElementById('btnNavBtmSarpras');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -4608,7 +4733,8 @@
         if (btmProdPermak) btmProdPermak.style.display = 'none';
         if (btmSantri) btmSantri.style.display = 'none';
         if (btmPermak) btmPermak.style.display = 'none';
-        if (btmPurchasing) btmPurchasing.style.display = 'none'
+        if (btmPurchasing) btmPurchasing.style.display = 'none';
+        if (btmSarpras) btmSarpras.style.display = 'none';
 
        // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
         var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
@@ -4677,6 +4803,13 @@
         else if (isPurchasing) {
           if (btmForm) btmForm.style.display = 'flex';
           // Tombol Driver dihilangkan karena sudah digantikan tombol "Isi Form"
+          if (btmLaporan) btmLaporan.style.display = 'flex';
+        }
+
+        // ATURAN 7: SARPRAS
+        else if (roleStr.includes('sarpras')) {
+          if (btmForm) btmForm.style.display = 'flex';
+          if (btmSarpras) btmSarpras.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
@@ -4793,7 +4926,7 @@
         var activeBtn = document.getElementById('nav-' + tabId);
         if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'santri-management', 'bazar-management'].forEach(t => {
+        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'master-aset', 'clhs-form', 'santri-management', 'bazar-management'].forEach(t => {
           if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
         });
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
@@ -4823,7 +4956,9 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak') {
+        else if (tabId === 'produksi-permak')
+        else if (tabId === 'clhs-form') checkAndLoadChecklistByDate('CLHS');
+        else if (tabId === 'master-aset') loadMasterAset(); {
           if (!document.getElementById('filterBulanProdPermak').value) {
             document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
           }
@@ -7967,12 +8102,14 @@
           if (!cachedCriteria.CLHKA) cachedCriteria.CLHKA = {};
           if (!cachedCriteria.CLHP) cachedCriteria.CLHP = {};
           if (!cachedCriteria.CLHDP) cachedCriteria.CLHDP = {};
+          if (!cachedCriteria.CLHS) cachedCriteria.CLHS = {};
 
           buildChecklistForm('CLHK', cachedCriteria.CLHK); 
           buildChecklistForm('CLHG', cachedCriteria.CLHG); 
           buildChecklistForm('CLHKA', cachedCriteria.CLHKA); 
           buildChecklistForm('CLHP', cachedCriteria.CLHP);
           buildChecklistForm('CLHDP', cachedCriteria.CLHDP);
+          buildChecklistForm('CLHS', cachedCriteria.CLHS);
         } catch (err) {
           console.error("Gagal meload indikator ceklis:", err);
         }
