@@ -1723,15 +1723,20 @@
 
             <div class="overflow-x-auto rounded-2xl border border-slate-100 w-full">
               <table class="w-full text-left text-xs min-w-[750px]">
-                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                <thead class="bg-slate-50 text-[10px] sm:text-xs text-slate-600 font-bold uppercase border-b">
                   <tr>
-                    <th class="py-3 px-3 w-10 text-center">No</th>
-                    <th class="py-3 px-4">Nama Aset</th>
-                    <th class="py-3 px-3">Kategori</th>
-                    <th class="py-3 px-3">Unit</th>
-                    <th class="py-3 px-3 text-center">Kondisi</th>
-                    <th class="py-3 px-3 text-center">Tgl Beli</th>
-                    <th class="py-3 px-3 text-center">Aksi</th>
+                    <th class="py-3 px-2 text-center">NO</th>
+                    <th class="py-3 px-3">NAMA BARANG</th>
+                    <th class="py-3 px-3">JENIS (KATEGORI)</th>
+                    <th class="py-3 px-3">MERK</th>
+                    <th class="py-3 px-2 text-center">KONDISI</th>
+                    <th class="py-3 px-2 text-center">STOCK</th>
+                    <th class="py-3 px-3 text-right">HARGA SATUAN</th>
+                    <th class="py-3 px-3 text-right">JUMLAH</th>
+                    <th class="py-3 px-2 text-center">TAHUN</th>
+                    <th class="py-3 px-3">NO ACCOUNT</th>
+                    <th class="py-3 px-3">KET</th>
+                    <th class="py-3 px-2 text-center">AKSI</th>
                   </tr>
                 </thead>
                 <tbody id="masterAsetTableBody" class="divide-y divide-slate-100 text-slate-700">
@@ -12456,13 +12461,12 @@
         });
 
         if (filtered.length === 0) {
-          tb.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">Tidak ada data aset.</td></tr>';
+          tb.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">Tidak ada data aset.</td></tr>';
           return;
         }
 
         var html = '';
         filtered.forEach((a, i) => {
-          // PERBAIKAN: Gunakan safeA dan safeNama agar VS Code tidak error membaca kutip
           var safeA = JSON.stringify(a).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
           var safeNama = String(a.nama_aset || '').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
           
@@ -12471,17 +12475,29 @@
           else if (a.kondisi === 'Rusak Ringan') badgeKon = 'bg-amber-100 text-amber-800';
           else if (a.kondisi === 'Rusak Berat') badgeKon = 'bg-rose-100 text-rose-800';
 
-          html += '<tr class="hover:bg-slate-50 transition">' +
-            '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (i + 1) + '</td>' +
-            '<td class="py-3 px-4">' +
-              '<div class="font-black text-slate-800">' + a.nama_aset + '</div>' +
-              '<div class="text-[9px] text-slate-500 font-mono mt-0.5">AST-' + a.id.substring(0,6).toUpperCase() + '</div>' +
+          var qty = a.qty || 0;
+          var harga = a.harga_beli || 0;
+          var jumlah = qty * harga;
+          
+          var fHarga = new Intl.NumberFormat('id-ID').format(harga);
+          var fJumlah = new Intl.NumberFormat('id-ID').format(jumlah);
+
+          html += '<tr class="hover:bg-slate-50 transition border-b border-slate-50">' +
+            '<td class="py-3 px-2 text-center font-bold text-slate-400">' + (i + 1) + '</td>' +
+            '<td class="py-3 px-3">' +
+              '<div class="font-black text-slate-800">' + (a.nama_aset || '-') + '</div>' +
+              '<div class="text-[9px] text-slate-400 font-mono mt-0.5">AST-' + a.id.substring(0,6).toUpperCase() + '</div>' +
             '</td>' +
-            '<td class="py-3 px-3 font-semibold text-slate-600">' + a.kategori + '</td>' +
-            '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (a.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + a.im + '</span></td>' +
-            '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-black ' + badgeKon + '">' + a.kondisi + '</span></td>' +
-            '<td class="py-3 px-3 text-center font-mono text-slate-600">' + (a.tgl_beli || '-') + '</td>' +
-            '<td class="py-3 px-3 text-center">' +
+            '<td class="py-3 px-3 font-semibold text-slate-600"><span class="px-2 py-0.5 rounded text-[9px] font-bold ' + (a.im === 'Banin' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') + '">' + a.im + '</span><br>' + (a.kategori || '-') + '</td>' +
+            '<td class="py-3 px-3 text-slate-700 font-medium">' + (a.merk || '-') + '</td>' +
+            '<td class="py-3 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-black ' + badgeKon + '">' + a.kondisi + '</span></td>' +
+            '<td class="py-3 px-2 text-center font-black text-slate-700">' + qty + '</td>' +
+            '<td class="py-3 px-3 text-right font-mono text-slate-500">Rp ' + fHarga + '</td>' +
+            '<td class="py-3 px-3 text-right font-mono font-black text-emerald-700">Rp ' + fJumlah + '</td>' +
+            '<td class="py-3 px-2 text-center font-mono font-bold text-slate-600">' + (a.tahun || '-') + '</td>' +
+            '<td class="py-3 px-3 text-xs font-mono text-slate-500">' + (a.no_account || '-') + '</td>' +
+            '<td class="py-3 px-3 text-[10px] text-slate-500 max-w-[120px] truncate" title="'+(a.keterangan || '')+'">' + (a.keterangan || '-') + '</td>' +
+            '<td class="py-3 px-2 text-center whitespace-nowrap">' +
               '<button onclick="openAsetFormModal(' + safeA + ')" class="p-1.5 text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>' +
               '<button onclick="deleteAset(\'' + a.id + '\', \'' + safeNama + '\')" class="p-1.5 text-rose-600 hover:text-rose-800" title="Hapus"><i class="fa-solid fa-trash"></i></button>' +
             '</td></tr>';
@@ -12496,61 +12512,81 @@
         modal.style.display = 'none';
         modal.className = 'fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-          <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-3 border-b">
-              <div>
-                <h3 id="asetModalTitle" class="text-sm sm:text-base font-black text-slate-800">Tambah Aset Baru</h3>
-              </div>
+              <h3 id="asetModalTitle" class="text-sm sm:text-base font-black text-slate-800">Tambah Data Inventaris</h3>
               <button onclick="closeModal('asetFormModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="asetForm" onsubmit="submitAsetForm(event)" class="space-y-3.5 text-xs">
               <input type="hidden" id="asetFormId" value="">
               
-              <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Nama Aset / Barang *</label>
-                <input type="text" id="asetFormNama" required placeholder="Contoh: Kulkas Showcase" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold outline-none focus:bg-white focus:ring-2 focus:ring-amber-500">
+              <div class="grid grid-cols-2 gap-2.5">
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Nama Barang *</label>
+                  <input type="text" id="asetFormNama" required class="w-full p-2 bg-slate-50 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Merk / Spesifikasi</label>
+                  <input type="text" id="asetFormMerk" class="w-full p-2 bg-slate-50 border rounded-xl font-medium outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
               </div>
 
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label class="block font-bold text-slate-700 uppercase mb-1">Kategori *</label>
-                  <select id="asetFormKategori" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
-                    <option value="Aset Tetap">Aset Tetap</option>
-                    <option value="Habis Pakai">Habis Pakai</option>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Jenis (Kategori) *</label>
+                  <select id="asetFormKategori" required class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                    <option value="Aset Pinjaman Pondok">Aset Pinjaman Pondok</option>
+                    <option value="Aset Islam Mart">Aset Islam Mart</option>
+                    <option value="Inventaris Islam Mart">Inventaris Islam Mart</option>
                   </select>
                 </div>
                 <div>
                   <label class="block font-bold text-slate-700 uppercase mb-1">Unit Toko *</label>
-                  <select id="asetFormIM" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                  <select id="asetFormIM" required class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-700">
                     <option value="Banin">IM Banin</option>
                     <option value="Banat">IM Banat</option>
                   </select>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2.5">
+              <div class="grid grid-cols-3 gap-2.5">
                 <div>
-                  <label class="block font-bold text-slate-700 uppercase mb-1">Kondisi / Status *</label>
-                  <select id="asetFormKondisi" required class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-slate-700">
-                    <option value="Baik">Baik / Normal</option>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Stock *</label>
+                  <input type="number" id="asetFormQty" required min="1" value="1" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-center">
+                </div>
+                <div class="col-span-2">
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Harga Satuan (Rp) *</label>
+                  <input type="number" id="asetFormHarga" required min="0" value="0" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-right font-mono text-emerald-700">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Kondisi *</label>
+                  <select id="asetFormKondisi" required class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                    <option value="Baik">Baik</option>
                     <option value="Rusak Ringan">Rusak Ringan</option>
                     <option value="Rusak Berat">Rusak Berat</option>
                   </select>
                 </div>
                 <div>
-                  <label class="block font-bold text-slate-700 uppercase mb-1">Tgl Pembelian</label>
-                  <input type="date" id="asetFormTglBeli" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-700">
+                  <label class="block font-bold text-slate-700 uppercase mb-1">Tahun</label>
+                  <input type="text" id="asetFormTahun" placeholder="2026" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-center">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1">No Account</label>
+                  <input type="text" id="asetFormNoAcc" class="w-full p-2 bg-slate-50 border rounded-xl font-mono text-xs">
                 </div>
               </div>
 
               <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1">Catatan / Detail Lokasi</label>
-                <input type="text" id="asetFormKet" placeholder="Contoh: Di samping meja kasir" class="w-full p-2.5 bg-slate-50 border rounded-xl font-medium outline-none focus:bg-white focus:ring-2 focus:ring-amber-500">
+                <label class="block font-bold text-slate-700 uppercase mb-1">Keterangan Tambahan</label>
+                <input type="text" id="asetFormKet" placeholder="Penjelasan / Lokasi / Alasan Rusak..." class="w-full p-2 bg-slate-50 border rounded-xl font-medium">
               </div>
 
               <div class="flex justify-end gap-2 pt-3 border-t">
-                <button type="button" onclick="closeModal('asetFormModal')" class="px-4 py-2.5 border rounded-xl font-bold text-slate-600">Batal</button>
-                <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow active:scale-95 transition">Simpan Aset</button>
+                <button type="button" onclick="closeModal('asetFormModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow active:scale-95 transition">Simpan Data</button>
               </div>
             </form>
           </div>
@@ -12564,16 +12600,20 @@
         document.getElementById('asetForm').reset();
         
         if (item) {
-          document.getElementById('asetModalTitle').innerText = 'Edit Data Aset';
+          document.getElementById('asetModalTitle').innerText = 'Edit Inventaris';
           document.getElementById('asetFormId').value = item.id;
-          document.getElementById('asetFormNama').value = item.nama_aset;
-          document.getElementById('asetFormKategori').value = item.kategori;
+          document.getElementById('asetFormNama').value = item.nama_aset || '';
+          document.getElementById('asetFormMerk').value = item.merk || '';
+          document.getElementById('asetFormKategori').value = item.kategori || 'Aset Islam Mart';
           document.getElementById('asetFormIM').value = item.im;
+          document.getElementById('asetFormQty').value = item.qty || 1;
+          document.getElementById('asetFormHarga').value = item.harga_beli || 0;
           document.getElementById('asetFormKondisi').value = item.kondisi || 'Baik';
-          document.getElementById('asetFormTglBeli').value = item.tgl_beli || '';
+          document.getElementById('asetFormTahun').value = item.tahun || '';
+          document.getElementById('asetFormNoAcc').value = item.no_account || '';
           document.getElementById('asetFormKet').value = item.keterangan || '';
         } else {
-          document.getElementById('asetModalTitle').innerText = 'Tambah Aset Baru';
+          document.getElementById('asetModalTitle').innerText = 'Tambah Inventaris Baru';
           document.getElementById('asetFormId').value = '';
           document.getElementById('asetFormIM').value = currentUser ? (currentUser.im || 'Banin') : 'Banin';
         }
@@ -12585,14 +12625,18 @@
         var id = document.getElementById('asetFormId').value.trim() || null;
         var payload = {
           nama_aset: document.getElementById('asetFormNama').value.trim(),
+          merk: document.getElementById('asetFormMerk').value.trim(),
           kategori: document.getElementById('asetFormKategori').value,
           im: document.getElementById('asetFormIM').value,
+          qty: parseInt(document.getElementById('asetFormQty').value) || 1,
+          harga_beli: parseInt(document.getElementById('asetFormHarga').value) || 0,
           kondisi: document.getElementById('asetFormKondisi').value,
-          tgl_beli: document.getElementById('asetFormTglBeli').value || null,
+          tahun: document.getElementById('asetFormTahun').value.trim(),
+          no_account: document.getElementById('asetFormNoAcc').value.trim(),
           keterangan: document.getElementById('asetFormKet').value.trim()
         };
 
-        showLoading('Menyimpan data aset...');
+        showLoading('Menyimpan inventaris...');
         try {
           if (id) {
             const { error } = await supaClient.from('master_aset').update(payload).eq('id', id);
@@ -12602,7 +12646,7 @@
             if (error) throw error;
           }
           hideLoading();
-          showToast('Data aset berhasil disimpan!', 'success');
+          showToast('Data berhasil disimpan!', 'success');
           closeModal('asetFormModal');
           loadMasterAset(true);
         } catch (err) {
@@ -12612,13 +12656,13 @@
       }
 
       async function deleteAset(id, nama) {
-        if (!confirm('Hapus data aset "' + nama + '"?')) return;
+        if (!confirm('Hapus data inventaris "' + nama + '"?')) return;
         showLoading('Menghapus...');
         try {
           const { error } = await supaClient.from('master_aset').delete().eq('id', id);
           if (error) throw error;
           hideLoading();
-          showToast('Aset dihapus!', 'success');
+          showToast('Data dihapus!', 'success');
           loadMasterAset(true);
         } catch (err) {
           hideLoading();
