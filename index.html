@@ -1716,10 +1716,11 @@
             <!-- Filter & Tabel (Placeholder Sementara agar UI rapi) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
               <input type="text" id="filterAsetSearch" oninput="loadMasterAset()" placeholder="Cari nama aset..." class="w-full px-3 py-2.5 bg-white border rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-600">
-              <select id="filterAsetKategori" onchange="loadMasterAset()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
+             <select id="filterAsetKategori" onchange="loadMasterAset()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
                 <option value="ALL">Semua Kategori</option>
-                <option value="Aset Tetap">Aset Tetap (Komputer, Kulkas, dll)</option>
-                <option value="Habis Pakai">Habis Pakai (Plastik, Kertas, dll)</option>
+                <option value="Aset Pinjaman Pondok">Aset Pinjaman ke Pondok</option>
+                <option value="Aset Islam Mart">Asset</option>
+                <option value="Inventaris Islam Mart">Inventaris</option>
               </select>
               <select id="filterAsetKondisi" onchange="loadMasterAset()" class="w-full p-2.5 bg-white border rounded-xl text-xs font-bold text-slate-700">
                 <option value="ALL">Semua Kondisi</option>
