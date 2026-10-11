@@ -1700,10 +1700,17 @@
                 </h2>
                 <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Data aset tetap (komputer, kulkas) & habis pakai (struk, plastik).</p>
               </div>
-              <button type="button" onclick="openAsetFormModal()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
-                <i class="fa-solid fa-plus"></i> Tambah Aset
-              </button>
-            </div>
+             <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="exportAsetExcel()" class="px-3 py-2 sm:px-4 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-excel"></i> Export
+                </button>
+                <button type="button" onclick="openImportAsetModal()" class="px-3 py-2 sm:px-4 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-file-import"></i> Import
+                </button>
+                <button type="button" onclick="openAsetFormModal()" class="px-3 py-2 sm:px-4 sm:py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-plus"></i> Tambah
+                </button>
+              </div>
 
             <!-- Filter & Tabel (Placeholder Sementara agar UI rapi) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
@@ -12665,9 +12672,167 @@
           showToast('Data dihapus!', 'success');
           loadMasterAset(true);
         } catch (err) {
+
           hideLoading();
           showToast('Gagal menghapus: ' + err.message, 'error');
         }
+      }
+
+      // ==========================================
+      // FITUR EXPORT & IMPORT ASET
+      // ==========================================
+      function exportAsetExcel() {
+        if (!cachedMasterAset || cachedMasterAset.length === 0) {
+          showToast('Tidak ada data untuk diexport.', 'warning');
+          return;
+        }
+        showLoading('Menyiapkan file Excel...');
+        try {
+          var exportData = cachedMasterAset.map((a, i) => ({
+            'NO': i + 1,
+            'ID ASET': a.id,
+            'NAMA BARANG': a.nama_aset || '',
+            'JENIS (KATEGORI)': a.kategori || '',
+            'MERK': a.merk || '',
+            'UNIT TOKO': a.im || '',
+            'KONDISI': a.kondisi || '',
+            'STOCK': a.qty || 0,
+            'HARGA SATUAN': a.harga_beli || 0,
+            'JUMLAH': (a.qty || 0) * (a.harga_beli || 0),
+            'TAHUN': a.tahun || '',
+            'NO ACCOUNT': a.no_account || '',
+            'KET': a.keterangan || ''
+          }));
+          
+          var ws = XLSX.utils.json_to_sheet(exportData);
+          var wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Master_Inventaris");
+          XLSX.writeFile(wb, "Data_Aset_Inventaris_" + new Date().toISOString().slice(0,10) + ".xlsx");
+          
+          hideLoading();
+          showToast('Data berhasil diexport ke Excel!', 'success');
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal export: ' + err.message, 'error');
+        }
+      }
+
+      function ensureAsetImportModalExists() {
+        if (document.getElementById('asetImportModal')) return;
+        var modal = document.createElement('div');
+        modal.id = 'asetImportModal';
+        modal.style.display = 'none';
+        modal.className = 'fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+          <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b">
+              <h3 class="text-sm sm:text-base font-black text-slate-800">Import Data dari Excel</h3>
+              <button onclick="closeModal('asetImportModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="text-[11px] sm:text-xs text-slate-600 space-y-3">
+              <p>Pastikan file Excel (.xlsx) Anda memiliki nama kolom berikut di baris paling atas (Header):</p>
+              <div class="bg-slate-100 p-3 rounded-xl font-mono text-[10px] overflow-x-auto border border-slate-200">
+                NAMA BARANG, KATEGORI, UNIT, MERK, KONDISI, STOCK, HARGA, TAHUN, NO ACCOUNT, KET
+              </div>
+              <ul class="list-disc pl-4 text-rose-600 font-bold space-y-1 mt-2">
+                <li>Kolom <b>UNIT</b> isikan: <i>Banin</i> atau <i>Banat</i>.</li>
+                <li>Kolom <b>KATEGORI</b> isikan: <i>Aset Pinjaman Pondok</i>, <i>Aset Islam Mart</i>, atau <i>Inventaris Islam Mart</i>.</li>
+              </ul>
+              <div class="pt-2">
+                <label class="block font-bold text-slate-700 uppercase mb-1">Pilih File Excel *</label>
+                <input type="file" id="fileImportAset" accept=".xlsx, .xls" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-700 cursor-pointer">
+              </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t mt-4">
+              <button type="button" onclick="closeModal('asetImportModal')" class="px-4 py-2 border rounded-xl font-bold text-slate-600 text-xs">Batal</button>
+              <button type="button" onclick="processImportAset()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Mulai Import</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        if (typeof ALL_MODAL_IDS !== 'undefined' && !ALL_MODAL_IDS.includes('asetImportModal')) ALL_MODAL_IDS.push('asetImportModal');
+      }
+
+      function openImportAsetModal() {
+        ensureAsetImportModalExists();
+        document.getElementById('fileImportAset').value = '';
+        openModal('asetImportModal');
+      }
+
+      async function processImportAset() {
+        var fileInput = document.getElementById('fileImportAset');
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showToast('Silakan pilih file Excel terlebih dahulu!', 'warning');
+          return;
+        }
+        
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+        
+        showLoading('Membaca file Excel...');
+        reader.onload = async function(e) {
+          try {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, {type: 'array'});
+            var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            var json = XLSX.utils.sheet_to_json(worksheet, {defval: ""});
+            
+            if (json.length === 0) throw new Error("File Excel kosong atau format tidak sesuai.");
+            
+            var payloads = json.map(row => {
+              var getVal = (possibleKeys) => {
+                for (let k of possibleKeys) {
+                  let match = Object.keys(row).find(rk => rk.toLowerCase().trim() === k.toLowerCase());
+                  if (match) return row[match];
+                }
+                return '';
+              };
+              
+              var rawKondisi = getVal(['kondisi', 'status']);
+              var validKondisi = ['Baik', 'Rusak Ringan', 'Rusak Berat'].includes(rawKondisi) ? rawKondisi : 'Baik';
+
+              var rawKat = getVal(['kategori', 'jenis (kategori)', 'jenis']);
+              var validKat = ['Aset Pinjaman Pondok', 'Aset Islam Mart', 'Inventaris Islam Mart'].includes(rawKat) ? rawKat : 'Aset Islam Mart';
+
+              var rawIM = getVal(['im', 'unit', 'unit toko', 'toko']);
+              var validIM = (String(rawIM).toLowerCase().includes('banat')) ? 'Banat' : 'Banin';
+
+              return {
+                nama_aset: getVal(['nama barang', 'nama_aset', 'nama aset', 'barang']) || 'Tanpa Nama',
+                merk: getVal(['merk', 'spesifikasi']) || '',
+                kategori: validKat,
+                im: validIM,
+                qty: parseInt(getVal(['stock', 'qty', 'stok', 'jumlah'])) || 1,
+                harga_beli: parseInt(getVal(['harga satuan', 'harga_beli', 'harga', 'modal'])) || 0,
+                kondisi: validKondisi,
+                tahun: String(getVal(['tahun', 'thn'])) || '',
+                no_account: String(getVal(['no account', 'no_account', 'no acc'])) || '',
+                keterangan: String(getVal(['ket', 'keterangan'])) || ''
+              };
+            });
+            
+            hideLoading();
+            showLoading('Menyimpan ' + payloads.length + ' baris ke database...');
+            
+            const { error } = await supaClient.from('master_aset').insert(payloads);
+            if (error) throw error;
+            
+            hideLoading();
+            showToast('Berhasil import ' + payloads.length + ' data!', 'success');
+            closeModal('asetImportModal');
+            loadMasterAset(true);
+          } catch (err) {
+            hideLoading();
+            showToast('Gagal import: ' + err.message, 'error');
+          }
+        };
+        
+        reader.onerror = function() {
+          hideLoading();
+          showToast('Gagal membaca file komputer.', 'error');
+        };
+        
+        reader.readAsArrayBuffer(file);
       }
 
      </script>
