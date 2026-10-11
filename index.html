@@ -12399,53 +12399,7 @@
         addItmToCart(variantItem);
       }
 
-     </script>
-
-    <!-- MODAL: PILIH VARIAN MAKANAN BASAH (DIPINDAH KE SINI AGAR BERADA DI LUAR JAVASCRIPT) -->
-    <div id="variantSelectionModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
-        <div class="p-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white flex items-center justify-between shrink-0">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-bowl-food"></i></div>
-            <div>
-              <h3 id="variantModalTitle" class="text-sm font-black uppercase tracking-wider">Pilih Varian</h3>
-              <p id="variantModalPrice" class="text-[11px] font-bold text-orange-100">Rp 0</p>
-            </div>
-          </div>
-          <button onclick="closeModal('variantSelectionModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        <div class="p-4 overflow-y-auto custom-scrollbar bg-slate-50 flex-1">
-          <div id="variantGridContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <!-- JS INJECTS VARIANTS HERE -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL: NOTA PEMBELANJAAN WALI SANTRI -->
-    <div id="notaWaliModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[160] flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-sm w-full flex flex-col shadow-2xl overflow-hidden">
-        <div class="p-4 bg-slate-800 text-white flex items-center justify-between shrink-0">
-          <h3 class="text-sm font-black tracking-wider flex items-center gap-2"><i class="fa-solid fa-file-invoice"></i> E-Nota Pesanan</h3>
-          <button onclick="closeModal('notaWaliModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        
-        <!-- Area Nota yang akan dicetak -->
-        <div id="notaWaliPrintArea" class="p-6 bg-white text-slate-800 text-xs overflow-y-auto max-h-[60vh] custom-scrollbar">
-            <!-- Isi Nota akan dimasukkan oleh Javascript -->
-        </div>
-        
-        <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
-            <button onclick="cetakNotaWaliPDF()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[11px] uppercase tracking-wider shadow-sm transition active:scale-95 flex items-center justify-center gap-2">
-              <i class="fa-solid fa-download"></i> Unduh / Simpan PDF
-            </button>
-        </div>
-      </div>
-    </div>
-    
-    // ==========================================
+       // ==========================================
       // MASTER ASET (SARPRAS)
       // ==========================================
       var cachedMasterAset = [];
@@ -12653,9 +12607,53 @@
           showToast('Gagal menghapus: ' + err.message, 'error');
         }
       }
+      
+     </script>
 
-    </script>
+    <!-- MODAL: PILIH VARIAN MAKANAN BASAH (DIPINDAH KE SINI AGAR BERADA DI LUAR JAVASCRIPT) -->
+    <div id="variantSelectionModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-gradient-to-r from-orange-500 to-rose-600 text-white flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-bowl-food"></i></div>
+            <div>
+              <h3 id="variantModalTitle" class="text-sm font-black uppercase tracking-wider">Pilih Varian</h3>
+              <p id="variantModalPrice" class="text-[11px] font-bold text-orange-100">Rp 0</p>
+            </div>
+          </div>
+          <button onclick="closeModal('variantSelectionModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scrollbar bg-slate-50 flex-1">
+          <div id="variantGridContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- JS INJECTS VARIANTS HERE -->
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- MODAL: NOTA PEMBELANJAAN WALI SANTRI -->
+    <div id="notaWaliModal" style="display: none;" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[160] flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-sm w-full flex flex-col shadow-2xl overflow-hidden">
+        <div class="p-4 bg-slate-800 text-white flex items-center justify-between shrink-0">
+          <h3 class="text-sm font-black tracking-wider flex items-center gap-2"><i class="fa-solid fa-file-invoice"></i> E-Nota Pesanan</h3>
+          <button onclick="closeModal('notaWaliModal')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <!-- Area Nota yang akan dicetak -->
+        <div id="notaWaliPrintArea" class="p-6 bg-white text-slate-800 text-xs overflow-y-auto max-h-[60vh] custom-scrollbar">
+            <!-- Isi Nota akan dimasukkan oleh Javascript -->
+        </div>
+        
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
+            <button onclick="cetakNotaWaliPDF()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-[11px] uppercase tracking-wider shadow-sm transition active:scale-95 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-download"></i> Unduh / Simpan PDF
+            </button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Register Service Worker PWA -->
     <script>
       if ('serviceWorker' in navigator) {
