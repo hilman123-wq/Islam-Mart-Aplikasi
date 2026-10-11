@@ -4783,12 +4783,13 @@
           if (btmLapBulanan) btmLapBulanan.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
-        // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
+       // ATURAN 4: KEPALA ADMINISTRASI / ADMIN
         else if (isAdmin || isKepalaAdmin) {
           if (btmRiwayatPO) btmRiwayatPO.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmStaf) btmStaf.style.display = 'flex';
           if (btmSantri) btmSantri.style.display = 'flex';
+          if (btmMenu) btmMenu.style.display = 'flex'; // <--- TAMBAHKAN BARIS INI
         }
 
         // ATURAN 5: PERMAK
@@ -4805,11 +4806,12 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
-        // ATURAN 7: SARPRAS
+       // ATURAN 7: SARPRAS
         else if (roleStr.includes('sarpras')) {
           if (btmForm) btmForm.style.display = 'flex';
           if (btmSarpras) btmSarpras.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
+          if (btmMenu) btmMenu.style.display = 'flex'; // <--- TAMBAHKAN BARIS INI
         }
 
         // Atur visibilitas Header Logo, Bottom Bar, & Ikon Riwayat Pojok Kanan Atas khusus Wali Santri
@@ -4892,7 +4894,11 @@
       // ==========================================
       // NAVIGASI
       // ==========================================
-      function openMobileSidebar() { document.getElementById('mainSidebar').classList.remove('-translate-x-full'); document.getElementById('mobileSidebarBackdrop').style.display = 'block'; }
+     function openMobileSidebar() { 
+        var sb = document.getElementById('mainSidebar');
+        if (sb) { sb.style.display = 'flex'; sb.classList.remove('-translate-x-full'); }
+        if (document.getElementById('mobileSidebarBackdrop')) document.getElementById('mobileSidebarBackdrop').style.display = 'block'; 
+      }
       function closeMobileSidebar() { document.getElementById('mainSidebar').classList.add('-translate-x-full'); document.getElementById('mobileSidebarBackdrop').style.display = 'none'; }
       function goToMyChecklist() {
         if (!currentUser) return;
@@ -12607,7 +12613,7 @@
           showToast('Gagal menghapus: ' + err.message, 'error');
         }
       }
-      
+
      </script>
 
     <!-- MODAL: PILIH VARIAN MAKANAN BASAH (DIPINDAH KE SINI AGAR BERADA DI LUAR JAVASCRIPT) -->
