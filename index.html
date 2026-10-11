@@ -4799,13 +4799,12 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
-        // ATURAN 6: PURCHASING
+       // ATURAN 6: PURCHASING
         else if (isPurchasing) {
           if (btmForm) btmForm.style.display = 'flex';
-          // Tombol Driver dihilangkan karena sudah digantikan tombol "Isi Form"
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
-
+        
         // ATURAN 7: SARPRAS
         else if (roleStr.includes('sarpras')) {
           if (btmForm) btmForm.style.display = 'flex';
@@ -4956,7 +4955,11 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak')
+        else if (tabId === 'produksi-permak') {
+          if (!document.getElementById('filterBulanProdPermak').value) {
+            document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
+          }
+        }
         else if (tabId === 'clhs-form') checkAndLoadChecklistByDate('CLHS');
         else if (tabId === 'master-aset') loadMasterAset(); {
           if (!document.getElementById('filterBulanProdPermak').value) {
@@ -12441,7 +12444,7 @@
         </div>
       </div>
     </div>
-
+       
     <!-- Register Service Worker PWA -->
     <script>
       if ('serviceWorker' in navigator) {
