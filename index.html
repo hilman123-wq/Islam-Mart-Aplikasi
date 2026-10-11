@@ -3108,10 +3108,10 @@
         <i class="fa-solid fa-truck-fast text-[13px] sm:text-xl"></i>
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Driver</span>
       </button>
-      <button id="btnNavBtmSarpras" onclick="switchTab('clhs-form')" style="display: none;"
-        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+      <button id="btnNavBtmMasterAset" onclick="switchTab('master-aset')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
         <i class="fa-solid fa-boxes-packing text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Sarpras</span>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Data Aset</span>
       </button>
       <button id="btnNavBtmStokPermak" onclick="switchTab('stok-permak')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-orange-600 focus:text-orange-600 transition-colors">
@@ -4713,7 +4713,7 @@
         var btmSantri = document.getElementById('btnNavBtmSantri');
         var btmPermak = document.getElementById('btnNavBtmPermak');
         var btmPurchasing = document.getElementById('btnNavBtmPurchasing');
-        var btmSarpras = document.getElementById('btnNavBtmSarpras');
+        var btmMasterAset = document.getElementById('btnNavBtmMasterAset');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -4734,7 +4734,7 @@
         if (btmSantri) btmSantri.style.display = 'none';
         if (btmPermak) btmPermak.style.display = 'none';
         if (btmPurchasing) btmPurchasing.style.display = 'none';
-        if (btmSarpras) btmSarpras.style.display = 'none';
+        if (btmMasterAset) btmMasterAset.style.display = 'none';
 
        // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
         var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
@@ -4789,7 +4789,9 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmStaf) btmStaf.style.display = 'flex';
           if (btmSantri) btmSantri.style.display = 'flex';
-          if (btmMenu) btmMenu.style.display = 'flex'; // <--- TAMBAHKAN BARIS INI
+          
+          if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
+          if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
         }
 
         // ATURAN 5: PERMAK
@@ -4800,18 +4802,20 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
-       // ATURAN 6: PURCHASING
+        // ATURAN 6: PURCHASING
         else if (isPurchasing) {
           if (btmForm) btmForm.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
         }
 
-       // ATURAN 7: SARPRAS
+        // ATURAN 7: SARPRAS
         else if (roleStr.includes('sarpras')) {
           if (btmForm) btmForm.style.display = 'flex';
           if (btmSarpras) btmSarpras.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
-          if (btmMenu) btmMenu.style.display = 'flex'; // <--- TAMBAHKAN BARIS INI
+          
+          if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
+          if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
         }
 
         // Atur visibilitas Header Logo, Bottom Bar, & Ikon Riwayat Pojok Kanan Atas khusus Wali Santri
