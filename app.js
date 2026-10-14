@@ -1454,7 +1454,8 @@
           else { const res = await supaClient.from('master_barang').insert([payload]); err = res.error; }
           hideLoading();
           if (err) throw err;
-          showToast('Barang tersimpan!', 'success'); closeModal('itemFormModal'); loadMasterBarang(true);
+          showToast('Barang tersimpan!', 'success');
+          recordSystemLog(id ? 'EDIT BARANG' : 'TAMBAH BARANG', 'Menyimpan data barang: ' + payload.nama + ' (Harga Jual: Rp' + payload.harga_jual + ')'); // <--- TAMBAHKAN BARIS INI; closeModal('itemFormModal'); loadMasterBarang(true);
         } catch (err) { hideLoading(); showToast('Gagal: ' + err.message, 'error'); }
       }
 
@@ -1469,6 +1470,7 @@
           if (error) throw error;
           closeModal('itemDeleteConfirmModal');
           showToast('Barang berhasil dihapus!', 'success');
+          recordSystemLog('HAPUS BARANG MASTER', 'Menghapus barang: ' + pendingDeleteItem.nama); // <--- TAMBAHKAN BARIS INI
           loadMasterBarang(true); // Muat ulang tabel master barang
         } catch (err) {
           hideLoading();
@@ -3693,7 +3695,7 @@
         showLoading('Menghapus orderan...');
         try {
           const { error } = await supaClient.from('orders').delete().eq('id', pendingDeleteOrderId);
-          hideLoading(); if (error) throw error; closeModal('orderDeleteConfirmModal'); showToast('PO dihapus', 'success'); loadOrdersTable(true);
+          hideLoading(); if (error) throw error; closeModal('orderDeleteConfirmModal'); showToast('PO dihapus', 'success'); loadOrdersTable(true); recordSystemLog('HAPUS ORDERAN', 'Menghapus dokumen PO/Pesanan');
         } catch (e) { hideLoading(); showToast('Gagal: ' + e.message, 'error'); }
       }
 
@@ -8465,3 +8467,26 @@
         reader.readAsArrayBuffer(file);
       }
       
+      // ==========================================
+      // SISTEM AUDIT LOG (JEJAK DIGITAL CCTV)
+      // ==========================================
+      async function recordSystemLog(aksi, detail) {
+        // Jika tidak ada user login (atau sistem error), abaikan agar aplikasi tidak macet
+        if (!currentUser) return; 
+
+        var payload = {
+          username: currentUser.username,
+          nama_pegawai: currentUser.nama,
+          role: currentUser.role,
+          unit_im: currentUser.im || 'Banin',
+          aksi: aksi,
+          detail: detail
+        };
+
+        try {
+          // Fungsi ini berjalan diam-diam tanpa memunculkan 'loading' di layar
+          await supaClient.from('system_logs').insert([payload]);
+        } catch (err) {
+          console.error('Gagal mencatat log CCTV:', err.message);
+        }
+      }
