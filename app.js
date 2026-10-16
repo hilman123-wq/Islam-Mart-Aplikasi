@@ -615,19 +615,15 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak');
-        else if (tabId === 'system-logs') loadSystemLogs(); {
-          if (!document.getElementById('filterBulanProdPermak').value) {
-            document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
-          }
-        }
-        else if (tabId === 'clhs-form') checkAndLoadChecklistByDate('CLHS');
-        else if (tabId === 'master-aset') loadMasterAset(); {
+        else if (tabId === 'produksi-permak') {
           if (!document.getElementById('filterBulanProdPermak').value) {
             document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
           }
           loadProduksiPermak();
-        } 
+        }
+        else if (tabId === 'clhs-form') checkAndLoadChecklistByDate('CLHS');
+        else if (tabId === 'master-aset') loadMasterAset();
+        else if (tabId === 'system-logs') loadSystemLogs();
       }
 
       function refreshTab() {
