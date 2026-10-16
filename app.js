@@ -421,6 +421,7 @@
           if (btmLapBulanan) btmLapBulanan.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmBarang) btmBarang.style.display = 'flex';
+          if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
         }
         // ATURAN 3: KEUANGAN
         else if (isKeuangan) {
@@ -578,6 +579,9 @@
         } else if (tabId === 'wa-reminder' && !isGudang && !isAdmin) {
           showToast('Menu Pengingat WA khusus untuk Kepala Toko dan Gudang!', 'error'); tabId = 'dashboard';
         }
+        else if (tabId === 'system-logs' && !isAdmin && !isGudang) {
+            showToast('Menu CCTV khusus Admin & Gudang!', 'error'); tabId = 'dashboard';
+          }
 
         // Catat perpindahan halaman ke riwayat tombol Back HP
         if (!window.isHandlingPopState && activeTab !== tabId) {
