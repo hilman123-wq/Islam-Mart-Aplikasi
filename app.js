@@ -615,7 +615,8 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak') {
+        else if (tabId === 'produksi-permak');
+        else if (tabId === 'system-logs') loadSystemLogs(); {
           if (!document.getElementById('filterBulanProdPermak').value) {
             document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
           }
@@ -8489,4 +8490,62 @@
         } catch (err) {
           console.error('Gagal mencatat log CCTV:', err.message);
         }
+      }
+
+      // ==========================================
+      // HALAMAN LOG AKTIVITAS (CCTV)
+      // ==========================================
+      window.isLogsLoaded = false;
+      var cachedLogsList = [];
+
+      async function loadSystemLogs(forceRefresh) {
+        if (forceRefresh === false && window.isLogsLoaded) return;
+        var tb = document.getElementById('logsTableBody');
+        if (tb) tb.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-rose-500 font-bold"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>Mengambil rekaman CCTV...</td></tr>';
+        
+        try {
+          const { data, error } = await supaClient.from('system_logs').select('*').order('created_at', { ascending: false }).limit(300);
+          if (error) throw error;
+          cachedLogsList = data || [];
+          window.isLogsLoaded = true;
+          renderSystemLogsTable();
+        } catch (err) {
+          if (tb) tb.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-red-500 font-bold">Koneksi gagal: ' + err.message + '</td></tr>';
+        }
+      }
+
+      function renderSystemLogsTable() {
+        var tb = document.getElementById('logsTableBody');
+        if (!tb) return;
+        var q = (document.getElementById('filterLogSearch').value || '').trim().toLowerCase();
+
+        var filtered = cachedLogsList.filter(l => {
+          if (!q) return true;
+          return String(l.nama_pegawai).toLowerCase().includes(q) || String(l.aksi).toLowerCase().includes(q) || String(l.detail).toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+          tb.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">Tidak ada rekaman yang sesuai.</td></tr>';
+          return;
+        }
+
+        var html = '';
+        filtered.forEach(l => {
+          var tglObj = new Date(l.created_at);
+          var waktu = tglObj.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) + ' ' + tglObj.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+          
+          var badgeAksi = 'bg-slate-100 text-slate-600';
+          if(String(l.aksi).includes('HAPUS')) badgeAksi = 'bg-rose-100 text-rose-700';
+          else if(String(l.aksi).includes('EDIT')) badgeAksi = 'bg-amber-100 text-amber-700';
+          else if(String(l.aksi).includes('TAMBAH')) badgeAksi = 'bg-emerald-100 text-emerald-700';
+
+          html += '<tr class="hover:bg-slate-50 transition border-b border-slate-100">' +
+            '<td class="py-3 px-3 text-[10px] font-mono font-bold text-slate-500">' + waktu + '</td>' +
+            '<td class="py-3 px-4 font-black text-slate-800">' + (l.nama_pegawai || l.username) + '<br><span class="text-[9px] text-slate-400 font-normal">' + (l.role || '') + '</span></td>' +
+            '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-600">' + (l.unit_im || '-') + '</span></td>' +
+            '<td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-black ' + badgeAksi + '">' + l.aksi + '</span></td>' +
+            '<td class="py-3 px-4 text-[11px] font-medium text-slate-600 leading-snug">' + l.detail + '</td>' +
+          '</tr>';
+        });
+        tb.innerHTML = html;
       }
