@@ -22,12 +22,13 @@
       var pendingDeleteItem = null;
       var isMondayToday = new Date().getDay() === 1;
 
-      var KATEGORI_LAPORAN = {
+     var KATEGORI_LAPORAN = {
         "administrasi": ["Laporan Absensi", "Laporan Fingerprint"],
         "gudang": ["CLHK", "Laporan badstock", "Top 10", "Laba rugi barang", "Program toko", "PJ departemen", "Promo", "Dokumentasi kegiatan"],
         "keuangan": ["Neraca", "Laba rugi", "Omzet kasir", "Omzet harian", "SO brangkas", "CLHK", "Cashflow"],
         "sarpras": ["Laporan aset", "RAB"],
-        "permak": ["CLHP", "Penjualan banin & banat", "Stok bahan"]
+        "permak": ["CLHP", "Penjualan banin & banat", "Stok bahan"],
+        "bazar": ["Neraca", "Laba Rugi", "Pembelian Aset", "Cashflow", "Laporan Penjualan"]
       };
 
       var EXCUSED_STATUS_MAP = {
@@ -398,7 +399,7 @@
           if (btmBazarNota) btmBazarNota.style.display = 'flex';
           if (btmBazarRiwayat) btmBazarRiwayat.style.display = 'flex';
           if (btmBazarBarang) btmBazarBarang.style.display = 'flex';
-          if (btmLaporan) btmLaporan.style.display = 'none'; // Hilangkan menu Arsip Lapbul
+          if (btmLaporan) btmLaporan.style.display = 'flex'; // Hilangkan menu Arsip Lapbul
         }
         
         // ATURAN KHUSUS WALI SANTRI (Sembunyikan Bottom Bar, Logo Header, & tampilkan Ikon Riwayat di atas)
@@ -4493,7 +4494,7 @@
         document.getElementById('laporanRawJson').value = ''; document.getElementById('laporanFormBulan').value = new Date().toISOString().substring(0, 7); document.getElementById('laporanFileName').innerText = 'Pilih Excel';
         var sel = document.getElementById('laporanFormJenis'); sel.innerHTML = '<option disabled selected>Pilih...</option>';
         var div = String(currentUser.role || '').toLowerCase();
-        if (div.includes('admin') || div.includes('kepala')) div = 'ALL'; else if (div.includes('gudang')) div = 'gudang'; else if (div.includes('keuangan')) div = 'keuangan'; else if (div.includes('sarpras')) div = 'sarpras'; else if (div.includes('permak')) div = 'permak';
+        if (div.includes('admin') || div.includes('kepala')) div = 'ALL'; else if (div.includes('gudang')) div = 'gudang'; else if (div.includes('keuangan')) div = 'keuangan'; else if (div.includes('sarpras')) div = 'sarpras'; else if (div.includes('permak')) div = 'permak'; else if (div.includes('bazar') || div.includes('kantin')) div = 'bazar';
         if (div === 'ALL') { for (let k in KATEGORI_LAPORAN) KATEGORI_LAPORAN[k].forEach(i => sel.innerHTML += '<option value="' + i + '">' + i + '</option>'); }
         else if (KATEGORI_LAPORAN[div]) { KATEGORI_LAPORAN[div].forEach(i => sel.innerHTML += '<option value="' + i + '">' + i + '</option>'); }
         openModal('laporanModal');
