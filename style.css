@@ -1,55 +1,105 @@
-/* PENGATURAN CETAK (PRINT) & ANTI TERPOTONG */
+  /* PENGATURAN CETAK (PRINT) & ANTI TERPOTONG */
     @media print {
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
       
-      /* 1. Mencegah kartu label terbelah/terpotong saat pindah halaman */
+      /* 1. Sembunyikan semua elemen di layar */
+      body * {
+        visibility: hidden !important;
+      }
+
+      /* 2. Bebaskan body dari kuncian scroll */
+      html, body {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+        background-color: white !important;
+      }
+
+      /* 3. Matikan sifat Pop-Up (Modal) agar tidak bentrok di mesin printer */
+      [id$="Modal"], [id$="Modal"] > div {
+        position: static !important;
+        display: block !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        transform: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+
+      /* 4. Tampilkan HANYA area print dan isinya (Termasuk PO, Raport, Label Rak) */
+      #weeklyPrintArea, #weeklyPrintArea *,
+      #raportPrintArea, #raportPrintArea *,
+      #poPrintArea, #poPrintArea *,
+      #shelfLabelPrintArea, #shelfLabelPrintArea *,
+      #laporanPrintArea, #laporanPrintArea *,
+      #notaWaliPrintArea, #notaWaliPrintArea * {
+        visibility: visible !important;
+      }
+
+      /* 5. Tarik area print ke paling ujung kiri atas kertas */
+      #weeklyPrintArea,
+      #raportPrintArea,
+      #poPrintArea,
+      #shelfLabelPrintArea,
+      #laporanPrintArea,
+      #notaWaliPrintArea {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Pengaturan khusus Label Rak agar tidak terbelah */
       .shelf-label-card {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         -webkit-column-break-inside: avoid !important;
       }
 
-      /* 2. Pastikan isi di dalam kartu juga utuh */
-      .shelf-label-card > div {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+      .no-print {
+        display: none !important;
       }
 
-      /* 3. Atur batas margin kertas A4 agar tata letak (grid) rapi */
       @page {
+        size: A4 portrait;
         margin: 6mm; 
       }
     }
 
-    /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
-    html,
-    body {
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden !important;
-      /* Mengunci geser kiri-kanan */
-      overflow-y: auto !important;
-      /* Membuka kunci geser atas-bawah */
-      -webkit-overflow-scrolling: touch;
-      /* Membuat scroll atas-bawah sangat mulus di HP */
-      overscroll-behavior-x: none;
-      /* Mencegah pantulan saat mentok di kiri/kanan */
-    }
+      /* === KODE ANTI GOYANG & SCROLL ATAS-BAWAH LANCAR === */
+      html,
+      body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden !important;
+        /* Mengunci geser kiri-kanan */
+        overflow-y: auto !important;
+        /* Membuka kunci geser atas-bawah */
+        -webkit-overflow-scrolling: touch;
+        /* Membuat scroll atas-bawah sangat mulus di HP */
+        overscroll-behavior-x: none;
+        /* Mencegah pantulan saat mentok di kiri/kanan */
+      }
 
-    * {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-    }
+      * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        box-sizing: border-box;
+      }
 
-    /* Memastikan tabel di dalam layar bisa digeser ke samping dengan lancar */
-    .overflow-x-auto {
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
-    }
+      /* Memastikan tabel di dalam layar bisa digeser ke samping dengan lancar */
+      .overflow-x-auto {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
 
     @media print {
       body * {
