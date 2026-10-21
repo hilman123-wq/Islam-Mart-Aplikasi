@@ -67,6 +67,22 @@
         visibility: visible !important;
       }
 
+      /* KODE PERBAIKAN BUG HALAMAN BERULANG MULAI DI SINI */
+      html, body {
+        height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+      }
+
+      /* Membuka kunci semua wadah popup (modal) agar kertas bisa berlanjut ke halaman 2, 3, dst */
+      [id$="Modal"], [id$="Modal"] > div {
+        position: absolute !important;
+        overflow: visible !important !important;
+        max-height: none !important;
+        height: auto !important;
+        transform: none !important;
+      }
+
       #weeklyPrintArea,
       #raportPrintArea,
       #poPrintArea,
@@ -78,7 +94,10 @@
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
       }
+      /* KODE PERBAIKAN SELESAI */
 
       .no-print {
         display: none !important;
