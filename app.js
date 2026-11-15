@@ -647,6 +647,8 @@
         else if (tabId === 'clhs-form') checkAndLoadChecklistByDate('CLHS');
         else if (tabId === 'master-aset') loadMasterAset();
         else if (tabId === 'system-logs') loadSystemLogs();
+        else if (tabId === 'rab-history') loadRabHistory();
+        else if (tabId === 'so-report') loadLaporanSO();
       }
 
       function refreshTab() {
