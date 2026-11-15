@@ -8635,8 +8635,11 @@
         if (!window.currentItemSO) return showToast('Scan barcode barang dulu!', 'error');
         
         var fisik = Number(document.getElementById('soFisik').value) || 0;
-        var komputer = Number(window.currentItemSO.stok) || 0;
-        var modal = Number(window.currentItemSO.harga_modal) || 0;
+        
+        // PENCARIAN KOLOM OTOMATIS: 
+        // Sistem akan mendeteksi apakah di database Anda namanya stok, stok_toko, atau stok_barang
+        var komputer = Number(window.currentItemSO.stok || window.currentItemSO.stok_toko || window.currentItemSO.stok_barang || window.currentItemSO.jumlah || 0);
+        var modal = Number(window.currentItemSO.harga_modal || window.currentItemSO.harga_beli || window.currentItemSO.modal || window.currentItemSO.hpp || 0);
         
         var selisih = fisik - komputer;
         var totalKerugian = selisih * modal; // Jika minus artinya rugi (barang hilang)
