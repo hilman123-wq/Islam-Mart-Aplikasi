@@ -633,12 +633,11 @@
         else if (tabId === 'bazar-management') initBazarView(false);
         else if (tabId === 'clhk-form') checkAndLoadChecklistByDate('CLHK');
         else if (tabId === 'clhg-form') checkAndLoadChecklistByDate('CLHG');
-        else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
+       else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak');
-        else if (tabId === 'so-report') loadLaporanSO(); {
+        else if (tabId === 'produksi-permak') {
           if (!document.getElementById('filterBulanProdPermak').value) {
             document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
           }
