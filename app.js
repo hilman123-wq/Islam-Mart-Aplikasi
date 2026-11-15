@@ -359,6 +359,8 @@
         var btmSarpras = document.getElementById('btnNavBtmSarpras');
         var btmMasterAset = document.getElementById('btnNavBtmMasterAset');
         var btmSystemLogs = document.getElementById('btnNavBtmSystemLogs');
+        var btmSO = document.getElementById('btnNavBtmSO');
+        var btmSOReport = document.getElementById('btnNavBtmSOReport');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -382,6 +384,8 @@
         if (btmSarpras) btmSarpras.style.display = 'none';
         if (btmMasterAset) btmMasterAset.style.display = 'none';
         if (btmSystemLogs) btmSystemLogs.style.display = 'none';
+        if (btmSO) btmSO.style.display = 'none';
+        if (btmSOReport) btmSOReport.style.display = 'none';
 
        // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
         var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
@@ -423,6 +427,8 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmBarang) btmBarang.style.display = 'flex';
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
+          if (btmSO) btmSO.style.display = 'flex';
+          if (btmSOReport) btmSOReport.style.display = 'flex';
         }
 
           if (document.getElementById('nav-so-input')) {
@@ -446,9 +452,12 @@
           if (btmStaf) btmStaf.style.display = 'flex';
           if (btmSantri) btmSantri.style.display = 'flex';
           
+          
           if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
           if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
+          if (btmSO) btmSO.style.display = 'flex';
+          if (btmSOReport) btmSOReport.style.display = 'flex';
         }
 
           if (document.getElementById('nav-so-input')) {
