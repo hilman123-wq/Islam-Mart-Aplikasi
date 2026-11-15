@@ -424,6 +424,14 @@
           if (btmBarang) btmBarang.style.display = 'flex';
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
         }
+
+          if (document.getElementById('nav-so-input')) {
+          var showSO = (isGudang || isAdmin || isKepalaAdmin) ? 'flex' : 'none';
+          document.getElementById('nav-so-input').style.display = showSO;
+          document.getElementById('nav-so-report').style.display = showSO;
+        }
+
+        
         // ATURAN 3: KEUANGAN
         else if (isKeuangan) {
           if (btmForm) btmForm.style.display = 'flex';
@@ -441,6 +449,12 @@
           if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
           if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
+        }
+
+          if (document.getElementById('nav-so-input')) {
+          var showSO = (isGudang || isAdmin || isKepalaAdmin) ? 'flex' : 'none';
+          document.getElementById('nav-so-input').style.display = showSO;
+          document.getElementById('nav-so-report').style.display = showSO;
         }
 
         // ATURAN 5: PERMAK
@@ -623,7 +637,8 @@
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
-        else if (tabId === 'produksi-permak') {
+        else if (tabId === 'produksi-permak');
+        else if (tabId === 'so-report') loadLaporanSO(); {
           if (!document.getElementById('filterBulanProdPermak').value) {
             document.getElementById('filterBulanProdPermak').value = new Date().toISOString().substring(0, 7);
           }
@@ -8552,4 +8567,144 @@
           '</tr>';
         });
         tb.innerHTML = html;
+      }
+
+      // ==========================================
+      // MODUL STOCK OPNAME (SO) DIGITAL
+      // ==========================================
+      window.currentItemSO = null;
+
+      async function cariBarangSO(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          var bc = document.getElementById('soBarcode').value.trim();
+          if (!bc) return;
+          
+          showLoading('Mencari...');
+          try {
+            // Tarik data stok paling update langsung dari database
+            const { data, error } = await supaClient.from('master_barang').select('*').eq('barcode', bc).single();
+            hideLoading();
+            if (error || !data) throw new Error('Barang tidak ditemukan!');
+            
+            window.currentItemSO = data;
+            document.getElementById('soNamaBarang').innerText = data.nama;
+            document.getElementById('soFisik').value = '';
+            document.getElementById('soFisik').focus();
+          } catch(err) {
+            hideLoading();
+            showToast('Barcode salah/tidak ada di Master!', 'error');
+            document.getElementById('soNamaBarang').innerText = '-';
+            window.currentItemSO = null;
+            document.getElementById('soBarcode').value = '';
+          }
+        }
+      }
+
+      async function simpanFisikSO(e) {
+        e.preventDefault();
+        if (!window.currentItemSO) return showToast('Scan barcode barang dulu!', 'error');
+        
+        var fisik = Number(document.getElementById('soFisik').value) || 0;
+        var komputer = Number(window.currentItemSO.stok) || 0;
+        var modal = Number(window.currentItemSO.harga_modal) || 0;
+        
+        var selisih = fisik - komputer;
+        var totalKerugian = selisih * modal; // Jika minus artinya rugi (barang hilang)
+        
+        var payload = {
+          tanggal: new Date().toISOString().split('T')[0],
+          barcode: window.currentItemSO.barcode,
+          nama_barang: window.currentItemSO.nama,
+          stok_komputer: komputer,
+          stok_fisik: fisik,
+          selisih: selisih,
+          harga_modal: modal,
+          total_kerugian: totalKerugian,
+          petugas: currentUser.nama,
+          status: 'Pending' // Menunggu disetujui Kepala/Admin
+        };
+        
+        showLoading('Menyimpan hitungan...');
+        try {
+          const { error } = await supaClient.from('riwayat_so').insert([payload]);
+          hideLoading();
+          if (error) throw error;
+          
+          showToast('Tersimpan! Silakan lanjut scan.', 'success');
+          
+          // Reset form untuk barang berikutnya
+          document.getElementById('soBarcode').value = '';
+          document.getElementById('soNamaBarang').innerText = '-';
+          document.getElementById('soFisik').value = '';
+          window.currentItemSO = null;
+          document.getElementById('soBarcode').focus();
+        } catch(err) {
+          hideLoading();
+          showToast('Gagal menyimpan: ' + err.message, 'error');
+        }
+      }
+
+      async function loadLaporanSO() {
+        var tb = document.getElementById('soReportTableBody');
+        if (tb) tb.innerHTML = '<tr><td colspan="7" class="py-10 text-center font-bold text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat...</td></tr>';
+        
+        try {
+          // Kita hanya menampilkan yang statusnya masih Pending (Belum diterapkan)
+          const { data, error } = await supaClient.from('riwayat_so').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
+          if (error) throw error;
+          
+          if (data.length === 0) {
+            if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data SO yang Pending.</td></tr>';
+            return;
+          }
+
+          var html = '';
+          data.forEach((r, i) => {
+            var colorSelisih = 'text-slate-600';
+            if (r.selisih < 0) colorSelisih = 'text-rose-600';
+            else if (r.selisih > 0) colorSelisih = 'text-emerald-600';
+
+            html += '<tr class="hover:bg-slate-50 border-b border-slate-100 transition">' +
+              '<td class="py-3 px-3 text-center font-bold text-slate-400">' + (i+1) + '</td>' +
+              '<td class="py-3 px-3"><span class="font-bold text-slate-700">' + r.petugas + '</span><br><span class="text-[9px] text-slate-400">' + r.tanggal + '</span></td>' +
+              '<td class="py-3 px-4"><div class="font-black text-slate-800">' + r.nama_barang + '</div><div class="text-[10px] font-mono text-slate-500">' + r.barcode + '</div></td>' +
+              '<td class="py-3 px-3 text-center font-bold text-slate-600">' + r.stok_komputer + '</td>' +
+              '<td class="py-3 px-3 text-center font-black text-blue-600 bg-blue-50/50">' + r.stok_fisik + '</td>' +
+              '<td class="py-3 px-3 text-center font-black ' + colorSelisih + '">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>' +
+              '<td class="py-3 px-3 text-right font-black ' + colorSelisih + '">Rp ' + Number(r.total_kerugian).toLocaleString('id-ID') + '</td>' +
+            '</tr>';
+          });
+          if(tb) tb.innerHTML = html;
+        } catch(err) {
+          if (tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-red-500">Gagal: ' + err.message + '</td></tr>';
+        }
+      }
+
+      async function terapkanHasilSO() {
+        if(!confirm('PERHATIAN! Semua stok di komputer akan diubah mengikuti stok fisik secara permanen. Yakin?')) return;
+        
+        showLoading('Mensinkronkan ke Master Barang...');
+        try {
+          const { data: pendingSO, error: errGet } = await supaClient.from('riwayat_so').select('*').eq('status', 'Pending');
+          if(errGet) throw errGet;
+          if(pendingSO.length === 0) {
+             hideLoading(); return showToast('Tidak ada data yang perlu diterapkan.', 'error');
+          }
+          
+          // Proses update ke tabel master_barang satu per satu
+          for(let i=0; i<pendingSO.length; i++) {
+             let so = pendingSO[i];
+             await supaClient.from('master_barang').update({stok: so.stok_fisik}).eq('barcode', so.barcode);
+             await supaClient.from('riwayat_so').update({status: 'Diterapkan'}).eq('id', so.id);
+          }
+          
+          hideLoading();
+          showToast('Stock Opname BERHASIL diterapkan!', 'success');
+          if (typeof recordSystemLog === 'function') recordSystemLog('TERAPKAN SO', 'Mensinkronkan ' + pendingSO.length + ' item Stock Opname');
+          loadLaporanSO();
+        } catch(err) {
+          hideLoading();
+          showToast('Gagal: ' + err.message, 'error');
+        }
       }

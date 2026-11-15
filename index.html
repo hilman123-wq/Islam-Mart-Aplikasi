@@ -311,6 +311,17 @@
             <span>Log Aktivitas (CCTV)</span>
           </button>
         </div>
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-3 pb-1">Gudang & Audit</div>
+        
+        <button onclick="switchTab('so-input')" id="nav-so-input" style="display: none;" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-emerald-600 hover:text-white transition">
+          <i class="fa-solid fa-barcode w-5 text-center text-emerald-400"></i>
+          <span>Mulai Stock Opname</span>
+        </button>
+        
+        <button onclick="switchTab('so-report')" id="nav-so-report" style="display: none;" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-slate-300 hover:bg-emerald-600 hover:text-white transition">
+          <i class="fa-solid fa-clipboard-check w-5 text-center text-blue-400"></i>
+          <span>Laporan Hasil SO</span>
+        </button>
       </nav>
 
       <!-- Sidebar Footer -->
@@ -2939,6 +2950,83 @@
                   <tr>
                     <td colspan="5" class="py-6 text-center text-slate-400">Memuat log aktivitas...</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB: MULAI STOCK OPNAME (BLIND COUNT) -->
+        <!-- ========================================================================= -->
+        <section id="tab-so-input" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 max-w-xl mx-auto space-y-5 text-center">
+            <div class="border-b pb-3">
+              <h2 class="text-base sm:text-lg font-black text-slate-800 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked text-emerald-500"></i> Stock Opname Digital
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">Scan barang dan hitung jumlah fisiknya di rak.</p>
+            </div>
+            
+            <div class="space-y-4 text-left">
+              <div>
+                <label class="block font-bold text-slate-700 uppercase mb-1 text-xs">1. Scan Barcode (Tekan Enter)</label>
+                <input type="text" id="soBarcode" onkeypress="cariBarangSO(event)" placeholder="Scan barcode di sini..." class="w-full p-4 bg-slate-50 border-2 border-emerald-100 rounded-xl font-mono font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 text-center text-lg">
+              </div>
+              
+              <div class="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
+                <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1">Nama Barang:</p>
+                <h3 id="soNamaBarang" class="font-black text-slate-800 text-lg sm:text-xl">-</h3>
+              </div>
+
+              <form id="soForm" onsubmit="simpanFisikSO(event)" class="space-y-4">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase mb-1 text-xs">2. Input Jumlah Fisik di Rak</label>
+                  <input type="number" id="soFisik" required placeholder="0" class="w-full p-4 bg-white border-2 border-slate-200 rounded-xl font-black text-slate-800 outline-none focus:border-emerald-500 text-center text-2xl">
+                </div>
+                <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-floppy-disk"></i> SIMPAN HASIL HITUNG
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB: LAPORAN HASIL SO -->
+        <!-- ========================================================================= -->
+        <section id="tab-so-report" style="display: none;" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3 gap-3">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-clipboard-check text-blue-500"></i> Laporan Rekonsiliasi SO
+                </h2>
+                <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Daftar selisih barang Pending (Belum diterapkan ke master).</p>
+              </div>
+              <div class="flex gap-2 w-full sm:w-auto">
+                <button onclick="loadLaporanSO()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                <button onclick="terapkanHasilSO()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-check-double"></i> TERAPKAN KE MASTER
+                </button>
+              </div>
+            </div>
+            
+            <div class="overflow-x-auto rounded-2xl border border-slate-100">
+              <table class="w-full text-left text-xs min-w-[750px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+                  <tr>
+                    <th class="py-3 px-3 w-10 text-center">No</th>
+                    <th class="py-3 px-3">Petugas</th>
+                    <th class="py-3 px-4">Barang & Barcode</th>
+                    <th class="py-3 px-3 text-center">Stok Komputer</th>
+                    <th class="py-3 px-3 text-center text-blue-600">Fisik (Rak)</th>
+                    <th class="py-3 px-3 text-center">Selisih</th>
+                    <th class="py-3 px-3 text-right">Nilai Selisih (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody id="soReportTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan SO...</td></tr>
                 </tbody>
               </table>
             </div>
