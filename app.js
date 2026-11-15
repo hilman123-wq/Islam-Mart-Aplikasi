@@ -8592,33 +8592,39 @@
           
           showLoading('Mencari...');
           try {
-            // PENCARIAN FLEKSIBEL (ANTI ERROR)
-            // 1. Pakai ilike untuk kebal terhadap spasi tersembunyi di database
-            // 2. Pakai limit(1) agar sistem tidak panik / error jika ada barcode ganda
+            // Kita kembalikan ke pencarian pasti (.eq) agar tidak ditolak jika kolom barcode berupa Angka
+            // Tetap menggunakan .limit(1) agar tidak error jika ada barcode ganda di database
             const { data, error } = await supaClient
               .from('master_barang')
               .select('*')
-              .ilike('barcode', '%' + bc + '%')
+              .eq('barcode', bc)
               .limit(1);
               
             hideLoading();
             
-            if (error) throw error;
+            // Tampilkan error asli di console (tekan F12) jika masih gagal untuk bahan evaluasi
+            if (error) {
+              console.error("Error Supabase SO:", error);
+              throw error;
+            }
+            
             if (!data || data.length === 0) {
                throw new Error('Barang tidak ditemukan!');
             }
             
-            // Ambil barang pertama yang paling cocok
+            // Ambil barang pertama hasil pencarian
             window.currentItemSO = data[0];
             document.getElementById('soNamaBarang').innerText = data[0].nama;
             document.getElementById('soFisik').value = '';
-            document.getElementById('soFisik').focus(); // Langsung pindah kursor ke kolom jumlah
+            document.getElementById('soFisik').focus();
             
           } catch(err) {
             hideLoading();
             showToast('Barcode salah/tidak ada di Master!', 'error');
             document.getElementById('soNamaBarang').innerText = '-';
             window.currentItemSO = null;
+            
+            // Kosongkan kembali inputnya agar siap di-scan ulang
             document.getElementById('soBarcode').value = '';
           }
         }
