@@ -359,8 +359,7 @@
         var btmSarpras = document.getElementById('btnNavBtmSarpras');
         var btmMasterAset = document.getElementById('btnNavBtmMasterAset');
         var btmSystemLogs = document.getElementById('btnNavBtmSystemLogs');
-        var btmSO = document.getElementById('btnNavBtmSO');
-        var btmSOReport = document.getElementById('btnNavBtmSOReport');
+        var btmStockOpname = document.getElementById('btnNavBtmStockOpname');
 
         if (btmBeranda) btmBeranda.style.display = 'flex';
         if (btmPO) btmPO.style.display = 'none';
@@ -384,8 +383,7 @@
         if (btmSarpras) btmSarpras.style.display = 'none';
         if (btmMasterAset) btmMasterAset.style.display = 'none';
         if (btmSystemLogs) btmSystemLogs.style.display = 'none';
-        if (btmSO) btmSO.style.display = 'none';
-        if (btmSOReport) btmSOReport.style.display = 'none';
+        if (btmStockOpname) btmStockOpname.style.display = 'none';
 
        // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
         var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
@@ -427,8 +425,7 @@
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmBarang) btmBarang.style.display = 'flex';
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
-          if (btmSO) btmSO.style.display = 'flex';
-          if (btmSOReport) btmSOReport.style.display = 'flex';
+          if (btmStockOpname) btmStockOpname.style.display = 'flex';
         }
 
           if (document.getElementById('nav-so-input')) {
@@ -456,8 +453,7 @@
           if (btmMasterAset) btmMasterAset.style.display = 'flex'; // <--- Tampilkan Data Aset
           if (btmSystemLogs) btmSystemLogs.style.display = 'flex';
           if (btmMenu) btmMenu.style.display = 'none'; // <--- Sembunyikan Sidebar Menu
-          if (btmSO) btmSO.style.display = 'flex';
-          if (btmSOReport) btmSOReport.style.display = 'flex';
+        if (btmStockOpname) btmStockOpname.style.display = 'flex';
         }
 
           if (document.getElementById('nav-so-input')) {
@@ -656,7 +652,7 @@
         else if (tabId === 'master-aset') loadMasterAset();
         else if (tabId === 'system-logs') loadSystemLogs();
         else if (tabId === 'rab-history') loadRabHistory();
-        else if (tabId === 'so-report') loadLaporanSO();
+        else if (tabId === 'stock-opname') loadLaporanSO();
       }
 
       function refreshTab() {
@@ -8675,6 +8671,7 @@
           document.getElementById('soFisik').value = '';
           window.currentItemSO = null;
           document.getElementById('soBarcode').focus();
+          loadLaporanSO(); // Otomatis perbarui tabel di bawah setelah scan
         } catch(err) {
           hideLoading();
           showToast('Gagal menyimpan: ' + err.message, 'error');

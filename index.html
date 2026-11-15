@@ -2957,9 +2957,11 @@
         </section>
 
         <!-- ========================================================================= -->
-        <!-- TAB: MULAI STOCK OPNAME (BLIND COUNT) -->
+        <!-- TAB: STOCK OPNAME (GABUNGAN FORM & LAPORAN) -->
         <!-- ========================================================================= -->
-        <section id="tab-so-input" style="display: none;" class="space-y-6">
+        <section id="tab-stock-opname" style="display: none;" class="space-y-6">
+          
+          <!-- BAGIAN ATAS: FORM SCAN BARCODE -->
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 max-w-xl mx-auto space-y-5 text-center">
             <div class="border-b pb-3">
               <h2 class="text-base sm:text-lg font-black text-slate-800 flex justify-center items-center gap-2">
@@ -2985,17 +2987,13 @@
                   <input type="number" id="soFisik" required placeholder="0" class="w-full p-4 bg-white border-2 border-slate-200 rounded-xl font-black text-slate-800 outline-none focus:border-emerald-500 text-center text-2xl">
                 </div>
                 <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-floppy-disk"></i> SIMPAN HASIL HITUNG
+                  <i class="fa-solid fa-floppy-disk"></i> SIMPAN & LIHAT HASIL
                 </button>
               </form>
             </div>
           </div>
-        </section>
 
-        <!-- ========================================================================= -->
-        <!-- TAB: LAPORAN HASIL SO -->
-        <!-- ========================================================================= -->
-        <section id="tab-so-report" style="display: none;" class="space-y-6">
+          <!-- BAGIAN BAWAH: TABEL LAPORAN -->
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3 gap-3">
               <div>
@@ -3151,18 +3149,11 @@
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">CCTV Log</span>
       </button>
 
-      <!-- Tombol Mulai SO -->
-      <button id="btnNavBtmSO" onclick="switchTab('so-input')" style="display: none;"
+     <!-- TOMBOL STOCK OPNAME GABUNGAN -->
+      <button id="btnNavBtmStockOpname" onclick="switchTab('stock-opname')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-        <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Mulai SO</span>
-      </button>
-
-      <!-- Tombol Hasil SO -->
-      <button id="btnNavBtmSOReport" onclick="switchTab('so-report')" style="display: none;"
-        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-blue-600 focus:text-blue-600 transition-colors">
-        <i class="fa-solid fa-clipboard-check text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Hasil SO</span>
+        <i class="fa-solid fa-boxes-stacked text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Opname</span>
       </button>
 
       <button id="btnNavBtmForm" onclick="goToMyChecklist()"
