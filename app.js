@@ -8636,26 +8636,15 @@
         
         var fisik = Number(document.getElementById('soFisik').value) || 0;
         
-        // PENCARIAN SUPER DETEKTIF DENGAN OPERATOR '??'
-        // Jika kolom 'stok' isinya memang angka 0, dia akan langsung mengambil angka 0 tersebut 
-        // tanpa mencari-cari ke kolom lain.
-        var komputer = Number(
-          window.currentItemSO.stok ?? 
-          window.currentItemSO.qty ?? 
-          window.currentItemSO.stock ?? 
-          window.currentItemSO.stok_toko ?? 
-          window.currentItemSO.jumlah ?? 
-          0
-        );
+        // PENCARIAN KOLOM OTOMATIS (SUPER AI DETECT)
+        // Sistem akan membongkar isi database dan mencari sendiri kolom mana yang mengandung kata "stok", "qty", atau "sisa"
+        var keys = Object.keys(window.currentItemSO);
         
-        // Mendeteksi kolom harga modal/beli/hpp
-        var modal = Number(
-          window.currentItemSO.harga_modal ?? 
-          window.currentItemSO.harga_beli ?? 
-          window.currentItemSO.hpp ?? 
-          window.currentItemSO.modal ?? 
-          0
-        );
+        var stokKey = keys.find(k => k.toLowerCase().includes('stok') || k.toLowerCase().includes('qty') || k.toLowerCase().includes('jumlah') || k.toLowerCase().includes('sisa'));
+        var komputer = stokKey ? Number(window.currentItemSO[stokKey]) : 0;
+        
+        var modalKey = keys.find(k => k.toLowerCase().includes('modal') || k.toLowerCase().includes('beli') || k.toLowerCase() === 'hpp');
+        var modal = modalKey ? Number(window.currentItemSO[modalKey]) : 0;
         
         var selisih = fisik - komputer;
         var totalKerugian = selisih * modal; // Jika minus artinya rugi (barang hilang)
@@ -8681,7 +8670,6 @@
           
           showToast('Tersimpan! Silakan lanjut scan.', 'success');
           
-          // Reset form untuk barang berikutnya
           document.getElementById('soBarcode').value = '';
           document.getElementById('soNamaBarang').innerText = '-';
           document.getElementById('soFisik').value = '';
