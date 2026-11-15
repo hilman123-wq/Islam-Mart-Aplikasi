@@ -344,7 +344,7 @@
         var btmLaporan = document.getElementById('btnNavBtmLaporan');
         var btmForm = document.getElementById('btnNavBtmForm');
         var btmMenu = document.getElementById('btnNavBtmMenu');
-        var btmLapMingguan = document.getElementById('btnNavBtmLapMingguan');
+        var btmPortalLaporan = document.getElementById('btnNavBtmPortalLaporan');
         var btmLapBulanan = document.getElementById('btnNavBtmLapBulanan');
         var btmBazarKasir = document.getElementById('btnNavBtmBazarKasir');
         var btmBazarNota = document.getElementById('btnNavBtmBazarNota');
@@ -369,7 +369,7 @@
         if (btmLaporan) btmLaporan.style.display = 'none';
         if (btmForm) btmForm.style.display = 'none';
         if (btmMenu) btmMenu.style.display = 'none';
-        if (btmLapMingguan) btmLapMingguan.style.display = 'none';
+       if (btmPortalLaporan) btmPortalLaporan.style.display = 'none';
         if (btmLapBulanan) btmLapBulanan.style.display = 'none';
         if (btmBazarKasir) btmBazarKasir.style.display = 'none';
         if (btmBazarNota) btmBazarNota.style.display = 'none';
@@ -422,7 +422,7 @@
         // ATURAN 2: GUDANG
         else if (isGudang) {
           if (btmForm) btmForm.style.display = 'flex';
-          if (btmLapMingguan) btmLapMingguan.style.display = 'flex';
+          if (btmPortalLaporan) btmPortalLaporan.style.display = 'flex';
           if (btmLapBulanan) btmLapBulanan.style.display = 'flex';
           if (btmLaporan) btmLaporan.style.display = 'flex';
           if (btmBarang) btmBarang.style.display = 'flex';
@@ -616,9 +616,11 @@
         var activeBtn = document.getElementById('nav-' + tabId);
         if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'master-aset', 'clhs-form', 'santri-management', 'bazar-management'].forEach(t => {
+        // Mendaftarkan seluruh Tab yang ada di aplikasi
+        ['portal-laporan', 'produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'master-aset', 'clhs-form', 'santri-management', 'bazar-management', 'system-logs', 'rab-create', 'rab-history', 'so-input', 'so-report'].forEach(t => {
           if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
         });
+        
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
         window.scrollTo(0, 0);
 
@@ -639,10 +641,9 @@
         else if (tabId === 'wa-reminder') loadWaReminder(false);
         else if (tabId === 'santri-management') loadSantriTable(false);
         else if (tabId === 'bazar-management') initBazarView(false);
-        else if (tabId === 'bazar-management') initBazarView(false);
         else if (tabId === 'clhk-form') checkAndLoadChecklistByDate('CLHK');
         else if (tabId === 'clhg-form') checkAndLoadChecklistByDate('CLHG');
-       else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
+        else if (tabId === 'clhka-form') checkAndLoadChecklistByDate('CLHKA');
         else if (tabId === 'clhp-form') checkAndLoadChecklistByDate('CLHP');
         else if (tabId === 'clhdp-form') checkAndLoadChecklistByDate('CLHDP');
         else if (tabId === 'stok-permak') loadStokPermak(false);
