@@ -8636,10 +8636,26 @@
         
         var fisik = Number(document.getElementById('soFisik').value) || 0;
         
-        // PENCARIAN KOLOM OTOMATIS: 
-        // Sistem akan mendeteksi apakah di database Anda namanya stok, stok_toko, atau stok_barang
-        var komputer = Number(window.currentItemSO.stok || window.currentItemSO.stok_toko || window.currentItemSO.stok_barang || window.currentItemSO.jumlah || 0);
-        var modal = Number(window.currentItemSO.harga_modal || window.currentItemSO.harga_beli || window.currentItemSO.modal || window.currentItemSO.hpp || 0);
+        // PENCARIAN SUPER DETEKTIF DENGAN OPERATOR '??'
+        // Jika kolom 'stok' isinya memang angka 0, dia akan langsung mengambil angka 0 tersebut 
+        // tanpa mencari-cari ke kolom lain.
+        var komputer = Number(
+          window.currentItemSO.stok ?? 
+          window.currentItemSO.qty ?? 
+          window.currentItemSO.stock ?? 
+          window.currentItemSO.stok_toko ?? 
+          window.currentItemSO.jumlah ?? 
+          0
+        );
+        
+        // Mendeteksi kolom harga modal/beli/hpp
+        var modal = Number(
+          window.currentItemSO.harga_modal ?? 
+          window.currentItemSO.harga_beli ?? 
+          window.currentItemSO.hpp ?? 
+          window.currentItemSO.modal ?? 
+          0
+        );
         
         var selisih = fisik - komputer;
         var totalKerugian = selisih * modal; // Jika minus artinya rugi (barang hilang)
@@ -8654,7 +8670,7 @@
           harga_modal: modal,
           total_kerugian: totalKerugian,
           petugas: currentUser.nama,
-          status: 'Pending' // Menunggu disetujui Kepala/Admin
+          status: 'Pending' 
         };
         
         showLoading('Menyimpan hitungan...');
