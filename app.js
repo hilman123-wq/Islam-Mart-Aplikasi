@@ -8592,15 +8592,28 @@
           
           showLoading('Mencari...');
           try {
-            // Tarik data stok paling update langsung dari database
-            const { data, error } = await supaClient.from('master_barang').select('*').eq('barcode', bc).single();
+            // PENCARIAN FLEKSIBEL (ANTI ERROR)
+            // 1. Pakai ilike untuk kebal terhadap spasi tersembunyi di database
+            // 2. Pakai limit(1) agar sistem tidak panik / error jika ada barcode ganda
+            const { data, error } = await supaClient
+              .from('master_barang')
+              .select('*')
+              .ilike('barcode', '%' + bc + '%')
+              .limit(1);
+              
             hideLoading();
-            if (error || !data) throw new Error('Barang tidak ditemukan!');
             
-            window.currentItemSO = data;
-            document.getElementById('soNamaBarang').innerText = data.nama;
+            if (error) throw error;
+            if (!data || data.length === 0) {
+               throw new Error('Barang tidak ditemukan!');
+            }
+            
+            // Ambil barang pertama yang paling cocok
+            window.currentItemSO = data[0];
+            document.getElementById('soNamaBarang').innerText = data[0].nama;
             document.getElementById('soFisik').value = '';
-            document.getElementById('soFisik').focus();
+            document.getElementById('soFisik').focus(); // Langsung pindah kursor ke kolom jumlah
+            
           } catch(err) {
             hideLoading();
             showToast('Barcode salah/tidak ada di Master!', 'error');
