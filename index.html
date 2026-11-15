@@ -3033,44 +3033,6 @@
           </div>
         </section>
 
-        <!-- ========================================================================= -->
-        <!-- TAB: PORTAL LAPORAN GABUNGAN -->
-        <!-- ========================================================================= -->
-        <section id="tab-portal-laporan" style="display: none;" class="space-y-6">
-          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 max-w-xl mx-auto text-center space-y-6">
-            <div>
-              <h2 class="text-base sm:text-lg font-black text-slate-800 flex justify-center items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-indigo-500"></i> Pusat Laporan Gudang
-              </h2>
-              <p class="text-xs text-slate-500 mt-1">Pilih jenis laporan operasional yang ingin Anda lihat.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <!-- Kotak Pilihan Mingguan -->
-              <button onclick="switchTab('laporan-mingguan')" class="p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl flex flex-col items-center gap-3 hover:bg-emerald-50 hover:border-emerald-200 transition group shadow-sm">
-                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-calendar-week text-xl text-emerald-500"></i>
-                </div>
-                <div class="text-center">
-                  <span class="block font-black text-slate-700 text-sm">Laporan Mingguan</span>
-                  <span class="text-[10px] text-slate-500 font-medium mt-1 block leading-tight">Rekap daftar periksa (ceklis) aktivitas per minggu</span>
-                </div>
-              </button>
-
-              <!-- Kotak Pilihan Bulanan -->
-              <button onclick="switchTab('laporan-bulanan')" class="p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl flex flex-col items-center gap-3 hover:bg-blue-50 hover:border-blue-200 transition group shadow-sm">
-                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                  <i class="fa-solid fa-award text-xl text-blue-500"></i>
-                </div>
-                <div class="text-center">
-                  <span class="block font-black text-slate-700 text-sm">Laporan Bulanan</span>
-                  <span class="text-[10px] text-slate-500 font-medium mt-1 block leading-tight">Rekap evaluasi & penilaian kinerja bulanan</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </section>
-
       </div>
     </main>
 
@@ -3127,12 +3089,19 @@
         <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
       </button>
 
-      <!-- TOMBOL LAPORAN GABUNGAN -->
-      <button id="btnNavBtmPortalLaporan" onclick="switchTab('portal-laporan')" style="display: none;"
-        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 focus:text-indigo-600 transition-colors">
-        <i class="fa-solid fa-chart-pie text-[13px] sm:text-xl"></i>
-        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Laporan</span>
+      <!-- TOMBOL KHUSUS GUDANG -->
+      <button id="btnNavBtmLapMingguan" onclick="switchTab('weekly-report')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
+        <i class="fa-solid fa-calendar-week text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Minggu</span>
       </button>
+
+      <button id="btnNavBtmLapBulanan" onclick="switchTab('monthly-raport')" style="display: none;"
+        class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
+        <i class="fa-solid fa-award text-[13px] sm:text-xl"></i>
+        <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Bulan</span>
+      </button>
+      <!-- END TOMBOL KHUSUS GUDANG -->
 
      <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;"
         class="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
