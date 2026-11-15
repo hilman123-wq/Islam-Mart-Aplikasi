@@ -42,6 +42,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 
 <body
@@ -2957,23 +2958,30 @@
         </section>
 
         <!-- ========================================================================= -->
-        <!-- TAB: STOCK OPNAME (GABUNGAN FORM & LAPORAN) -->
+        <!-- TAB: STOCK OPNAME (GABUNGAN FORM, LAPORAN & KAMERA) -->
         <!-- ========================================================================= -->
         <section id="tab-stock-opname" style="display: none;" class="space-y-6">
           
-          <!-- BAGIAN ATAS: FORM SCAN BARCODE -->
+          <!-- BAGIAN ATAS: FORM CARI & KAMERA -->
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 max-w-xl mx-auto space-y-5 text-center">
             <div class="border-b pb-3">
               <h2 class="text-base sm:text-lg font-black text-slate-800 flex justify-center items-center gap-2">
                 <i class="fa-solid fa-boxes-stacked text-emerald-500"></i> Stock Opname Digital
               </h2>
-              <p class="text-xs text-slate-500 mt-1">Scan barang dan hitung jumlah fisiknya di rak.</p>
+              <p class="text-xs text-slate-500 mt-1">Gunakan scanner, kamera HP, atau ketik nama barang.</p>
             </div>
             
             <div class="space-y-4 text-left">
               <div>
-                <label class="block font-bold text-slate-700 uppercase mb-1 text-xs">1. Scan Barcode (Tekan Enter)</label>
-                <input type="text" id="soBarcode" onkeypress="cariBarangSO(event)" placeholder="Scan barcode di sini..." class="w-full p-4 bg-slate-50 border-2 border-emerald-100 rounded-xl font-mono font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 text-center text-lg">
+                <label class="block font-bold text-slate-700 uppercase mb-1 text-xs">1. Cari Barang (Enter)</label>
+                <div class="flex gap-2">
+                  <input type="text" id="soBarcode" onkeypress="cariBarangSO(event)" placeholder="Ketik barcode / nama..." class="w-full p-4 bg-slate-50 border-2 border-emerald-100 rounded-xl font-bold text-slate-700 outline-none focus:bg-white focus:border-emerald-500 text-[15px]">
+                  
+                  <!-- TOMBOL KAMERA -->
+                  <button type="button" onclick="bukaKameraSO()" class="bg-slate-800 text-white w-16 rounded-xl hover:bg-slate-700 active:scale-95 transition flex items-center justify-center shadow-md">
+                     <i class="fa-solid fa-camera text-xl"></i>
+                  </button>
+                </div>
               </div>
               
               <div class="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
@@ -2993,14 +3001,14 @@
             </div>
           </div>
 
-          <!-- BAGIAN BAWAH: TABEL LAPORAN -->
+          <!-- BAGIAN BAWAH: TABEL LAPORAN (Tetap Sama) -->
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3 gap-3">
               <div>
                 <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
                   <i class="fa-solid fa-clipboard-check text-blue-500"></i> Laporan Rekonsiliasi SO
                 </h2>
-                <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Daftar selisih barang Pending (Belum diterapkan ke master).</p>
+                <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Daftar selisih barang Pending.</p>
               </div>
               <div class="flex gap-2 w-full sm:w-auto">
                 <button onclick="loadLaporanSO()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-rotate"></i> Refresh</button>
@@ -3020,13 +3028,40 @@
                     <th class="py-3 px-3 text-center">Stok Komputer</th>
                     <th class="py-3 px-3 text-center text-blue-600">Fisik (Rak)</th>
                     <th class="py-3 px-3 text-center">Selisih</th>
-                    <th class="py-3 px-3 text-right">Nilai Selisih (Rp)</th>
+                    <th class="py-3 px-3 text-right">Nilai (Rp)</th>
                   </tr>
                 </thead>
                 <tbody id="soReportTableBody" class="divide-y divide-slate-100 text-slate-700">
-                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan SO...</td></tr>
+                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan...</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- POP-UP MODAL KAMERA DAN PILIH BARANG GANDA   -->
+          <!-- ============================================== -->
+          <div id="soCameraModal" class="fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
+              <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-camera text-emerald-500"></i> Kamera Scanner</h3>
+                <button onclick="tutupKameraSO()" class="w-8 h-8 flex items-center justify-center rounded-full bg-rose-100 text-rose-600 hover:bg-rose-200"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="p-4 bg-black">
+                <div id="so-reader" class="w-full rounded-xl overflow-hidden"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="soPilihBarangModal" class="fixed inset-0 bg-slate-900/80 z-[70] hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
+              <div class="p-4 border-b flex justify-between items-center bg-emerald-50 rounded-t-3xl">
+                <h3 class="font-black text-emerald-800">Ditemukan Beberapa Barang:</h3>
+                <button onclick="document.getElementById('soPilihBarangModal').style.display='none'" class="text-rose-500 font-bold px-2">Batal</button>
+              </div>
+              <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-2" id="soPilihBarangList">
+                <!-- Daftar nama ganda masuk sini -->
+              </div>
             </div>
           </div>
         </section>

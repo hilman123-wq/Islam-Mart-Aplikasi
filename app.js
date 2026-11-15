@@ -8580,6 +8580,43 @@
       // ==========================================
       window.currentItemSO = null;
 
+      // ==========================================
+      // FUNGSI KAMERA SCANNER HP
+      // ==========================================
+      let html5QrcodeScannerSO = null;
+      let isCameraOpen = false;
+
+      function bukaKameraSO() {
+        document.getElementById('soCameraModal').style.display = 'flex';
+        if (!html5QrcodeScannerSO) {
+           html5QrcodeScannerSO = new Html5Qrcode("so-reader");
+        }
+        
+        // Setting kamera belakang dan ukuran area scan
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+        html5QrcodeScannerSO.start({ facingMode: "environment" }, config, (decodedText) => {
+           // Jika sukses menemukan barcode
+           tutupKameraSO();
+           document.getElementById('soBarcode').value = decodedText;
+           
+           // Langsung otomatis cari seolah menekan Enter
+           cariBarangSO({ key: 'Enter', preventDefault: () => {} });
+        }).catch(err => {
+           console.warn("Menunggu kamera fokus...", err);
+        });
+        isCameraOpen = true;
+      }
+
+      function tutupKameraSO() {
+        document.getElementById('soCameraModal').style.display = 'none';
+        if (html5QrcodeScannerSO && isCameraOpen) {
+           html5QrcodeScannerSO.stop().then(() => { isCameraOpen = false; }).catch(e => console.log(e));
+        }
+      }
+
+      // ==========================================
+      // PENCARIAN CERDAS (BARCODE & NAMA)
+      // ==========================================
       async function cariBarangSO(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -8588,42 +8625,63 @@
           
           showLoading('Mencari...');
           try {
-            // Kita kembalikan ke pencarian pasti (.eq) agar tidak ditolak jika kolom barcode berupa Angka
-            // Tetap menggunakan .limit(1) agar tidak error jika ada barcode ganda di database
+            // Kita bersihkan karakter koma jika user mengetik nama barang pakai koma
+            var cleanBc = bc.replace(/,/g, ' '); 
+            
+            // Mencari barcode yang persis SAMA, ATAU nama yang MIRIP
             const { data, error } = await supaClient
               .from('master_barang')
               .select('*')
-              .eq('barcode', bc)
-              .limit(1);
+              .or(`barcode.eq.${cleanBc},nama.ilike.%${cleanBc}%`)
+              .limit(15); 
               
             hideLoading();
             
-            // Tampilkan error asli di console (tekan F12) jika masih gagal untuk bahan evaluasi
-            if (error) {
-              console.error("Error Supabase SO:", error);
-              throw error;
-            }
+            if (error) throw error;
+            if (!data || data.length === 0) throw new Error('Barang tidak ditemukan!');
             
-            if (!data || data.length === 0) {
-               throw new Error('Barang tidak ditemukan!');
+            if (data.length === 1 || data[0].barcode === bc) {
+               // Jika hanya ketemu 1 barang, atau barcodenya cocok 100%, langsung pilih
+               pilihBarangUntukSO(data[0]);
+            } else {
+               // Jika mengetik nama dan ketemu BANYAK barang, buka Pop-Up Pilihan
+               tampilkanModalPilihBarangSO(data);
             }
-            
-            // Ambil barang pertama hasil pencarian
-            window.currentItemSO = data[0];
-            document.getElementById('soNamaBarang').innerText = data[0].nama;
-            document.getElementById('soFisik').value = '';
-            document.getElementById('soFisik').focus();
             
           } catch(err) {
             hideLoading();
-            showToast('Barcode salah/tidak ada di Master!', 'error');
+            showToast('Barang tidak ada di Master!', 'error');
             document.getElementById('soNamaBarang').innerText = '-';
             window.currentItemSO = null;
-            
-            // Kosongkan kembali inputnya agar siap di-scan ulang
             document.getElementById('soBarcode').value = '';
           }
         }
+      }
+
+      function tampilkanModalPilihBarangSO(data) {
+        const list = document.getElementById('soPilihBarangList');
+        list.innerHTML = '';
+        data.forEach(b => {
+           const div = document.createElement('div');
+           div.className = 'p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-emerald-50 active:scale-95 transition';
+           div.onclick = () => {
+              pilihBarangUntukSO(b);
+              document.getElementById('soPilihBarangModal').style.display = 'none';
+           };
+           div.innerHTML = `<div class="font-black text-sm text-slate-800">${b.nama}</div>
+                            <div class="text-[10px] text-slate-500 font-mono">${b.barcode || 'Belum ada barcode'}</div>`;
+           list.appendChild(div);
+        });
+        document.getElementById('soPilihBarangModal').style.display = 'flex';
+      }
+
+      function pilihBarangUntukSO(barang) {
+        window.currentItemSO = barang;
+        document.getElementById('soNamaBarang').innerText = barang.nama;
+        // Tampilkan namanya di kolom agar petugas yakin
+        document.getElementById('soBarcode').value = barang.barcode || barang.nama; 
+        document.getElementById('soFisik').value = '';
+        document.getElementById('soFisik').focus();
       }
 
       async function simpanFisikSO(e) {
