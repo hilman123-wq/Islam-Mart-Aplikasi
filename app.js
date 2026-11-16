@@ -612,7 +612,8 @@
         var activeBtn = document.getElementById('nav-' + tabId);
         if (activeBtn) { activeBtn.classList.remove('text-slate-300'); activeBtn.classList.add('text-emerald-400', 'bg-emerald-950/40', 'border', 'border-emerald-800/50'); }
 
-        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'master-aset', 'clhs-form', 'santri-management', 'bazar-management'].forEach(t => {
+        // Mendaftarkan seluruh Tab yang ada di aplikasi agar ditutup otomatis saat pindah menu
+        ['produksi-permak','stok-permak', 'dashboard', 'order-create', 'order-history', 'master-barang', 'clhk-form', 'clhg-form', 'clhka-form', 'clhp-form', 'clhdp-form','data-history', 'weekly-report', 'monthly-raport', 'laporan-bulanan', 'user-management', 'wa-reminder', 'master-aset', 'clhs-form', 'santri-management', 'bazar-management', 'system-logs', 'rab-create', 'rab-history', 'stock-opname'].forEach(t => {
           if (document.getElementById('tab-' + t)) document.getElementById('tab-' + t).style.display = 'none';
         });
         if (document.getElementById('tab-' + tabId)) document.getElementById('tab-' + tabId).style.display = 'block';
