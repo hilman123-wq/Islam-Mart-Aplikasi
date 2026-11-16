@@ -8738,15 +8738,25 @@
 
       async function loadLaporanSO() {
         var tb = document.getElementById('soReportTableBody');
-        if (tb) tb.innerHTML = '<tr><td colspan="7" class="py-10 text-center font-bold text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat...</td></tr>';
+        // Ambil nilai dari kolom pencarian
+        var searchInput = document.getElementById('soSearchInput');
+        var keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        
+        if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-10 text-center font-bold text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat...</td></tr>';
         
         try {
-          // Kita hanya menampilkan yang statusnya masih Pending (Belum diterapkan)
-          const { data, error } = await supaClient.from('riwayat_so').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
+          // Cari khusus yang masih Pending
+          let query = supaClient.from('riwayat_so').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
+          
+          if (keyword) {
+             query = query.ilike('nama_barang', '%' + keyword + '%');
+          }
+          
+          const { data, error } = await query;
           if (error) throw error;
           
           if (data.length === 0) {
-            if(tb) tb.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data SO yang Pending.</td></tr>';
+            if(tb) tb.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">Belum ada data SO / Tidak ditemukan.</td></tr>';
             return;
           }
 
@@ -8764,11 +8774,108 @@
               '<td class="py-3 px-3 text-center font-black text-blue-600 bg-blue-50/50">' + r.stok_fisik + '</td>' +
               '<td class="py-3 px-3 text-center font-black ' + colorSelisih + '">' + (r.selisih > 0 ? '+' : '') + r.selisih + '</td>' +
               '<td class="py-3 px-3 text-right font-black ' + colorSelisih + '">Rp ' + Number(r.total_kerugian).toLocaleString('id-ID') + '</td>' +
+              '<td class="py-3 px-3 text-center">' +
+                 '<div class="flex items-center justify-center gap-1.5">' +
+                   '<button onclick="editSO(\'' + r.id + '\', \'' + r.stok_komputer + '\', \'' + r.harga_modal + '\', \'' + r.stok_fisik + '\')" class="w-7 h-7 rounded bg-amber-100 text-amber-600 hover:bg-amber-200 flex items-center justify-center transition" title="Edit Fisik"><i class="fa-solid fa-pen text-[10px]"></i></button>' +
+                   '<button onclick="hapusSO(\'' + r.id + '\')" class="w-7 h-7 rounded bg-rose-100 text-rose-600 hover:bg-rose-200 flex items-center justify-center transition" title="Hapus Data"><i class="fa-solid fa-trash text-[10px]"></i></button>' +
+                 '</div>' +
+              '</td>' +
             '</tr>';
           });
           if(tb) tb.innerHTML = html;
         } catch(err) {
-          if (tb) tb.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-red-500">Gagal: ' + err.message + '</td></tr>';
+          if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-red-500">Gagal: ' + err.message + '</td></tr>';
+        }
+      }
+
+      // ==========================================
+      // FITUR AKSI & EXCEL SO
+      // ==========================================
+      async function hapusSO(id) {
+        if (!confirm('Yakin ingin menghapus hitungan SO ini?')) return;
+        showLoading('Menghapus...');
+        try {
+          const { error } = await supaClient.from('riwayat_so').delete().eq('id', id);
+          hideLoading();
+          if (error) throw error;
+          showToast('Data berhasil dihapus', 'success');
+          loadLaporanSO();
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal menghapus: ' + err.message, 'error');
+        }
+      }
+
+      async function editSO(id, komputer, modal, fisikLama) {
+        var fisikBaru = prompt("Masukkan jumlah FISIK RAK yang baru:", fisikLama);
+        if (fisikBaru === null || fisikBaru.trim() === '') return;
+        
+        fisikBaru = Number(fisikBaru);
+        var komp = Number(komputer);
+        var hModal = Number(modal);
+        
+        // Komputer otomatis menghitung ulang selisih & kerugian jika fisik diubah
+        var selisih = fisikBaru - komp;
+        var kerugian = selisih * hModal;
+        
+        showLoading('Mengubah data...');
+        try {
+          const { error } = await supaClient.from('riwayat_so').update({
+            stok_fisik: fisikBaru,
+            selisih: selisih,
+            total_kerugian: kerugian
+          }).eq('id', id);
+          
+          hideLoading();
+          if (error) throw error;
+          showToast('Fisik SO berhasil diperbarui', 'success');
+          loadLaporanSO();
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal mengubah: ' + err.message, 'error');
+        }
+      }
+
+      async function exportExcelSO() {
+        showLoading('Menyiapkan Excel...');
+        try {
+          const { data, error } = await supaClient.from('riwayat_so').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
+          hideLoading();
+          if (error) throw error;
+          if (data.length === 0) return showToast('Tidak ada data untuk di-export!', 'error');
+
+          // Header Format CSV (Bisa dibuka di Excel)
+          let csvContent = "data:text/csv;charset=utf-8,";
+          csvContent += "No,Tanggal,Petugas,Nama Barang,Barcode,Stok Komputer,Stok Fisik,Selisih,Harga Modal,Total Kerugian\n";
+
+          data.forEach((r, index) => {
+            // Tanda kutip agar spasi/koma di nama barang tidak merusak kolom Excel
+            let baris = [
+              index + 1,
+              r.tanggal,
+              `"${r.petugas}"`,
+              `"${r.nama_barang}"`,
+              `'${r.barcode}'`, // Tanda petik agar barcode panjang tidak jadi 8.99E+11 di Excel
+              r.stok_komputer,
+              r.stok_fisik,
+              r.selisih,
+              r.harga_modal,
+              r.total_kerugian
+            ];
+            csvContent += baris.join(",") + "\n";
+          });
+
+          // Otomatis men-download file ke HP/Laptop
+          var link = document.createElement("a");
+          link.setAttribute("href", encodeURI(csvContent));
+          link.setAttribute("download", "Laporan_StockOpname_" + new Date().toISOString().split('T')[0] + ".csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+        } catch (err) {
+          hideLoading();
+          showToast('Gagal export: ' + err.message, 'error');
         }
       }
 

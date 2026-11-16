@@ -3001,25 +3001,32 @@
             </div>
           </div>
 
-          <!-- BAGIAN BAWAH: TABEL LAPORAN (Tetap Sama) -->
+         <!-- BAGIAN BAWAH: TABEL LAPORAN (DENGAN AKSI & PENCARIAN) -->
           <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3 gap-3">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b pb-3 gap-3">
               <div>
                 <h2 class="text-sm sm:text-base font-black text-slate-800 flex items-center gap-2">
                   <i class="fa-solid fa-clipboard-check text-blue-500"></i> Laporan Rekonsiliasi SO
                 </h2>
                 <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Daftar selisih barang Pending.</p>
               </div>
-              <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="loadLaporanSO()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-rotate"></i> Refresh</button>
-                <button onclick="terapkanHasilSO()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-check-double"></i> TERAPKAN KE MASTER
+              
+              <!-- MENU FITUR: SEARCH, EXCEL, REFRESH, TERAPKAN -->
+              <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
+                <div class="relative flex-1 lg:w-48">
+                  <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                  <input type="text" id="soSearchInput" onkeyup="loadLaporanSO()" placeholder="Cari nama barang..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-500 transition">
+                </div>
+                <button onclick="exportExcelSO()" class="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                <button onclick="loadLaporanSO()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition shadow-sm"><i class="fa-solid fa-rotate"></i></button>
+                <button onclick="terapkanHasilSO()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-check-double"></i> TERAPKAN
                 </button>
               </div>
             </div>
             
             <div class="overflow-x-auto rounded-2xl border border-slate-100">
-              <table class="w-full text-left text-xs min-w-[750px]">
+              <table class="w-full text-left text-xs min-w-[850px]">
                 <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
                   <tr>
                     <th class="py-3 px-3 w-10 text-center">No</th>
@@ -3029,10 +3036,11 @@
                     <th class="py-3 px-3 text-center text-blue-600">Fisik (Rak)</th>
                     <th class="py-3 px-3 text-center">Selisih</th>
                     <th class="py-3 px-3 text-right">Nilai (Rp)</th>
+                    <th class="py-3 px-3 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody id="soReportTableBody" class="divide-y divide-slate-100 text-slate-700">
-                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat laporan...</td></tr>
+                  <tr><td colspan="8" class="py-6 text-center text-slate-400">Memuat laporan...</td></tr>
                 </tbody>
               </table>
             </div>
