@@ -8753,18 +8753,28 @@
 
       async function loadLaporanSO() {
         var tb = document.getElementById('soReportTableBody');
-        // Ambil nilai dari kolom pencarian
         var searchInput = document.getElementById('soSearchInput');
         var keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        
+        // Ambil nilai filter selisih yang baru kita buat
+        var filterSelisih = document.getElementById('soFilterSelisih') ? document.getElementById('soFilterSelisih').value : 'ALL';
         
         if (tb) tb.innerHTML = '<tr><td colspan="8" class="py-10 text-center font-bold text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 block"></i>Memuat...</td></tr>';
         
         try {
-          // Cari khusus yang masih Pending
           let query = supaClient.from('riwayat_so').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
           
           if (keyword) {
              query = query.ilike('nama_barang', '%' + keyword + '%');
+          }
+          
+          // Logika Filter Selisih ke Supabase Database
+          if (filterSelisih === 'MINUS') {
+             query = query.lt('selisih', 0); // Kurang dari 0
+          } else if (filterSelisih === 'PLUS') {
+             query = query.gt('selisih', 0); // Lebih dari 0
+          } else if (filterSelisih === 'KLOP') {
+             query = query.eq('selisih', 0); // Sama dengan 0
           }
           
           const { data, error } = await query;

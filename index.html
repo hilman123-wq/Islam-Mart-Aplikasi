@@ -3019,12 +3019,24 @@
                 <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Daftar selisih barang Pending.</p>
               </div>
               
-              <!-- MENU FITUR: SEARCH, EXCEL, REFRESH, TERAPKAN -->
-              <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
-                <div class="relative flex-1 lg:w-48">
+             <!-- MENU FITUR: SEARCH, FILTER, EXCEL, REFRESH, TERAPKAN -->
+              <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-end items-center">
+                
+                <!-- Kotak Pencarian -->
+                <div class="relative flex-1 lg:w-48 min-w-[150px]">
                   <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
                   <input type="text" id="soSearchInput" onkeyup="loadLaporanSO()" placeholder="Cari nama barang..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-500 transition">
                 </div>
+                
+                <!-- Filter Selisih (BARU) -->
+                <select id="soFilterSelisih" onchange="loadLaporanSO()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-500 transition cursor-pointer shadow-sm">
+                  <option value="ALL">Semua Selisih</option>
+                  <option value="MINUS">Selisih Kurang (-)</option>
+                  <option value="PLUS">Selisih Lebih (+)</option>
+                  <option value="KLOP">Sesuai (0)</option>
+                </select>
+
+                <!-- Tombol Aksi -->
                 <button onclick="exportExcelSO()" class="px-3 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm"><i class="fa-solid fa-file-excel"></i> Excel</button>
                 <button onclick="loadLaporanSO()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition shadow-sm"><i class="fa-solid fa-rotate"></i></button>
                 <button onclick="terapkanHasilSO()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
