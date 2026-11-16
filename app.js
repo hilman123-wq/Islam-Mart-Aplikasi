@@ -1298,6 +1298,20 @@
         if (typeof renderMasterBarangPage === 'function') renderMasterBarangPage();
       }
 
+      function cekBedaHargaKlik() {
+         // Menyuruh dropdown 'filterItemIM' berubah secara paksa meskipun sudah tidak ada di opsinya,
+         // lalu memanggil fungsi render tabel.
+         var dropdownIM = document.getElementById('filterItemIM');
+         if(dropdownIM) {
+             // Kita "suntik" pilihan ini sementara agar sistem memfilternya
+             dropdownIM.value = 'BEDA_HARGA'; 
+             filterAndRenderMasterBarang();
+             
+             // Kembalikan dropdown tampilannya ke "Semua Toko" setelah dipencet
+             setTimeout(() => { dropdownIM.value = 'ALL'; }, 500); 
+         }
+      }
+
       function changeMasterPage(delta) {
         var maxPage = Math.ceil(window.filteredMasterItems.length / window.masterItemsPerPage);
         var newPage = window.masterCurrentPage + delta;

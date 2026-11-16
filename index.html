@@ -1035,6 +1035,16 @@
                   <i class="fa-solid fa-trash-arrow-up"></i>
                   <span>Hapus Semua</span>
                 </button>
+                <button type="button" onclick="cekBedaHargaKlik()"
+                  class="px-3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Cek Beda Harga</span>
+                </button>
+                <button type="button" onclick="document.getElementById('previewZahirInput').click()"
+                  class="px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+                  <i class="fa-solid fa-folder-open"></i>
+                  <span>Cuci File Zahir</span>
+                </button>
               </div>
             </div>
 
@@ -1054,11 +1064,9 @@
                   <option value="ALL">Semua Toko</option>
                   <option value="Banin">Khusus Banin</option>
                   <option value="Banat">Khusus Banat</option>
-                  <option value="BEDA_HARGA">⚠️ Cek Beda Harga</option>
-               <option value="PREVIEW_ZAHIR">📂 Filter File Zahir (Cuci Excel)</option>
-             </select>
-             <!-- Input tersembunyi untuk memilih file Zahir multi-file -->
-             <input type="file" id="previewZahirInput" accept=".xlsx, .xls, .csv" multiple style="display: none;" onchange="processPreviewZahir(event)">
+                </select>
+                <!-- Biarkan input file tersembunyi tetap ada di sini (hanya jangan dihapus) -->
+                <input type="file" id="previewZahirInput" accept=".xlsx, .xls, .csv" multiple style="display: none;" onchange="processPreviewZahir(event)">
               </div>
               <div>
                 <select id="filterItemCategory" onchange="filterAndRenderMasterBarang()"
