@@ -383,7 +383,7 @@
         if (btmSarpras) btmSarpras.style.display = 'none';
         if (btmMasterAset) btmMasterAset.style.display = 'none';
         if (btmSystemLogs) btmSystemLogs.style.display = 'none';
-        if (btmStockOpname) btmStockOpname.style.display = 'none';
+        if (btmStockOpname) btmStockOpname.style.display = 'flex';
 
        // ATURAN KHUSUS BAZAR BANIN, BANAT & KANTIN DAYCARE (Tanpa Menu Arsip)
         var isKantin = roleStr.includes('kantin') || unameStr.includes('daycare');
