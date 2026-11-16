@@ -3095,148 +3095,153 @@
     </style>
 
     <div id="bottomNavBar" class="fixed bottom-0 inset-x-0 z-50 pointer-events-none">
-      <div class="bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] pointer-events-auto flex items-end">
+      <!-- PERBAIKAN: Tambahkan 'w-full' agar bar putih membentang penuh ke ujung kanan -->
+      <div class="w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] pointer-events-auto flex items-end justify-center">
         
-        <!-- AREA TOMBOL MENU (BISA DI-SWIPE KE KANAN-KIRI) -->
-        <div class="flex-1 overflow-x-auto flex-nowrap no-scrollbar flex items-center justify-start gap-1 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3">
+        <!-- INNER CONTAINER: Menjaga layout sejajar dengan konten dashboard di monitor PC -->
+        <div class="w-full max-w-7xl mx-auto flex items-end justify-between">
           
-          <button id="btnNavBtmBeranda" onclick="switchTab('dashboard')"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-gauge-high text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Beranda</span>
-          </button>
+          <!-- AREA TOMBOL MENU (BISA DI-SWIPE KE KANAN-KIRI DI HP) -->
+          <div class="flex-1 overflow-x-auto flex-nowrap no-scrollbar flex items-center justify-start gap-1 sm:gap-4 lg:gap-6 px-2 sm:px-6 py-2 sm:py-3">
+            
+            <button id="btnNavBtmBeranda" onclick="switchTab('dashboard')"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+              <i class="fa-solid fa-gauge-high text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Beranda</span>
+            </button>
 
-          <button id="btnNavBtmPO" onclick="switchTab('order-create')"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
-            <i class="fa-solid fa-cart-plus text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Order PO</span>
-          </button>
+            <button id="btnNavBtmPO" onclick="switchTab('order-create')"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+              <i class="fa-solid fa-cart-plus text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Order PO</span>
+            </button>
 
-          <button id="btnNavBtmRiwayatPO" onclick="switchTab('order-history')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
-            <i class="fa-solid fa-receipt text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
-          </button>
+            <button id="btnNavBtmRiwayatPO" onclick="switchTab('order-history')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+              <i class="fa-solid fa-receipt text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
+            </button>
 
-          <!-- MENU BAWAH KHUSUS BAZAR -->
-          <button id="btnNavBtmBazarKasir" onclick="openBazarKasirPos()" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-cash-register text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kasir</span>
-          </button>
+            <!-- MENU BAWAH KHUSUS BAZAR -->
+            <button id="btnNavBtmBazarKasir" onclick="openBazarKasirPos()" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+              <i class="fa-solid fa-cash-register text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Kasir</span>
+            </button>
 
-          <button id="btnNavBtmBazarNota" onclick="openBazarTransModal('NOTA_PEMBELIAN')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-blue-600 focus:text-blue-600 transition-colors">
-            <i class="fa-solid fa-file-invoice-dollar text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Nota Beli</span>
-          </button>
+            <button id="btnNavBtmBazarNota" onclick="openBazarTransModal('NOTA_PEMBELIAN')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-blue-600 focus:text-blue-600 transition-colors">
+              <i class="fa-solid fa-file-invoice-dollar text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Nota Beli</span>
+            </button>
 
-          <button id="btnNavBtmBazarRiwayat" onclick="switchTab('bazar-management'); switchBazarSubMenu('RIWAYAT_PENJUALAN');" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
-            <i class="fa-solid fa-clock-rotate-left text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
-          </button>
+            <button id="btnNavBtmBazarRiwayat" onclick="switchTab('bazar-management'); switchBazarSubMenu('RIWAYAT_PENJUALAN');" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+              <i class="fa-solid fa-clock-rotate-left text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Riwayat</span>
+            </button>
+            
+            <button id="btnNavBtmBazarBarang" onclick="switchTab('bazar-management'); switchBazarSubMenu('STOK');" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+              <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
+            </button>
+            <!-- END MENU BAWAH KHUSUS BAZAR -->
+
+            <button id="btnNavBtmBarang" onclick="switchTab('master-barang')"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+              <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
+            </button>
+
+            <!-- TOMBOL KHUSUS GUDANG -->
+            <button id="btnNavBtmLapMingguan" onclick="switchTab('weekly-report')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
+              <i class="fa-solid fa-calendar-week text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Minggu</span>
+            </button>
+
+            <button id="btnNavBtmLapBulanan" onclick="switchTab('monthly-raport')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
+              <i class="fa-solid fa-award text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Bulan</span>
+            </button>
+            <!-- END TOMBOL KHUSUS GUDANG -->
+
+           <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+              <i class="fa-solid fa-cloud-arrow-up text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lapbul</span>
+            </button>
+
+            <button id="btnNavBtmPermak" onclick="switchTab('clhp-form')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+              <i class="fa-solid fa-scissors text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Permak</span>
+            </button>
+            
+            <button id="btnNavBtmPurchasing" onclick="switchTab('clhdp-form')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
+              <i class="fa-solid fa-truck-fast text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Driver</span>
+            </button>
+            
+            <button id="btnNavBtmMasterAset" onclick="switchTab('master-aset')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
+              <i class="fa-solid fa-boxes-packing text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Aset</span>
+            </button>
+            
+            <button id="btnNavBtmStokPermak" onclick="switchTab('stok-permak')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-orange-600 focus:text-orange-600 transition-colors">
+              <i class="fa-solid fa-box-open text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Bahan</span>
+            </button>
+            
+            <button id="btnNavBtmProdPermak" onclick="switchTab('produksi-permak')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+              <i class="fa-solid fa-shirt text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Produksi</span>
+            </button>
+            
+            <button id="btnNavBtmStaf" onclick="switchTab('user-management')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-purple-600 focus:text-purple-600 transition-colors">
+              <i class="fa-solid fa-users-gear text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Staf</span>
+            </button>
+
+            <button id="btnNavBtmSantri" onclick="switchTab('santri-management')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
+              <i class="fa-solid fa-user-graduate text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Santri</span>
+            </button>
+            
+            <button id="btnNavBtmSystemLogs" onclick="switchTab('system-logs')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
+              <i class="fa-solid fa-video text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">CCTV Log</span>
+            </button>
+
+            <!-- TOMBOL STOCK OPNAME GABUNGAN -->
+            <button id="btnNavBtmStockOpname" onclick="switchTab('stock-opname')" style="display: none;"
+              class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
+              <i class="fa-solid fa-boxes-stacked text-[13px] sm:text-xl"></i>
+              <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Opname</span>
+            </button>
+          </div>
+
+          <!-- TOMBOL UTAMA "ISI FORM" (DIKUNCI DI POJOK KANAN, BORDER KIRI HANYA DI HP) -->
+          <div class="pr-3 pl-2 pb-2 sm:pb-3 shrink-0 flex items-end border-l border-slate-200 sm:border-none ml-2">
+            <button id="btnNavBtmForm" onclick="goToMyChecklist()"
+              class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold relative -top-3 sm:-top-5 transition-transform active:scale-95">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-[0_4px_15px_rgba(5,150,105,0.4)] border-[3px] sm:border-4 border-slate-100">
+                <i class="fa-solid fa-square-check text-lg sm:text-2xl"></i>
+              </div>
+              <span class="text-[9px] sm:text-[11px] mt-0.5 tracking-tight">Isi Form</span>
+            </button>
+          </div>
           
-          <button id="btnNavBtmBazarBarang" onclick="switchTab('bazar-management'); switchBazarSubMenu('STOK');" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
-          </button>
-          <!-- END MENU BAWAH KHUSUS BAZAR -->
-
-          <button id="btnNavBtmBarang" onclick="switchTab('master-barang')"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-barcode text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Barang</span>
-          </button>
-
-          <!-- TOMBOL KHUSUS GUDANG -->
-          <button id="btnNavBtmLapMingguan" onclick="switchTab('weekly-report')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
-            <i class="fa-solid fa-calendar-week text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Minggu</span>
-          </button>
-
-          <button id="btnNavBtmLapBulanan" onclick="switchTab('monthly-raport')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
-            <i class="fa-solid fa-award text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lap. Bulan</span>
-          </button>
-          <!-- END TOMBOL KHUSUS GUDANG -->
-
-         <button id="btnNavBtmLaporan" onclick="switchTab('laporan-bulanan')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-            <i class="fa-solid fa-cloud-arrow-up text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Lapbul</span>
-          </button>
-
-          <button id="btnNavBtmPermak" onclick="switchTab('clhp-form')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-            <i class="fa-solid fa-scissors text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Permak</span>
-          </button>
-          
-          <button id="btnNavBtmPurchasing" onclick="switchTab('clhdp-form')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-sky-600 focus:text-sky-600 transition-colors">
-            <i class="fa-solid fa-truck-fast text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Driver</span>
-          </button>
-          
-          <button id="btnNavBtmMasterAset" onclick="switchTab('master-aset')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-amber-600 focus:text-amber-600 transition-colors">
-            <i class="fa-solid fa-boxes-packing text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Aset</span>
-          </button>
-          
-          <button id="btnNavBtmStokPermak" onclick="switchTab('stok-permak')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-orange-600 focus:text-orange-600 transition-colors">
-            <i class="fa-solid fa-box-open text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Bahan</span>
-          </button>
-          
-          <button id="btnNavBtmProdPermak" onclick="switchTab('produksi-permak')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-            <i class="fa-solid fa-shirt text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Produksi</span>
-          </button>
-          
-          <button id="btnNavBtmStaf" onclick="switchTab('user-management')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-purple-600 focus:text-purple-600 transition-colors">
-            <i class="fa-solid fa-users-gear text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Staf</span>
-          </button>
-
-          <button id="btnNavBtmSantri" onclick="switchTab('santri-management')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-teal-600 focus:text-teal-600 transition-colors">
-            <i class="fa-solid fa-user-graduate text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Santri</span>
-          </button>
-          
-          <button id="btnNavBtmSystemLogs" onclick="switchTab('system-logs')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-rose-600 focus:text-rose-600 transition-colors">
-            <i class="fa-solid fa-video text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">CCTV Log</span>
-          </button>
-
-         <!-- TOMBOL STOCK OPNAME GABUNGAN -->
-          <button id="btnNavBtmStockOpname" onclick="switchTab('stock-opname')" style="display: none;"
-            class="w-14 shrink-0 flex flex-col items-center gap-1 text-slate-500 hover:text-emerald-600 focus:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-boxes-stacked text-[13px] sm:text-xl"></i>
-            <span class="text-[8px] sm:text-[11px] font-bold mt-0.5 tracking-tight">Opname</span>
-          </button>
         </div>
-
-        <!-- TOMBOL UTAMA "ISI FORM" (DIKUNCI DI KANAN, TIDAK IKUT DIGESER) -->
-        <div class="pr-3 pl-1 pb-2 sm:pb-3 shrink-0 flex items-end">
-          <button id="btnNavBtmForm" onclick="goToMyChecklist()"
-            class="flex flex-col items-center gap-1 text-emerald-600 font-extrabold relative -top-3 sm:-top-5 transition-transform active:scale-95">
-            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-[0_4px_15px_rgba(5,150,105,0.4)] border-[3px] sm:border-4 border-slate-100">
-              <i class="fa-solid fa-square-check text-lg sm:text-2xl"></i>
-            </div>
-            <span class="text-[9px] sm:text-[11px] mt-0.5 tracking-tight">Isi Form</span>
-          </button>
-        </div>
-
       </div>
     </div>
 
